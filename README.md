@@ -18,32 +18,7 @@
 *   **后端**: Spring Boot 3 + Spring Security + MyBatis-Plus
 *   **数据库**: MySQL 8.0
 *   **AI 集成**: 调用 [文心一言/通义千问] API
-*   **协作与部署**: Git, GitHub, Docker (可选)
-
-## 🏛️ 系统架构 (Architecture)
-
-```mermaid
-graph TD;
-    subgraph b[系统边界]
-        direction LR
-        subgraph backend[后端API服务器 (Java/Spring Boot)]
-            direction TB
-            A1[用户管理] --> A4[AI服务];
-            A2[合同管理] --> A4;
-            A3[工作流引擎] --> A4;
-        end
-        
-        UserBrowser["用户浏览器"] -- HTTP --> Frontend["Web前端 (Vue.js)"];
-        Frontend -- API --> backend;
-        backend -- CRUD --> DB["数据库 (MySQL)"];
-    end
-
-    backend -- API调用 --> LLM["外部大语言模型API服务"];
-    
-    style b fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
-    style LLM fill:#e6f7ff,stroke:#91d5ff
-```
-
+*   **协作与部署**: Git, GitHub, Docker
 ## 📦 快速开始 (Getting Started)
 
 > 此部分内容将在项目开发过程中逐步完善。
