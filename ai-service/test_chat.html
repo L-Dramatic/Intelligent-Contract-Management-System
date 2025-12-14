@@ -223,7 +223,7 @@
         const userId = 'test_user_' + Math.random().toString(36).substr(2, 9);
         
         function connect() {
-            const wsUrl = `ws://localhost:8000/ws/chat/${userId}`;
+            const wsUrl = `ws://localhost:8765/ws/chat/${userId}`;
             ws = new WebSocket(wsUrl);
             
             ws.onopen = () => {

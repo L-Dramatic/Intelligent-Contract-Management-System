@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.core.ParameterizedTypeReference;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -29,7 +30,7 @@ public class AIServiceImpl implements AIService {
                 .uri("/api/generate")
                 .bodyValue(request)
                 .retrieve()
-                .bodyToMono(AIResponse.class)
+                .bodyToMono(new ParameterizedTypeReference<AIResponse<String>>(){})
                 .timeout(Duration.ofSeconds(30))
                 .doOnSuccess(response -> log.info("AI生成条款成功"))
                 .doOnError(e -> log.error("AI生成条款失败", e))
@@ -44,7 +45,7 @@ public class AIServiceImpl implements AIService {
                 .uri("/api/check")
                 .bodyValue(request)
                 .retrieve()
-                .bodyToMono(AIResponse.class)
+                .bodyToMono(new ParameterizedTypeReference<AIResponse<String>>(){})
                 .timeout(Duration.ofSeconds(30))
                 .doOnSuccess(response -> log.info("AI合规检查成功"))
                 .doOnError(e -> log.error("AI合规检查失败", e))
@@ -58,14 +59,21 @@ public class AIServiceImpl implements AIService {
         return aiWebClient.get()
                 .uri("/api/knowledge/stats")
                 .retrieve()
-                .bodyToMono(AIResponse.class)
+                .bodyToMono(new ParameterizedTypeReference<AIResponse<Object>>(){})
                 .timeout(Duration.ofSeconds(10))
                 .doOnError(e -> log.error("获取知识库统计失败", e))
-                .onErrorReturn(createErrorResponse("获取统计信息失败"));
+                .onErrorReturn(createErrorResponseObject("获取统计信息失败"));
     }
     
     private AIResponse<String> createErrorResponse(String message) {
         return AIResponse.error(message);
+    }
+    
+    private AIResponse<Object> createErrorResponseObject(String message) {
+        AIResponse<Object> response = new AIResponse<>();
+        response.setSuccess(false);
+        response.setMessage(message);
+        return response;
     }
 }
 
