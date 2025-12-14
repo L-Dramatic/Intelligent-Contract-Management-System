@@ -48,6 +48,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 这里只配置业务接口的权限
                 .requestMatchers("/user/login", "/user/register").permitAll()
+                .requestMatchers("/api/ai/**").permitAll() // 放行AI接口（开发环境）
                 // 其他所有接口都需要认证
                 .anyRequest().authenticated()
             )
