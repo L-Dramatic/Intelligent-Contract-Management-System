@@ -24,3 +24,4 @@ public interface AIService {
     Mono<AIResponse<Object>> getKnowledgeStats();
 }
 
+

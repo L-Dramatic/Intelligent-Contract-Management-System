@@ -20,3 +20,4 @@ public class AIGenerateRequest {
     private String requirement;
 }
 
+

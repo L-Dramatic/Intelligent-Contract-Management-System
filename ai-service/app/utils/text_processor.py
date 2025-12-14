@@ -80,3 +80,4 @@ def extract_key_terms(text: str) -> list:
     
     return found_terms
 
+
