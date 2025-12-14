@@ -1,24 +1,27 @@
-# AI合同助手服务依赖
+# AI合同助手服务依赖 - 简化版（Python 3.14兼容）
+
 # FastAPI框架
-fastapi==0.104.1
-uvicorn==0.24.0
-websockets==12.0
+fastapi>=0.104.1
+uvicorn>=0.24.0
+websockets>=12.0
 
 # 通义千问API
-dashscope==1.14.0
-
-# 向量数据库
-chromadb==0.4.18
-
-# Embedding模型
-sentence-transformers==2.2.2
+dashscope>=1.14.0
 
 # 文档处理
-PyPDF2==3.0.1
-python-docx==1.1.0
-python-multipart==0.0.6
+PyPDF2>=3.0.1
+python-docx>=1.1.0
+python-multipart>=0.0.6
 
-# LangChain（可选，用于更复杂的RAG管道）
-langchain==0.1.0
-langchain-community==0.0.10
+# ==== 以下是可选依赖，可以稍后安装 ====
+
+# 向量数据库（需要时再安装，Python 3.14可能有兼容问题）
+# chromadb>=0.5.0
+
+# Embedding模型（需要时再安装）
+# sentence-transformers>=2.2.2
+
+# LangChain（需要时再安装）
+# langchain>=0.1.0
+# langchain-community>=0.0.10
 

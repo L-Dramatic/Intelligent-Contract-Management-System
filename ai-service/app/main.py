@@ -18,9 +18,16 @@ import json
 # 导入LLM服务
 from dashscope import Generation
 
-# 导入RAG和提示词服务
-from app.services.rag_service import RAGService
+# 导入提示词服务
 from app.services.prompt_manager import PromptManager
+
+# 导入RAG服务（可选，可能不可用）
+try:
+    from app.services.rag_service import RAGService
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+    print("[提示] RAG服务模块不可用（缺少chromadb），将使用纯LLM模式")
 
 # ============================================================
 # 配置加载
@@ -72,21 +79,29 @@ print("AI合同助手服务启动中...")
 print("=" * 60)
 
 # 初始化RAG和Prompt服务
-print("\n[1/2] 正在初始化RAG服务...")
+print("\n[1/2] 正在初始化服务...")
 chroma_db_path = str(Path(__file__).parent.parent / 'chroma_db')
 
-try:
-    rag_service = RAGService(chroma_db_path=chroma_db_path)
-    prompt_manager = PromptManager()
-    stats = rag_service.get_collection_stats()
-    print(f"      RAG服务初始化成功")
-    print(f"      知识库文档数: {stats['document_count']}")
-    RAG_ENABLED = True
-except Exception as e:
-    print(f"      [警告] RAG服务初始化失败: {e}")
-    print(f"      将降级为普通对话模式")
+# 初始化Prompt服务（必需）
+prompt_manager = PromptManager()
+
+# 初始化RAG服务（可选）
+if RAG_AVAILABLE:
+    try:
+        rag_service = RAGService(chroma_db_path=chroma_db_path)
+        stats = rag_service.get_collection_stats()
+        print(f"      RAG服务初始化成功")
+        print(f"      知识库文档数: {stats['document_count']}")
+        RAG_ENABLED = True
+    except Exception as e:
+        print(f"      [警告] RAG服务初始化失败: {e}")
+        print(f"      将降级为普通对话模式")
+        rag_service = None
+        RAG_ENABLED = False
+else:
+    print(f"      [信息] RAG功能未安装（需要chromadb和sentence-transformers）")
+    print(f"      当前以纯LLM模式运行")
     rag_service = None
-    prompt_manager = PromptManager()
     RAG_ENABLED = False
 
 print(f"\n[2/2] 服务配置完成")
@@ -126,26 +141,30 @@ def call_ai(user_message: str, user_id: str = None, contract_type: str = None) -
         
         # 构建提示词
         system_prompt = prompt_manager.get_system_prompt("default")
+        
+        # 安全地获取最近的对话历史
+        recent_history = history[-6:] if history else []
+        
         user_prompt = prompt_manager.build_chat_prompt(
             user_message=user_message,
             context=context,
-            conversation_history=history[-6:]  # 最近3轮
+            conversation_history=recent_history
         )
         
-        # 调用通义千问
+        # 合并系统提示词和用户提示词
+        full_prompt = f"{system_prompt}\n\n{user_prompt}"
+        
+        # 调用通义千问（使用prompt方式）
         response = Generation.call(
             model='qwen-turbo',
             api_key=API_KEY,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
+            prompt=full_prompt,
             max_tokens=1500,
             temperature=0.7
         )
         
         if response.status_code == 200:
-            ai_reply = response.output.choices[0].message.content
+            ai_reply = response.output.text
             
             # 保存对话历史
             if user_id:
@@ -287,14 +306,14 @@ async def generate_clause(request: dict):
         user_requirement=requirement
     )
     
+    # 合并系统提示词
+    full_prompt = f"{prompt_manager.get_system_prompt('clause_generation')}\n\n{prompt}"
+    
     # 调用AI
     response = Generation.call(
         model='qwen-turbo',
         api_key=API_KEY,
-        messages=[
-            {"role": "system", "content": prompt_manager.get_system_prompt("clause_generation")},
-            {"role": "user", "content": prompt}
-        ],
+        prompt=full_prompt,
         max_tokens=2000,
         temperature=0.7
     )
@@ -302,7 +321,7 @@ async def generate_clause(request: dict):
     if response.status_code == 200:
         return {
             "success": True,
-            "clause": response.output.choices[0].message.content,
+            "clause": response.output.text,
             "rag_used": bool(context)
         }
     else:
@@ -342,14 +361,14 @@ async def check_compliance(request: dict):
         contract_type=prompt_manager.get_contract_type_name(contract_type)
     )
     
+    # 合并系统提示词
+    full_prompt = f"{prompt_manager.get_system_prompt('compliance_check')}\n\n{prompt}"
+    
     # 调用AI
     response = Generation.call(
         model='qwen-turbo',
         api_key=API_KEY,
-        messages=[
-            {"role": "system", "content": prompt_manager.get_system_prompt("compliance_check")},
-            {"role": "user", "content": prompt}
-        ],
+        prompt=full_prompt,
         max_tokens=1500,
         temperature=0.5
     )
@@ -357,7 +376,7 @@ async def check_compliance(request: dict):
     if response.status_code == 200:
         return {
             "success": True,
-            "analysis": response.output.choices[0].message.content,
+            "analysis": response.output.text,
             "rag_used": bool(context)
         }
     else:
