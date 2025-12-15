@@ -67,8 +67,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         Map<String, Object> data = new HashMap<>();
         data.put("token", token);
-        data.put("user", user);
-        data.put("permissions", permissionCodes); // 把权限也返回给前端，前端好控制按钮显示
+        // 前端期望字段名为 userInfo
+        data.put("userInfo", user);
+        // 把权限也返回给前端（以及让前端可将其合并进 userInfo.permissions）
+        data.put("permissions", permissionCodes);
 
         return data;
     }
