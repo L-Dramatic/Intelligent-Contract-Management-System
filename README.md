@@ -21,16 +21,24 @@
 *   **协作与部署**: Git, GitHub, Docker
 ## 📦 快速开始 (Getting Started)
 
-> 此部分内容将在项目开发过程中逐步完善。
-
 ### 环境要求
 
-*   JDK 17+
+*   JDK 17+ (推荐21)
 *   Maven 3.6+
-*   Node.js 18+
+*   Node.js 20+
 *   MySQL 8.0+
 
-### 安装与运行
+### ⚡ 一键启动（推荐）
+
+项目提供了跨平台的一键启动脚本，自动检查环境并启动服务：
+
+**Windows 用户：** 双击 `start.bat` 或运行 `.\start.ps1`
+
+**Linux/Mac 用户：** 运行 `chmod +x start.sh && ./start.sh`
+
+首次使用请选择 `[4] 安装依赖`，然后选择 `[1] 启动全部`
+
+### 手动启动
 
 1.  **克隆仓库**
     ```bash
@@ -38,25 +46,37 @@
     cd [你的仓库名]
     ```
 
-2.  **后端启动**
+2.  **初始化数据库**
     ```bash
-    # 进入后端项目目录
+    mysql -u root -p < database/init.sql
+    ```
+
+3.  **配置数据库密码**
+    
+    编辑 `backend/src/main/resources/application.properties`，修改 `spring.datasource.password`
+
+4.  **后端启动**
+    ```bash
     cd backend
-    # 配置 application.yml 中的数据库连接信息
-    # ...
-    # 启动项目
     mvn spring-boot:run
     ```
 
-3.  **前端启动**
+5.  **前端启动**
     ```bash
-    # 进入前端项目目录
     cd frontend
-    # 安装依赖
     npm install
-    # 启动开发服务器
     npm run dev
     ```
+
+### 访问地址
+
+| 服务 | 地址 |
+|------|------|
+| 前端页面 | http://localhost:5173 |
+| 后端API | http://localhost:8080 |
+| API文档 | http://localhost:8080/doc.html |
+
+详细说明请查看 [启动指南](./Docs/启动指南.md)
 
 ## 🧑‍💻 团队成员 (Team Members)
 

@@ -17,7 +17,10 @@ INSERT INTO `sys_dept` (`id`, `parent_id`, `name`, `manager_id`) VALUES
 -- 提示：如果你的注册逻辑用了 BCrypt，这里的密码在登录时可能无法通过，建议后续用注册接口创建，或者暂时只用之前注册好的账号。
 -- 这里仅作为参考数据结构。
 
+-- 增加前端默认演示账号：admin / 123456、user / 123456
 INSERT INTO `sys_user` (`username`, `password`, `real_name`, `role`, `dept_id`) VALUES 
+('admin', '123456', '系统管理员', 'ADMIN', 1),        -- 管理员
+('user', '123456', '普通用户', 'USER', 2),            -- 普通用户
 ('li_project', '123456', '李项目', 'USER', 2),    -- 网络部项目经理 (发起人)
 ('wang_legal', '123456', '王法务', 'LEGAL', 4),   -- 法务 (审查人)
 ('zhang_manager', '123456', '张经理', 'MANAGER', 2), -- 部门经理 (审批人)
