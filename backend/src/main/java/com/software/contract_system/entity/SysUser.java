@@ -22,5 +22,6 @@ public class SysUser {
     private String realName;
     private String role;     // ADMIN, MANAGER, USER
     private Long deptId;
+    private Long directLeaderId;
     private LocalDateTime createdAt;
 }

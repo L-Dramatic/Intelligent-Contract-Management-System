@@ -1,96 +1,37 @@
-### ==================================================
-### 1. 登录 (用于获取最新 Token)
-### ==================================================
+### ==========================================
+### 合同管理测试
+### ==========================================
+
+### 1. 登录李项目 (拥有创建合同权限)
 POST http://localhost:8080/user/login
 Content-Type: application/json
 
 {
-    "username": "admin",
+    "username": "li_project",
     "password": "123456"
 }
 
-### ==================================================
-### 2. 测试 A：不带 Token 访问受保护接口
-### 预期结果：403 Forbidden (被拦截)
-### ==================================================
-GET http://localhost:8080/user/info
-
-
-### ==================================================
-### 3. 测试 B：带 Token 访问受保护接口
-### 预期结果：200 OK (如果你看到了 "Token 验证成功" 的字样)
-### 注意：Authorization 的格式是 "Bearer " + 空格 + Token
-### ==================================================
-GET http://localhost:8080/user/info
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJJZCI6MSwiaWF0IjoxNzY1NjQ4Nzc0LCJleHAiOjE3NjU3MzUxNzR9.3y1G0nEP87rm25UM4zwp4_fMH8-Mh8r2Pi0M3jV4TWs
-
-### 测试注册
-POST http://localhost:8080/user/register
+### 2. 创建基站租赁合同 (存为草稿)
+### 记得把 Token 换成上面李项目登录返回的 Token
+POST http://localhost:8080/contract/create
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1ODcxNDc0LCJleHAiOjE3NjU5NTc4NzR9.RABetVAFQxtVVdh6tmb5NZl9DupNE764tmu4mi4EUZw
 
 {
-    "username": "zhangluowu",
-    "password": "123456",
-    "realName": "张洛梧",
-    "role": "MANAGER"
+    "name": "2025年朝阳区基站租赁合同-一期",
+    "type": "BASE_STATION",
+    "partyA": "中国电信XX分公司",
+    "partyB": "万达广场物业管理公司",
+    "amount": 50000.00,
+    "content": "<h1>基站租赁合同</h1><p>第一条：...</p>",
+    "isDraft": true,
+    "attributes": {
+        "address": "朝阳区建国路99号",
+        "area": 20.5,
+        "siteType": "ROOFTOP"
+    }
 }
 
-### ==================================================
-### 4. 验证新账号登录
-### 预期结果：200 OK，并且返回一个新的 Token
-### ==================================================
-POST http://localhost:8080/user/login
-Content-Type: application/json
-
-{
-    "username": "zhangluowu",
-    "password": "123456"
-}
-
-
-### ==========================================
-### 场景 A：使用 ADMIN 账号 (权限：user:manage)
-### ==========================================
-
-### 1. Admin 登录 (获取 Token)
-POST http://localhost:8080/user/login
-Content-Type: application/json
-
-{
-    "username": "admin",
-    "password": "123456"
-}
-
-### 2. Admin 尝试删除用户 (需要 user:manage)
-### 预期：200 OK (成功)
-DELETE http://localhost:8080/user/888
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJJZCI6MSwicm9sZSI6IkFETUlOIiwicGVybXMiOlsidXNlcjptYW5hZ2UiXSwiaWF0IjoxNzY1NjU3NDQ2LCJleHAiOjE3NjU3NDM4NDZ9.8aW4HiIttoFYBThkL_RlZ6NOVM3X4AkfrmJT4AI0FO8
-
-### 3. Admin 尝试访问审批 (需要 contract:audit)
-### 预期：403 Forbidden (Admin 虽然是老大，但我们在数据库里没给他审批权，只给了用户管理权)
-GET http://localhost:8080/user/audit_test
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInVzZXJJZCI6MSwicm9sZSI6IkFETUlOIiwicGVybXMiOlsidXNlcjptYW5hZ2UiXSwiaWF0IjoxNzY1NjU3NDQ2LCJleHAiOjE3NjU3NDM4NDZ9.8aW4HiIttoFYBThkL_RlZ6NOVM3X4AkfrmJT4AI0FO8
-
-
-### ==========================================
-### 场景 B：使用 MANAGER 账号 (权限：contract:audit)
-### ==========================================
-
-### 4. Manager 登录 (之前 init_data.sql 里插入的数据)
-POST http://localhost:8080/user/login
-Content-Type: application/json
-
-{
-    "username": "zhang_manager",
-    "password": "123456"
-}
-
-### 5. Manager 尝试删除用户 (需要 user:manage)
-### 预期：403 Forbidden (经理不能删人)
-DELETE http://localhost:8080/user/888
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6aGFuZ19tYW5hZ2VyIiwidXNlcklkIjo1LCJyb2xlIjoiTUFOQUdFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciLCJjb250cmFjdDphdWRpdCJdLCJpYXQiOjE3NjU2NTc0MTIsImV4cCI6MTc2NTc0MzgxMn0.IyQdnRXygHE9mQrv3LbXNI7WmSWZ13sfSdaMbaaM324
-
-### 6. Manager 尝试访问审批 (需要 contract:audit)
-### 预期：200 OK (成功)
-GET http://localhost:8080/user/audit_test
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6aGFuZ19tYW5hZ2VyIiwidXNlcklkIjo1LCJyb2xlIjoiTUFOQUdFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciLCJjb250cmFjdDphdWRpdCJdLCJpYXQiOjE3NjU2NTc0MTIsImV4cCI6MTc2NTc0MzgxMn0.IyQdnRXygHE9mQrv3LbXNI7WmSWZ13sfSdaMbaaM324
+### 3. 分页查询合同列表
+GET http://localhost:8080/contract/list?pageNum=1&pageSize=10
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1ODcxNDc0LCJleHAiOjE3NjU5NTc4NzR9.RABetVAFQxtVVdh6tmb5NZl9DupNE764tmu4mi4EUZw
