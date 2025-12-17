@@ -32,7 +32,11 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
         // 1. 复制基本字段
         contract.setName(dto.getName());
         contract.setType(dto.getType());
-        contract.setPartyA(dto.getPartyA());
+        if (StringUtils.hasText(dto.getPartyA())) {
+            contract.setPartyA(dto.getPartyA());
+        } else {
+            contract.setPartyA("中国电信XX省分公司"); // 默认甲方
+        }
         contract.setPartyB(dto.getPartyB());
         contract.setAmount(dto.getAmount());
         contract.setContent(dto.getContent());

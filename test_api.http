@@ -1,8 +1,10 @@
 ### ==========================================
-### 合同管理测试
+### 终极业务闭环测试
 ### ==========================================
 
-### 1. 登录李项目 (拥有创建合同权限)
+### ---------------- 阶段一：发起人操作 ----------------
+
+### 1. 李项目登录 (获取Token)
 POST http://localhost:8080/user/login
 Content-Type: application/json
 
@@ -11,27 +13,84 @@ Content-Type: application/json
     "password": "123456"
 }
 
-### 2. 创建基站租赁合同 (存为草稿)
-### 记得把 Token 换成上面李项目登录返回的 Token
+### 2. 李项目创建合同 (获取 contractId，假设是 1)
+# 记得替换 Authorization 为李项目的 Token
 POST http://localhost:8080/contract/create
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1ODcxNDc0LCJleHAiOjE3NjU5NTc4NzR9.RABetVAFQxtVVdh6tmb5NZl9DupNE764tmu4mi4EUZw
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1OTQwODQ2LCJleHAiOjE3NjYwMjcyNDZ9.M6SbgzZ2dWwu5M08XDRdWOTvQVFsL5ZsmAztLykn0Jg
 
 {
-    "name": "2025年朝阳区基站租赁合同-一期",
-    "type": "BASE_STATION",
-    "partyA": "中国电信XX分公司",
-    "partyB": "万达广场物业管理公司",
-    "amount": 50000.00,
-    "content": "<h1>基站租赁合同</h1><p>第一条：...</p>",
-    "isDraft": true,
-    "attributes": {
-        "address": "朝阳区建国路99号",
-        "area": 20.5,
-        "siteType": "ROOFTOP"
-    }
+    "name": "2025年5G核心网建设工程合同",
+    "type": "NETWORK",
+    "partyA": "中国电信XX省分公司",
+    "partyB": "华为技术有限公司",
+    "amount": 1000000,
+    "isDraft": true
 }
 
-### 3. 分页查询合同列表
-GET http://localhost:8080/contract/list?pageNum=1&pageSize=10
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1ODcxNDc0LCJleHAiOjE3NjU5NTc4NzR9.RABetVAFQxtVVdh6tmb5NZl9DupNE764tmu4mi4EUZw
+### 3. 李项目提交审批 (启动流程)
+# 替换 contractId 为上一步返回的 ID (例如 1)
+POST http://localhost:8080/workflow/submit/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1OTQwODQ2LCJleHAiOjE3NjYwMjcyNDZ9.M6SbgzZ2dWwu5M08XDRdWOTvQVFsL5ZsmAztLykn0Jg
+
+
+### ---------------- 阶段二：经理审批 ----------------
+
+### 4. 张经理登录 (获取Token)
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "zhang_manager",
+    "password": "123456"
+}
+
+### 5. 张经理查看待办任务 (获取 taskId)
+GET http://localhost:8080/workflow/tasks
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6aGFuZ19tYW5hZ2VyIiwidXNlcklkIjozLCJyb2xlIjoiTUFOQUdFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciLCJjb250cmFjdDphdWRpdCJdLCJpYXQiOjE3NjU5NDE1NjAsImV4cCI6MTc2NjAyNzk2MH0.HHzjZ0XHKBp149PoGI91xUXXO9jat7uFeZipyex_Vvw
+
+### 6. 张经理审批通过
+# 替换 taskId 为上一步返回的 id
+POST http://localhost:8080/workflow/approve
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ6aGFuZ19tYW5hZ2VyIiwidXNlcklkIjozLCJyb2xlIjoiTUFOQUdFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciLCJjb250cmFjdDphdWRpdCJdLCJpYXQiOjE3NjU5NDE1NjAsImV4cCI6MTc2NjAyNzk2MH0.HHzjZ0XHKBp149PoGI91xUXXO9jat7uFeZipyex_Vvw
+
+{
+    "taskId": 1,
+    "pass": true,
+    "comment": "同意，请法务审核"
+}
+
+
+### ---------------- 阶段三：法务审批 ----------------
+
+### 7. 王法务登录
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "wang_legal",
+    "password": "123456"
+}
+
+### 8. 王法务查看待办
+GET http://localhost:8080/workflow/tasks
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ3YW5nX2xlZ2FsIiwidXNlcklkIjoyLCJyb2xlIjoiTEVHQUwiLCJwZXJtcyI6WyJjb250cmFjdDp2aWV3IiwiY29udHJhY3Q6YXVkaXQiLCJyaXNrOnJldmlldyJdLCJpYXQiOjE3NjU5NDE2MDEsImV4cCI6MTc2NjAyODAwMX0.h3YTEI5H3yqhOTdyZesMsWq8BbR-VN3U-05vKFp2_tk
+
+### 9. 王法务审批通过 (流程结束)
+# 替换 taskId (注意ID是新的)
+POST http://localhost:8080/workflow/approve
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ3YW5nX2xlZ2FsIiwidXNlcklkIjoyLCJyb2xlIjoiTEVHQUwiLCJwZXJtcyI6WyJjb250cmFjdDp2aWV3IiwiY29udHJhY3Q6YXVkaXQiLCJyaXNrOnJldmlldyJdLCJpYXQiOjE3NjU5NDE2MDEsImV4cCI6MTc2NjAyODAwMX0.h3YTEI5H3yqhOTdyZesMsWq8BbR-VN3U-05vKFp2_tk
+
+{
+    "taskId": 2,
+    "pass": true,
+    "comment": "条款合规，同意"
+}
+
+### ---------------- 阶段四：验证结果 ----------------
+
+### 10. 查看合同详情 (检查 status 是否变为 2 已生效)
+GET http://localhost:8080/contract/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsaV9wcm9qZWN0IiwidXNlcklkIjoxLCJyb2xlIjoiVVNFUiIsInBlcm1zIjpbImNvbnRyYWN0OmFkZCIsImNvbnRyYWN0OnZpZXciXSwiaWF0IjoxNzY1OTQwODQ2LCJleHAiOjE3NjYwMjcyNDZ9.M6SbgzZ2dWwu5M08XDRdWOTvQVFsL5ZsmAztLykn0Jg
