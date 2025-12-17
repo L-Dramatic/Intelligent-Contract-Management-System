@@ -1,6 +1,8 @@
 package com.software.contract_system.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.software.contract_system.common.BusinessException;
+import com.software.contract_system.common.ContractStatus;
 import com.software.contract_system.common.Result;
 import com.software.contract_system.dto.ContractDTO;
 import com.software.contract_system.entity.Contract;
@@ -78,19 +80,7 @@ public class ContractController {
     @Operation(summary = "删除合同", description = "仅草稿或已驳回状态可删除")
     @PreAuthorize("hasAuthority('contract:add')")
     public Result<Boolean> delete(@PathVariable Long id) {
-        // 1. 先查出来看看状态
-        Contract contract = contractService.getById(id);
-        if (contract == null) {
-            return Result.error("合同不存在");
-        }
-        
-        // 2. 检查状态 (0:草稿, 3:已驳回)
-        if (contract.getStatus() != 0 && contract.getStatus() != 3) {
-            return Result.error("只能删除草稿或已驳回的合同，当前状态不可删除");
-        }
-
-        // 3. 执行物理删除 (也可以做逻辑删除，MyBatis-Plus 配置 logic-delete 即可)
-        boolean success = contractService.removeById(id);
+        boolean success = contractService.deleteContract(id);
         return Result.success(success);
     }
 }

@@ -31,7 +31,7 @@ public class AIServiceImpl implements AIService {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<AIResponse<String>>(){})
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(60)) // 生成条款需要较长时间，设置60秒
                 .doOnSuccess(response -> log.info("AI生成条款成功"))
                 .doOnError(e -> log.error("AI生成条款失败", e))
                 .onErrorReturn(createErrorResponse("AI服务调用失败，请稍后重试"));
@@ -46,7 +46,7 @@ public class AIServiceImpl implements AIService {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<AIResponse<String>>(){})
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(45)) // 合规检查设置45秒
                 .doOnSuccess(response -> log.info("AI合规检查成功"))
                 .doOnError(e -> log.error("AI合规检查失败", e))
                 .onErrorReturn(createErrorResponse("AI服务调用失败，请稍后重试"));

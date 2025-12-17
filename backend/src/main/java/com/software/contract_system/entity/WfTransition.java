@@ -13,5 +13,5 @@ public class WfTransition {
     private Long defId;
     private Long fromNodeId;
     private Long toNodeId;
-    // private String conditionExpr; // 暂时不用复杂条件
+    private String conditionExpr; // 条件表达式（用于条件分支）
 }

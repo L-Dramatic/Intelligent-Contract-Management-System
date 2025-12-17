@@ -113,16 +113,27 @@ public class WorkflowServiceImpl implements WorkflowService {
     // 核心辅助方法：流转到下一节点
     // ==========================================
     private void toNextNode(WfInstance instance, WfNode currentNode) {
-        // 1. 找连线 (From Current -> To Next)
-        WfTransition transition = transitionMapper.selectOne(new LambdaQueryWrapper<WfTransition>()
-                .eq(WfTransition::getFromNodeId, currentNode.getId()));
+        // 1. 找所有可能的连线 (From Current -> To Next)
+        List<WfTransition> transitions = transitionMapper.selectList(
+            new LambdaQueryWrapper<WfTransition>()
+                .eq(WfTransition::getFromNodeId, currentNode.getId())
+        );
         
-        if (transition == null) {
+        if (transitions == null || transitions.isEmpty()) {
             // 没有后续连线，说明流程配置有问题，或者到了隐式结尾
             throw new RuntimeException("流程中断：找不到下一节点");
         }
 
-        // 2. 获取下一节点
+        // 2. 根据条件表达式选择合适的连线
+        // 如果只有一条连线，直接使用
+        // 如果有多条连线，需要评估条件表达式（简化实现：优先选择无条件的，或第一条）
+        WfTransition transition = selectTransition(transitions, instance);
+        
+        if (transition == null) {
+            throw new RuntimeException("流程流转失败：没有满足条件的连线");
+        }
+
+        // 3. 获取下一节点
         WfNode nextNode = nodeMapper.selectById(transition.getToNodeId());
 
         // 3. 判断下一节点类型
@@ -163,6 +174,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 如果配置的是角色 (ROLE)，比如 'MANAGER'
         if ("ROLE".equals(node.getApproverType())) {
             String roleCode = node.getApproverValue();
+            if (roleCode == null || roleCode.trim().isEmpty()) {
+                throw new RuntimeException("节点配置错误：审批人角色编码为空");
+            }
+            
             // 去用户表找一个该角色的用户
             // 简单起见，我们取第一个匹配的人。实际项目可能需要更复杂的分配策略。
             List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
@@ -171,14 +186,66 @@ public class WorkflowServiceImpl implements WorkflowService {
             if (users.isEmpty()) {
                 throw new RuntimeException("流转失败：系统中找不到角色为 " + roleCode + " 的用户");
             }
-            return users.get(0).getId(); // 派给第一个人
+            
+            // 获取第一个用户并进行null检查
+            SysUser user = users.get(0);
+            if (user == null || user.getId() == null) {
+                throw new RuntimeException("流转失败：用户数据异常，用户ID为空");
+            }
+            
+            return user.getId();
         }
         
         // 如果配置的是具体用户 (USER)
         if ("USER".equals(node.getApproverType())) {
-            return Long.parseLong(node.getApproverValue());
+            String userIdStr = node.getApproverValue();
+            if (userIdStr == null || userIdStr.trim().isEmpty()) {
+                throw new RuntimeException("节点配置错误：审批人用户ID为空");
+            }
+            
+            try {
+                Long userId = Long.parseLong(userIdStr);
+                // 验证用户是否存在
+                SysUser user = userMapper.selectById(userId);
+                if (user == null) {
+                    throw new RuntimeException("流转失败：指定的审批人不存在(ID: " + userId + ")");
+                }
+                return userId;
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("节点配置错误：审批人用户ID格式不正确");
+            }
         }
         
-        throw new RuntimeException("节点配置错误：未知的审批人类型");
+        throw new RuntimeException("节点配置错误：未知的审批人类型 " + node.getApproverType());
+    }
+    
+    /**
+     * 从多条连线中选择一条满足条件的
+     * 简化实现：优先选择无条件的连线，如果没有则选择第一条
+     * 
+     * TODO: 后续可以实现真正的条件表达式解析（例如：amount > 100000）
+     */
+    private WfTransition selectTransition(List<WfTransition> transitions, WfInstance instance) {
+        if (transitions.size() == 1) {
+            return transitions.get(0);
+        }
+        
+        // 查找无条件的连线
+        for (WfTransition transition : transitions) {
+            String conditionExpr = transition.getConditionExpr();
+            if (conditionExpr == null || conditionExpr.trim().isEmpty()) {
+                return transition;
+            }
+        }
+        
+        // TODO: 在这里可以实现条件表达式评估逻辑
+        // 例如：解析 "amount > 100000" 这样的表达式
+        // Contract contract = contractMapper.selectById(instance.getContractId());
+        // if (evaluateExpression(transition.getConditionExpr(), contract)) {
+        //     return transition;
+        // }
+        
+        // 简化实现：如果都有条件，返回第一个（实际项目应该抛异常）
+        return transitions.get(0);
     }
 }

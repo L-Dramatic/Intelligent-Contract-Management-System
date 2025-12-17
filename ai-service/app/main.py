@@ -399,10 +399,11 @@ async def get_knowledge_stats():
 # ============================================================
 
 if __name__ == "__main__":
+    # 统一使用8765端口，与后端配置保持一致
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8765,
         reload=True
     )
 

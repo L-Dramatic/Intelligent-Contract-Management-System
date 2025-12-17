@@ -33,4 +33,12 @@ public class Result<T> {
         result.msg = msg;
         return result;
     }
+    
+    // 失败时调用（自定义错误码）
+    public static <T> Result<T> error(Integer code, String msg) {
+        Result<T> result = new Result<>();
+        result.code = code;
+        result.msg = msg;
+        return result;
+    }
 }

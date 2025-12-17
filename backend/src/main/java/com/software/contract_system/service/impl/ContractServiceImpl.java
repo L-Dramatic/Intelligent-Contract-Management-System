@@ -4,28 +4,38 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.software.contract_system.common.BusinessException;
+import com.software.contract_system.common.ContractStatus;
 import com.software.contract_system.dto.ContractDTO;
 import com.software.contract_system.entity.Contract;
-import com.software.contract_system.entity.SysUser;
+import com.software.contract_system.entity.WfInstance;
 import com.software.contract_system.mapper.ContractMapper;
-import com.software.contract_system.mapper.SysUserMapper;
+import com.software.contract_system.mapper.WfInstanceMapper;
 import com.software.contract_system.service.ContractService;
+import com.software.contract_system.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @Service
 public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> implements ContractService {
 
     @Autowired
-    private SysUserMapper userMapper;
+    private SecurityUtils securityUtils;
+    
+    @Autowired
+    private WfInstanceMapper wfInstanceMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long createContract(ContractDTO dto) {
         Contract contract = new Contract();
         
@@ -42,17 +52,17 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
         contract.setContent(dto.getContent());
         contract.setAttributes(dto.getAttributes()); // 扩展字段 Map
         
-        // 2. 生成合同编号: HT-类型-时间戳 (例如: HT-BASE_STATION-20251212101010)
-        String timeStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String contractNo = "HT-" + dto.getType() + "-" + timeStr;
+        // 2. 生成合同编号: HT-类型-UUID (避免高并发重复)
+        String uuid = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String contractNo = "HT-" + dto.getType() + "-" + uuid;
         contract.setContractNo(contractNo);
 
-        // 3. 设置状态 (前端传 isDraft=true 则是草稿0，否则直接提交审批1)
-        // 注意：目前我们还没接工作流，先都默认存为草稿(0)或审批中(1)
-        contract.setStatus(Boolean.TRUE.equals(dto.getIsDraft()) ? 0 : 1);
+        // 3. 设置状态：统一创建为草稿状态
+        // 提交审批必须通过 WorkflowController.submit() 进行，避免状态不一致
+        contract.setStatus(ContractStatus.DRAFT);
         
         // 4. 获取当前登录用户 (创建人)
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = securityUtils.getCurrentUserId();
         contract.setCreatorId(currentUserId);
         
         // 5. 默认设置
@@ -65,17 +75,20 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateContract(ContractDTO dto) {
         // 1. 检查是否存在
         Contract oldContract = this.getById(dto.getId());
         if (oldContract == null) {
-            throw new RuntimeException("合同不存在");
+            throw BusinessException.notFound("合同不存在");
         }
 
-        // 2. 权限/状态检查
-        // 只有[草稿0]或[已驳回3]状态才能修改
-        if (oldContract.getStatus() != 0 && oldContract.getStatus() != 3) {
-            throw new RuntimeException("当前状态不可修改合同，请先撤回或等待审批结束");
+        // 2. 状态检查：只有草稿或已驳回状态才能修改
+        if (!ContractStatus.canEdit(oldContract.getStatus())) {
+            throw BusinessException.badRequest(
+                "当前状态[" + ContractStatus.getStatusName(oldContract.getStatus()) + 
+                "]不可修改合同，请先撤回或等待审批结束"
+            );
         }
 
         // 3. 更新字段
@@ -85,10 +98,8 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
         oldContract.setContent(dto.getContent());
         oldContract.setAttributes(dto.getAttributes());
         
-        // 如果是从草稿提交为审批中
-        if (Boolean.FALSE.equals(dto.getIsDraft())) {
-            oldContract.setStatus(1); // 变更为审批中
-        }
+        // 注意：更新合同后保持草稿状态，不自动提交审批
+        // 提交审批必须通过 WorkflowController.submit() 进行
 
         return this.updateById(oldContract);
     }
@@ -108,20 +119,38 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
         return this.page(page, wrapper);
     }
 
-    /**
-     * 辅助方法：从 Security 上下文中获取当前登录用户ID
-     */
-    private Long getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
-            throw new RuntimeException("未登录");
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteContract(Long id) {
+        // 1. 检查合同是否存在
+        Contract contract = this.getById(id);
+        if (contract == null) {
+            throw BusinessException.notFound("合同不存在");
         }
-        String username = (String) auth.getPrincipal(); // Filter里存的是 username
-        // 根据用户名查ID (这里可以用缓存优化，现在先查库)
-        SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username));
-        if (user == null) {
-            throw new RuntimeException("用户数据异常");
+        
+        // 2. 检查状态：只能删除草稿或已驳回的合同
+        if (!ContractStatus.canEdit(contract.getStatus())) {
+            throw BusinessException.badRequest(
+                "只能删除草稿或已驳回的合同，当前状态[" + 
+                ContractStatus.getStatusName(contract.getStatus()) + "]不可删除"
+            );
         }
-        return user.getId();
+        
+        // 3. 级联检查：是否存在工作流实例
+        Long instanceCount = wfInstanceMapper.selectCount(
+            new LambdaQueryWrapper<WfInstance>()
+                .eq(WfInstance::getContractId, id)
+        );
+        
+        if (instanceCount > 0) {
+            throw BusinessException.badRequest(
+                "该合同存在 " + instanceCount + " 条审批记录，不允许删除。" +
+                "如需删除，请先清理相关审批记录或联系管理员。"
+            );
+        }
+        
+        // 4. 执行删除
+        return this.removeById(id);
     }
+
 }

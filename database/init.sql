@@ -24,6 +24,39 @@ CREATE TABLE IF NOT EXISTS `sys_dept` (
   PRIMARY KEY (`id`)
 ) COMMENT='部门表';
 
+-- 3.1 角色表 (Role)
+CREATE TABLE IF NOT EXISTS `sys_role` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `role_code` varchar(50) NOT NULL COMMENT '角色编码',
+  `role_name` varchar(100) NOT NULL COMMENT '角色名称',
+  `description` varchar(200) DEFAULT NULL COMMENT '角色描述',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_code` (`role_code`)
+) COMMENT='角色表';
+
+-- 3.2 权限表 (Permission)
+CREATE TABLE IF NOT EXISTS `sys_permission` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `permission_code` varchar(100) NOT NULL COMMENT '权限编码，如: contract:add',
+  `permission_name` varchar(100) NOT NULL COMMENT '权限名称',
+  `resource_type` varchar(20) DEFAULT 'MENU' COMMENT '资源类型: MENU, BUTTON, API',
+  `parent_id` bigint DEFAULT '0' COMMENT '父权限ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_permission_code` (`permission_code`)
+) COMMENT='权限表';
+
+-- 3.3 角色-权限关联表 (Role-Permission)
+CREATE TABLE IF NOT EXISTS `sys_role_permission` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `role_id` bigint NOT NULL COMMENT '角色ID',
+  `permission_id` bigint NOT NULL COMMENT '权限ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_permission` (`role_id`, `permission_id`)
+) COMMENT='角色-权限关联表';
+
 -- 4. 合同主表 (Contract)
 CREATE TABLE IF NOT EXISTS `t_contract` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -100,6 +133,62 @@ CREATE TABLE IF NOT EXISTS `wf_task` (
   PRIMARY KEY (`id`)
 ) COMMENT='审批任务表';
 
--- 插入一条测试用户数据 (密码通常需要加密，这里为了测试先存明文或后期处理)
-INSERT INTO `sys_user` (`username`, `password`, `real_name`, `role`) 
-VALUES ('admin', '123456', '系统管理员', 'ADMIN');
+-- ==================== 初始化数据 ====================
+
+-- 插入角色数据
+INSERT INTO `sys_role` (`role_code`, `role_name`, `description`) VALUES
+('ADMIN', '系统管理员', '拥有所有权限'),
+('MANAGER', '项目经理', '可创建和查看合同，提交审批'),
+('APPROVER', '审批领导', '可审批合同'),
+('LEGAL', '法务人员', '可进行合规审查'),
+('USER', '普通员工', '可查看合同');
+
+-- 插入权限数据
+INSERT INTO `sys_permission` (`permission_code`, `permission_name`, `resource_type`, `parent_id`) VALUES
+-- 合同管理权限
+('contract:view', '查看合同', 'API', 0),
+('contract:add', '创建/修改合同', 'API', 0),
+('contract:delete', '删除合同', 'API', 0),
+('contract:audit', '审批合同', 'API', 0),
+-- 工作流权限
+('workflow:view', '查看流程', 'API', 0),
+('workflow:config', '配置流程', 'API', 0),
+-- 系统管理权限
+('system:user', '用户管理', 'API', 0),
+('system:dept', '部门管理', 'API', 0),
+('system:role', '角色管理', 'API', 0);
+
+-- 插入角色-权限关联（ADMIN拥有所有权限）
+INSERT INTO `sys_role_permission` (`role_id`, `permission_id`)
+SELECT r.id, p.id FROM sys_role r, sys_permission p WHERE r.role_code = 'ADMIN';
+
+-- MANAGER角色权限
+INSERT INTO `sys_role_permission` (`role_id`, `permission_id`)
+SELECT r.id, p.id FROM sys_role r, sys_permission p 
+WHERE r.role_code = 'MANAGER' 
+AND p.permission_code IN ('contract:view', 'contract:add', 'workflow:view');
+
+-- APPROVER角色权限
+INSERT INTO `sys_role_permission` (`role_id`, `permission_id`)
+SELECT r.id, p.id FROM sys_role r, sys_permission p 
+WHERE r.role_code = 'APPROVER' 
+AND p.permission_code IN ('contract:view', 'contract:audit', 'workflow:view');
+
+-- LEGAL角色权限
+INSERT INTO `sys_role_permission` (`role_id`, `permission_id`)
+SELECT r.id, p.id FROM sys_role r, sys_permission p 
+WHERE r.role_code = 'LEGAL' 
+AND p.permission_code IN ('contract:view', 'contract:audit');
+
+-- USER角色权限
+INSERT INTO `sys_role_permission` (`role_id`, `permission_id`)
+SELECT r.id, p.id FROM sys_role r, sys_permission p 
+WHERE r.role_code = 'USER' 
+AND p.permission_code = 'contract:view';
+
+-- 插入测试用户数据 (密码需要使用BCrypt加密，这里先用明文，实际使用需通过程序加密)
+-- BCrypt加密的"123456": $2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi
+INSERT INTO `sys_user` (`username`, `password`, `real_name`, `role`) VALUES
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '系统管理员', 'ADMIN'),
+('manager', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '项目经理', 'MANAGER'),
+('approver', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '审批领导', 'APPROVER');
