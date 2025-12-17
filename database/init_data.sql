@@ -1,50 +1,76 @@
+-- Active: 1765803264184@@118.31.77.102@3306@contract_system
+/*
+ Description: 02_全量数据初始化 (Data)
+*/
 USE contract_system;
 
--- 1. 清理旧数据 (可选，如果你想重置的话)
--- TRUNCATE TABLE sys_dept;
--- TRUNCATE TABLE sys_user;
+-- ==================== 1. 基础数据：部门 (sys_dept) ====================
+-- 注意：补充了 code, type, level 字段
+INSERT INTO `sys_dept` (`id`, `parent_id`, `name`, `code`, `type`, `level`, `manager_id`) VALUES 
+(1, 0, '中国电信XX省分公司', 'ROOT', 'PROVINCE', 1, NULL),
+(2, 1, '网络建设部', 'NET-DEPT', 'DEPT', 2, 5), -- 经理是 zhang_manager(id=5)
+(3, 1, '采购供应部', 'PUR-DEPT', 'DEPT', 2, NULL),
+(4, 1, '法律事务部', 'LEGAL-DEPT', 'DEPT', 2, 4), -- 经理是 wang_legal(id=4)
+(5, 1, '财务部', 'FIN-DEPT', 'DEPT', 2, NULL);
 
--- 2. 初始化部门 (模拟真实电信架构)
-INSERT INTO `sys_dept` (`id`, `parent_id`, `name`, `manager_id`) VALUES 
-(1, 0, '中国电信XX省分公司', NULL),
-(2, 1, '网络建设部', NULL),
-(3, 1, '采购供应部', NULL),
-(4, 1, '法律事务部', NULL),
-(5, 1, '财务部', NULL);
+-- ==================== 2. 基础数据：用户 (sys_user) ====================
+-- 密码均为 123456
+-- 注意：补充了 direct_leader_id 逻辑
+INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `dept_id`, `direct_leader_id`) VALUES 
+(1, 'admin', '123456', '系统管理员', 'ADMIN', 1, 6),        -- 管理员 (上级设为BOSS)
+(2, 'user', '123456', '普通用户', 'USER', 2, 5),            -- 普通用户 (上级是经理)
+(3, 'li_project', '123456', '李项目', 'USER', 2, 5),    -- 发起人 (上级是经理)
+(4, 'wang_legal', '123456', '王法务', 'LEGAL', 4, 6),   -- 法务 (上级是BOSS)
+(5, 'zhang_manager', '123456', '张经理', 'MANAGER', 2, 6), -- 经理 (上级是BOSS)
+(6, 'zhao_boss', '123456', '赵副总', 'BOSS', 1, NULL);     -- BOSS (无上级)
 
--- 3. 初始化用户 (覆盖不同角色)
--- 密码均为 123456 (假设加密逻辑暂未开启，或你需要手动 update 为加密串)
--- 提示：如果你的注册逻辑用了 BCrypt，这里的密码在登录时可能无法通过，建议后续用注册接口创建，或者暂时只用之前注册好的账号。
--- 这里仅作为参考数据结构。
+-- ==================== 3. RBAC：权限定义 (sys_permission) ====================
+INSERT INTO `sys_permission` (`code`, `name`) VALUES 
+('user:manage', '用户管理'),
+('contract:add', '创建合同'),
+('contract:view', '查看合同'),
+('contract:audit', '审批合同'),
+('risk:review', '风险审查');
 
--- 增加前端默认演示账号：admin / 123456、user / 123456
-INSERT INTO `sys_user` (`username`, `password`, `real_name`, `role`, `dept_id`) VALUES 
-('admin', '123456', '系统管理员', 'ADMIN', 1),        -- 管理员
-('user', '123456', '普通用户', 'USER', 2),            -- 普通用户
-('li_project', '123456', '李项目', 'USER', 2),    -- 网络部项目经理 (发起人)
-('wang_legal', '123456', '王法务', 'LEGAL', 4),   -- 法务 (审查人)
-('zhang_manager', '123456', '张经理', 'MANAGER', 2), -- 部门经理 (审批人)
-('zhao_boss', '123456', '赵副总', 'BOSS', 1);     -- 公司领导 (终审)
+-- ==================== 4. RBAC：角色权限分配 (sys_role_permission) ====================
+-- ADMIN (user:manage)
+INSERT INTO `sys_role_permission` (`role_code`, `permission_id`)
+SELECT 'ADMIN', id FROM `sys_permission` WHERE code = 'user:manage';
 
--- 4. 初始化流程定义 (基站租赁合同审批流程)
-INSERT INTO `wf_definition` (`name`, `apply_type`, `version`, `is_active`) VALUES 
-('基站租赁合同标准审批', 'BASE_STATION', 1, 1);
+-- USER (add, view)
+INSERT INTO `sys_role_permission` (`role_code`, `permission_id`)
+SELECT 'USER', id FROM `sys_permission` WHERE code IN ('contract:add', 'contract:view');
 
--- 获取刚才插入的流程ID (假设是 1)
--- 插入节点：开始 -> 部门经理 -> 法务 -> 结束
+-- MANAGER (add, view, audit)
+INSERT INTO `sys_role_permission` (`role_code`, `permission_id`)
+SELECT 'MANAGER', id FROM `sys_permission` WHERE code IN ('contract:add', 'contract:view', 'contract:audit');
+
+-- LEGAL (view, audit, risk:review)
+INSERT INTO `sys_role_permission` (`role_code`, `permission_id`)
+SELECT 'LEGAL', id FROM `sys_permission` WHERE code IN ('contract:view', 'contract:audit', 'risk:review');
+
+-- BOSS (view, audit)
+INSERT INTO `sys_role_permission` (`role_code`, `permission_id`)
+SELECT 'BOSS', id FROM `sys_permission` WHERE code IN ('contract:view', 'contract:audit');
+
+-- ==================== 5. 工作流：流程定义 (wf_definition) ====================
+INSERT INTO `wf_definition` (`id`, `name`, `apply_type`, `version`, `is_active`) VALUES 
+(1, '基站租赁合同标准审批', 'BASE_STATION', 1, 1);
+
+-- ==================== 6. 工作流：节点 (wf_node) ====================
 INSERT INTO `wf_node` (`def_id`, `node_code`, `node_name`, `type`, `approver_type`, `approver_value`) VALUES 
 (1, 'node_1', '发起提交', 'START', NULL, NULL),
 (1, 'node_2', '部门经理审批', 'APPROVE', 'ROLE', 'MANAGER'),
 (1, 'node_3', '法务合规审查', 'APPROVE', 'ROLE', 'LEGAL'),
 (1, 'node_4', '流程结束', 'END', NULL, NULL);
 
--- 插入连线
+-- ==================== 7. 工作流：连线 (wf_transition) ====================
 INSERT INTO `wf_transition` (`def_id`, `from_node_id`, `to_node_id`) VALUES 
 (1, 1, 2), -- 发起 -> 经理
 (1, 2, 3), -- 经理 -> 法务
 (1, 3, 4); -- 法务 -> 结束
 
--- 5. 初始化知识库 (RAG 数据源预览)
+-- ==================== 8. 知识库：初始数据 (t_knowledge_base) ====================
 INSERT INTO `t_knowledge_base` (`title`, `content`, `type`) VALUES 
 ('电信基础设施共建共享管理办法', '第三条 电信基础设施共建共享应当遵循统筹规划、需求导向、资源节约、保障安全的原则...', 'REGULATION'),
 ('基站租赁合同标准条款-电磁辐射', '出租方已知悉基站设备产生的电磁辐射符合国家标准（GB 8702-2014），不影响居住环境安全。', 'TERM'),
