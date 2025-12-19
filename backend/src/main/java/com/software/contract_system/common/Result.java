@@ -21,6 +21,15 @@ public class Result<T> {
         return result;
     }
 
+    // 成功时调用（自定义消息）
+    public static <T> Result<T> success(T data, String msg) {
+        Result<T> result = new Result<>();
+        result.code = 200;
+        result.msg = msg;
+        result.data = data;
+        return result;
+    }
+
     // 成功但无数据返回
     public static <T> Result<T> success() {
         return success(null);

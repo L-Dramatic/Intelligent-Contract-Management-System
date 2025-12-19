@@ -2,6 +2,9 @@ package com.software.contract_system.common;
 
 /**
  * 合同状态常量
+ * 
+ * 完整生命周期：草稿 -> 审批中 -> 待签署 -> 已生效 -> 已终止/已作废
+ *              草稿 -> 审批中 -> 已驳回 -> (可重新编辑提交)
  */
 public class ContractStatus {
     
@@ -20,6 +23,12 @@ public class ContractStatus {
     /** 已终止 */
     public static final int TERMINATED = 4;
     
+    /** 待签署（审批通过后等待签署） */
+    public static final int PENDING_SIGN = 5;
+    
+    /** 已作废 */
+    public static final int VOIDED = 6;
+    
     private ContractStatus() {
         // 工具类，不允许实例化
     }
@@ -34,6 +43,8 @@ public class ContractStatus {
             case EFFECTIVE: return "已生效";
             case REJECTED: return "已驳回";
             case TERMINATED: return "已终止";
+            case PENDING_SIGN: return "待签署";
+            case VOIDED: return "已作废";
             default: return "未知状态";
         }
     }
@@ -50,6 +61,27 @@ public class ContractStatus {
      */
     public static boolean canSubmit(int status) {
         return status == DRAFT || status == REJECTED;
+    }
+    
+    /**
+     * 判断是否可以签署
+     */
+    public static boolean canSign(int status) {
+        return status == PENDING_SIGN;
+    }
+    
+    /**
+     * 判断是否可以作废
+     */
+    public static boolean canVoid(int status) {
+        return status == DRAFT || status == REJECTED;
+    }
+    
+    /**
+     * 判断是否可以终止
+     */
+    public static boolean canTerminate(int status) {
+        return status == EFFECTIVE;
     }
 }
 

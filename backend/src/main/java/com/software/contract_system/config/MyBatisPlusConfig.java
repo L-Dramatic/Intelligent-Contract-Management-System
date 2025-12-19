@@ -29,11 +29,15 @@ public class MyBatisPlusConfig {
     public static class MyMetaObjectHandler implements MetaObjectHandler {
         @Override
         public void insertFill(MetaObject metaObject) {
+            // 插入时自动填充 createdAt 和 updatedAt
             this.strictInsertFill(metaObject, "createdAt", LocalDateTime.class, LocalDateTime.now());
+            this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
         }
 
         @Override
         public void updateFill(MetaObject metaObject) {
+            // 更新时自动填充 updatedAt
+            this.strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
         }
     }
 }
