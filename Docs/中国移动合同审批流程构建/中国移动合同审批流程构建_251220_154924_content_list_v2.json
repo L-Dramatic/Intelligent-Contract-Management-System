@@ -1,0 +1,2663 @@
+[
+    [
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "中国移动通信集团市级与县级分公司组织架构、部门职能与岗位职级体系深度研究报告"
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                112,
+                90,
+                864,
+                167
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "1.绪论：战略转型背景下的组织架构演进逻辑"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                112,
+                181,
+                692,
+                209
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "1.1从传统运营商到世界一流信息服务科技创新企业的转型"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                219,
+                705,
+                241
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "中国移动通信集团（以下简称“中国移动”）作为全球网络规模最大、客户数量最多的电信运营商，其组织架构的演进不仅是企业内部管理的调整，更是应对数字经济时代挑战的战略回应。近年来，中国移动确立了“创世界一流信息服务科技创新企业”的新定位，这一战略目标深刻重塑了其市级和县级分公司的组织形态。传统的以语音和流量业务为主的“管道工”模式，正逐步向以算力网络、智慧中台、数字化服务为核心的“科创型”架构转变 1。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                251,
+                877,
+                347
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "在这种战略导向下，中国移动在组织设计上推行了著名的“管战建”协同机制。这一机制的核心在于釐清总部、区域分公司与专业机构之间的权责边界，实现资源的集约化配置与市场响应的敏捷化。“管”指集团及省公司总部的战略管控与资源统筹；“战”指市、县分公司作为市场竞争的主体，聚焦区域客户获取与服务维系；“建”则指专业公司（如设计院、终端公司、互联网公司）负责核心能力的建设与产品研发 4。本报告将深入剖析这一机制在市级与县级分公司的具体落地形态，揭示其背后的管理逻辑与运行机理。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                362,
+                883,
+                479
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "1.2 “管战建”体系下的层级分工与职能定位"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                494,
+                547,
+                515
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "在“管战建”体系中，市级分公司（地市公司）与县级分公司（区县公司）被明确定义为“主战”单元。这意味着其核心考核指标从单纯的网络建设规模转向了市场份额、客户价值（ARPU值）、政企收入占比以及客户满意度。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                525,
+                870,
+                583
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "市级分公司作为承上启下的枢纽，既要承接省公司的战略指标，又要对县级分公司进行资源切分与战术指导。其组织架构呈现出“大中台、强前台”的特征，通过强大的网络运维中台和市场支撑中台，赋能前端的网格化作战单元。县级分公司则进一步下沉，作为最基本的经营核算单元，通过“网格化”改革（Grid Management），将触角延伸至街道、社区与乡镇。这种层层递进的架构设计，旨在解决超大型央企“大企业病”带来的决策迟缓问题，通过权力的下放与责任的压实，激活末端组织的活力 1。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                597,
+                877,
+                712
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "值得注意的是，随着政企业务重要性的提升，中国移动正在经历一场深刻的B2B组织变革。传统的政企业务分散在各地市分公司，而最新的改革趋势是效仿中国电信的模式，将政企条线的管理职能上收至总部或省公司垂直管理，业务开展则依托分公司落地。这种“条块结合”的矩阵式管理，使得市县分公司的政企部门职能发生了微妙变化，既受分公司总经理领导，又受上级政企专业线的业务指导 5。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                728,
+                880,
+                825
+            ]
+        }
+    ],
+    [
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2. 市级分公司（地市公司）组织架构与部门设置详解"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                111,
+                90,
+                769,
+                116
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "市级分公司是中国移动运营体系中的核心利润中心。其行政级别通常对应国家行政体系的处级或副局级（视城市规模而定），在内部管理上拥有一级架构的完整性，涵盖了市场、网络、综合管理三大板块。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                128,
+                882,
+                184
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.1领导班子与决策机制"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                200,
+                359,
+                220
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "市级分公司的领导班子配置遵循国有企业“双向进入、交叉任职”的原则，设有党委书记（兼总经理）、副总经理（3-5名）、纪委书记等职位。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                232,
+                866,
+                268
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 总经理（Z14/Z15级）： 作为公司法定代表人（或授权代表）及党委书记，全面主持公司经营管理与党建工作，对省公司下达的KPI指标负总责。在特大型城市（如省会城市），总经理职级可能高配至Z16级（省公司副总级） 6。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 副总经理（Z13级）： 分管市场经营、网络运维、政企业务、工程建设等不同条线。副总经理的绩效与分管领域的业绩强挂钩。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 纪委书记（Z13级）： 负责党风廉政建设与反腐败工作，特别是在工程建设、物资采购、选人用人等高风险领域行使监督权 2。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                277,
+                879,
+                411
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "市级分公司的重大决策严格执行“三重一大”制度（重大事项决策、重要干部任免、重大项目安排、大额资金使用）。凡涉及此类事项，必须经过党委会或总经理办公会集体研究决定，严禁个人独断专行。例如，年度预算调整、科级干部提拔、大额工程款支付等，均需会议纪要作为执行依据 7。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                429,
+                877,
+                486
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.2 前台业务部门：市场与收入的发动机"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                111,
+                503,
+                514,
+                523
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "前台部门直接面向客户，承担着收入获取与市场拓展的重任。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                536,
+                594,
+                551
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.2.1 市场经营部（Market Operation Department）"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                111,
+                570,
+                566,
+                589
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "市场经营部是B2C业务的指挥中心。其主要职责包括制定本地市场营销策略、管理渠道体系（自营厅、社会渠道、电子渠道）、设计资费套餐（在省公司框架内）以及品牌推广。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                598,
+                877,
+                635
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 职能细分： 随着流量红利的见顶，该部门的重心已从单纯的新增用户获取转向存量用户经营（Customer Retention）。这涉及到利用大数据进行精准营销，提升用户的融合业务渗透率（如“手机 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "^ +"
+                            },
+                            {
+                                "type": "text",
+                                "content": "宽带 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "^ +"
+                            },
+                            {
+                                "type": "text",
+                                "content": "高清电视”）。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 与专业公司的协同： 市场部需要与中国移动终端公司密切配合，管理手机、路由器等终端产品的供应链与销售，确保营业厅有货可卖 4。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                643,
+                879,
+                737
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.2.2 政企客户部（Government & Enterprise Department）"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                111,
+                756,
+                640,
+                775
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "这是近年来增长最快的部门，负责政府、企业、教育、医疗等垂直行业的数字化解决方案销售。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                782,
+                857,
+                801
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 组织变革： 根据最新的架构调整，政企分公司正在进行拆分重组，管理职能上收，但市级分公司的政企部依然是业务落地的关键。该部门通常下设多个行业中心（如教育行业中心、医疗行业中心），配备专门的客户经理（Account Manager）和解决方案经理（Solution Manager）  4。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 业务范围： 从传统的专线接入、集团短号，扩展到云服务（移动云）、IDC数据中心托管、物联"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                810,
+                874,
+                905
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "网（IoT）应用以及 "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "5 G +"
+                    },
+                    {
+                        "type": "text",
+                        "content": "工业互联网项目。"
+                    }
+                ]
+            },
+            "bbox": [
+                148,
+                89,
+                460,
+                107
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.3中台运营部门：网络与技术的支撑者"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                111,
+                125,
+                516,
+                146
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "中台部门负责构建企业的核心生产能力——网络质量与技术底座。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                156,
+                633,
+                174
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.3.1 网络部 / 网络主要中心（Network Operation Center）"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                111,
+                190,
+                627,
+                210
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "网络部是技术密集型部门，负责通信网络的规划、建设、维护与优化。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                218,
+                661,
+                237
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 职责范围： 涵盖无线网（基站）、传输网（光缆）、核心网以及动力环境（机房电源空调）。其核心KPI是网络接通率、掉话率、网络覆盖率以及故障处理时长。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 运维模式： 市级分公司通常将部分基础代维工作（如光缆巡检、基站除尘）外包给第三方代维公司，并通过“网络综合代维框架合同”进行管理。网络部保留核心技术人员进行故障诊断与代维考核 8。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 规划建设： 负责承接省公司下达的5G基站建设任务，与计划建设部配合，协调设计院出图、铁塔公司建塔，并进行设备开通调试 4。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                244,
+                874,
+                378
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.3.2客户服务部/品质管理部"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                396,
+                380,
+                416
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "负责全渠道客户服务质量管理，处理10086升级投诉，管理VIP客户权益。在“大服务”理念下，该部门拥有对其他业务部门的考核权，即“以客户满意度倒逼业务流程优化”。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                424,
+                883,
+                463
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.4 后台职能部门：资源配置与风险管控"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                111,
+                479,
+                517,
+                500
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "后台部门为前中台提供人、财、物及法律支撑，确保企业合规高效运转。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                508,
+                679,
+                527
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.4.1 综合部（办公室）"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                544,
+                302,
+                561
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "作为公司的行政枢纽，负责文秘机要、印章管理、车辆调度、后勤保障以及对外公共关系协调。在合同管理中，综合部通常负责实体印章（公章、合同专用章）的保管与盖章操作，必须依据系统审批流程进行，严禁违规用印 9。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                571,
+                879,
+                628
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.4.2 人力资源部（党群工作部）"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                647,
+                382,
+                666
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "负责组织架构设计、岗位编制管理、薪酬绩效核算、员工招聘与培训。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                674,
+                660,
+                693
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 职级管理： 维护Z岗级体系，组织内部竞聘（Jingpin）与职级晋升评审。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "equation_inline",
+                                "content": "\\bullet"
+                            },
+                            {
+                                "type": "text",
+                                "content": "人才队伍： 落实“十百千”技术人才工程，负责劳务派遣员工转正（如果有指标）及管理培训生的培养 11。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                700,
+                864,
+                756
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.4.3 财务部"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                775,
+                228,
+                792
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "掌握企业的“钱袋子”，负责全面预算管理、资金结算、税务筹划及会计核算。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                803,
+                710,
+                821
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 报销审批： 执行严格的财务报销制度。例如，单笔业务支出超过一定额度（如3万元、6万元）需经分管领导乃至总经理审批。对于电商平台采购的异地发票，需附订单截图与支付记录 13。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 合同支付： 审核合同付款节点，对于未满足付款条件（如未验收、未提供发票）的款项行使一"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                830,
+                879,
+                887
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "票否决权。"
+                    }
+                ]
+            },
+            "bbox": [
+                150,
+                89,
+                236,
+                104
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "2.4.4 采购供应中心"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                125,
+                285,
+                141
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "负责物资与服务的集中采购管理。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                152,
+                379,
+                167
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 权限分级： 依据《采购管理办法》，严格区分自行采购与集中采购的界限。例如，金额在20万元或30万元以下的可能允许自行采购，而大额项目必须通过省公司平台或公开招标 15。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 供应商管理： 建立供应商信用档案，对围标串标、供应劣质产品的供应商列入黑名单 17。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                178,
+                864,
+                236
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "3. 县级分公司组织架构与网格化运营机制"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                112,
+                279,
+                650,
+                305
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "县级分公司处于中国移动组织架构的底座，是执行力的最终落脚点。在最新的改革中，县级分公司通过“网格化”进一步裂变，形成了“县公司管总、网格主战”的新格局。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                316,
+                866,
+                354
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "3.1 县级分公司的法律地位与职能局限"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                369,
+                501,
+                390
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "需要特别强调的是，县级分公司虽然在行政上是一个独立的管理单元，但在法律上通常不具备独立的法人资格，甚至在对外签约权限上受到严格限制。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                402,
+                874,
+                439
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 签约限制： 根据中国移动内部公告，区县分公司及内设部门无权对外签署合同。所有的对外法律文件（合同、协议、订单）必须以市公司或省公司的名义签署，并加盖市/省公司的公章或合同专用章。未经授权的县公司签字盖章属于无效行为，不产生法律效力 10。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 职能定位： 县公司主要被定义为“成本中心”或“模拟利润中心”，其核心职责是执行市公司下达的销售任务和维护任务，而非制定战略。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                446,
+                872,
+                542
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "3.2“小而全”的部门设置"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                560,
+                362,
+                579
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "县级分公司的机构设置通常是市公司的精简版，遵循“一专多能”的原则。一般设置3-4个中心："
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                590,
+                861,
+                609
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 综合部（综合支撑中心）： 涵盖人事、行政、财务报账员、后勤等职能。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "equation_inline",
+                                "content": "\\bullet"
+                            },
+                            {
+                                "type": "text",
+                                "content": "市场部（营销中心）： 负责辖区内的自营厅管理、社会渠道拓展、以及网格经理的业务指导。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 网络部（建维中心）： 负责辖区内基站的巡检、简单的故障处理、宽带装维队伍的管理。复杂的网络优化和工程建设通常由市公司垂直支撑。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 政企部（政企中心）： 负责县域内的政府机关、中小企业客户的拓展。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                618,
+                866,
+                710
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "3.3 网格化（Grid）管理：组织的“细胞化”"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                729,
+                516,
+                748
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "为了解决县公司管理半径过大的问题，中国移动推行了“网格化”运营。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                758,
+                666,
+                777
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 网格定义： 将县域按照街道、乡镇或人流密集区划分若干个“网格”（Grid）。每个网格是一个独立的作战单元。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 网格长（Grid Master）： 每个网格设一名网格长，拥有极大的自主权，被称为“小CEO”。他们有权决定网格内的营销资源分配、绩效奖金分配，甚至对网格内的人员（包括装维人员、营业员）有考核权。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 倒三角支撑： 组织逻辑变为“网格吹哨，部门报到”。市县公司的职能部门要为网格提供炮火"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                786,
+                880,
+                898
+            ]
+        }
+    ],
+    [
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "4. 岗位等级体系（Z岗）与职业发展路径"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                112,
+                148,
+                627,
+                175
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "中国移动建立了一套严密且标准化的岗位职级体系，通常称为“Z岗”体系（部分省份可能叫法不同，但逻辑一致），覆盖了从基层员工到省公司高管的全序列。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                186,
+                883,
+                222
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "4.1 Z岗级层级对应关系详解"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                239,
+                398,
+                260
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "根据内部调研数据与公开招聘信息，Z岗级的分布大致如下 6："
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                272,
+                599,
+                290
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/c7ddd1e8f546814411d92147f3af19df0bfbd80428b2ddc51912f4e73198746b.jpg"
+                },
+                "table_caption": [],
+                "table_footnote": [],
+                "html": "<table><tr><td>岗位等级(Z-Level)</td><td>对应行政职务/角色</td><td>典型岗位示例</td><td>相当于公务员体系(参考)</td></tr><tr><td>Z17-Z16</td><td>省公司副总/特大\n市公司总经理</td><td>省公司副总经理、北京/上海移动分公司总经理</td><td>厅局级/副厅级</td></tr><tr><td>Z15-Z14</td><td>地市公司总经理/\n省部门正职</td><td>xx市分公司总经理、省公司市场部总经理</td><td>正处级/副局级</td></tr><tr><td>Z13</td><td>地市公司副总/省\n部门副职</td><td>xx市分公司副总经理、资深专家(三级经理副职)</td><td>副处级</td></tr><tr><td>Z12</td><td>区县公司总经理/市\n部门正职</td><td>xx县分公司总经理、\n市公司网络部经理</td><td>正科级</td></tr><tr><td>Z11</td><td>区县公司副总/市\n部门副职</td><td>xx县分公司副总经理、市公司政企部副经理</td><td>副科级</td></tr><tr><td>Z10</td><td>业务主管/技术专家</td><td>高级项目经理、网络优化专家、片区总监</td><td>股级/正科级</td></tr><tr><td>Z9</td><td>班组长/资深员工</td><td>营业厅经理、网格长、高级工程师</td><td>科员(资深)</td></tr><tr><td>Z8</td><td>骨干员工</td><td>核心技术人员、业务主办</td><td>科员</td></tr><tr><td>Z5-Z7</td><td>初级员工/应届生</td><td>新入职大学生(硕士定Z6/7,本科Z5)、普通专员</td><td>办事员</td></tr><tr><td>Z1-Z4</td><td>辅助岗位/劳务派遣</td><td>呼叫中心坐席、前台引导员、基础装维人员</td><td>编外人员</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                305,
+                883,
+                878
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "支援，而不是单纯下达指令。"
+                    }
+                ]
+            },
+            "bbox": [
+                151,
+                89,
+                377,
+                107
+            ]
+        }
+    ],
+    [
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/"
+                },
+                "table_caption": [],
+                "table_footnote": [],
+                "html": "",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                88,
+                885,
+                315
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "4.2职业发展的“H”型双通道"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                335,
+                405,
+                356
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "为了解决管理岗位有限导致的职业天花板问题，中国移动推行了“H”型职业发展通道，即管理通道（M序列）和技术业务通道（P/T序列）并行 11。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                367,
+                866,
+                405
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 管理通道： 传统的晋升路径，从专员 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "- >"
+                            },
+                            {
+                                "type": "text",
+                                "content": "主管 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "- >"
+                            },
+                            {
+                                "type": "text",
+                                "content": "副经理 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "- >"
+                            },
+                            {
+                                "type": "text",
+                                "content": "经理。竞争极其激烈，需要具备极强的综合协调能力和政治素养。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 技术/专业通道： 针对技术人才设立。员工可以通过考取内部资格认证（如网络专家、IT专家），晋升为“专家”、“高级专家”、“首席专家”。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                415,
+                870,
+                488
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "○ 首席专家/总师制： 集团级或省级的首席专家，其职级和待遇可以对标部门总经理（Z14/15），甚至更高。这使得技术人员无需在行政职务上“挤独木桥”，也能获得高薪和地位。"
+                    }
+                ]
+            },
+            "bbox": [
+                151,
+                491,
+                869,
+                545
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "● 职级停滞现象（Glass Ceiling）： 实际上，Z9级是绝大多数员工的职业终点。从Z9跨越到Z10（进入科级干部序列）是一个巨大的门槛，通常需要通过严格的内部竞聘（Jingpin），由第三方机构进行测评，且受名额限制极严 6。"
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                547,
+                877,
+                604
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "4.3薪酬结构与用工形式"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                622,
+                366,
+                643
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 薪酬构成： 基本工资（与Z岗级挂钩） "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "^ +"
+                            },
+                            {
+                                "type": "text",
+                                "content": "绩效奖金（占大头） "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "^ +"
+                            },
+                            {
+                                "type": "text",
+                                "content": "津贴补贴 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "^ +"
+                            },
+                            {
+                                "type": "text",
+                                "content": "福利（五险二金）。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 绩效导向： 在网格化改革下，绩效奖金的波动极大。一个在核心商圈业绩突出的Z8级网格经理，其到手收入可能超过机关里按部就班的Z10级主管。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "用工形式差异："
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                654,
+                870,
+                727
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "○ 合同制（A类）： 直接与中国移动签署劳动合同，享受完整福利和晋升通道，通常来源于校园招聘（一本以上）或高端社会招聘。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "○ 劳务派遣/业务外包（B类/C类）： 与第三方公司签署合同，派驻到移动工作。虽然近年来强调“同工同酬”，但在福利（如企业年金）、晋升天花板（通常难升至Z10以上）方面仍有隐形壁垒 12。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                153,
+                729,
+                874,
+                824
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "5. 关键管理流程：采购、合同与风险控制"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                111,
+                866,
+                635,
+                892
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "作为国有企业，中国移动的内部管理流程呈现出高度的合规性与严谨性，特别是涉及到资金支出的环节，有着繁复的审批链条。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                89,
+                872,
+                126
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "5.1采购管理办法与权限分级"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                143,
+                408,
+                165
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "中国移动执行极其严格的集中采购制度，旨在通过规模效应降低成本并杜绝腐败。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                174,
+                758,
+                191
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "5.1.1 采购方式分类"
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                209,
+                279,
+                227
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 公开招标： 适用于大额项目（通常是工程类>400万，货物服务类>200万，具体限额随政策调整），必须在公共交易平台进行。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 邀请招标/竞争性谈判： 适用于技术复杂或供应商有限的项目。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 单一来源采购： 仅在极其特殊（如原厂维保、专利限制）情况下适用，需经过严格的前置审批和公示 15。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 电商平台采购（ES）： 对于通用办公用品、低值易耗品，推广在内部电商平台“京东/苏宁企业购”直接下单，简化流程 16。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                237,
+                872,
+                371
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "5.1.2审批权限矩阵 "
+                    }
+                ],
+                "level": 4
+            },
+            "bbox": [
+                112,
+                388,
+                279,
+                407
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "审批权限是根据金额大小和业务类型进行分级授权的（以下为典型模型，各省略有差异） 13："
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                417,
+                828,
+                435
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/82abcf65100908b118baf9497753efe2ac77789c594c22d867c26b06aeda158d.jpg"
+                },
+                "table_caption": [],
+                "table_footnote": [],
+                "html": "<table><tr><td>金额区间 (RMB)</td><td>审批/决策层级</td><td>典型流程</td></tr><tr><td>&lt;1万元</td><td>部门级</td><td>项目经理发起 -&gt; 部门经理\n审批 -&gt; 财务审核</td></tr><tr><td>1万-5万元</td><td>分管领导级</td><td>+ 分管副总审批</td></tr><tr><td>5万-20/50万元</td><td>公司总经理级</td><td>+ 总经理审批</td></tr><tr><td>&gt;50万元 (或设定阈值)</td><td>“三重一大”集体决策</td><td>必须上总经理办公会或党委\n会讨论通过</td></tr><tr><td>超限额 (如 &gt;200万)</td><td>省公司审批</td><td>市公司仅作为需求方，由省\n公司统一组织采购</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                452,
+                883,
+                768
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "5.2 合同管理与签字盖章权限"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                790,
+                410,
+                810
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "合同是企业风险控制的最后一道防线。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                821,
+                418,
+                839
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "● 模板化管理： 中国移动强制使用标准合同模板（范本），如《物资集中采购框架协议》、《网络综合代维框架合同》。修改范本条款（特别是违约责任、付款方式）需要经过法务部门的严格审查 8。"
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                847,
+                875,
+                904
+            ]
+        }
+    ],
+    [
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 签字人资格： 只有法定代表人（市公司总经理）或其书面授权的委托代理人（如分管副总）才有权在合同上签字。部门经理通常无权直接对外签合同，除非获得单项授权 10。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 印章管理： 严禁“人章分离”。使用公章必须通过OA系统发起申请，上传合同定稿，经各级领导审批通过后，由专管员在监控下盖章。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 风险条款： 框架协议中通常包含严厉的“质量保证金”和“履约保证金”条款。例如，供应商需缴纳合同金额 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "5 \\% - 1 0 \\%"
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "5 \\%"
+                            },
+                            {
+                                "type": "text",
+                                "content": "的履约保证金，若交付不合格或违约，将直接扣除。且通常约定“先货后款”，甚至通过“应付账款抵扣”的方式收取质保金 23。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                89,
+                872,
+                224
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "5.3资金支付与发票管理"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                242,
+                366,
+                262
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "财务部门对合同执行拥有最终把关权。"
+                    }
+                ]
+            },
+            "bbox": [
+                112,
+                273,
+                416,
+                290
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 三单匹配： 报销付款时，要求“合同、发票、验收单/入库单”三单一致。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "equation_inline",
+                                "content": "\\bullet"
+                            },
+                            {
+                                "type": "text",
+                                "content": "拆单禁止： 严禁为了规避审批权限，将一个大额合同拆分成多个小额合同（拆单），这是审计的红线 13。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                300,
+                875,
+                354
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "6. 协同与支撑：与专业公司及外部生态的互动"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                111,
+                398,
+                694,
+                422
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "市级分公司并非孤岛，其运作深度依赖于中国移动庞大的专业化子公司集群和外部合作伙伴。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                436,
+                852,
+                453
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "6.1 内部专业化分工（“建”的环节）"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                470,
+                457,
+                491
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 终端公司： 市分公司市场部与终端公司省分公司紧密协同。终端公司负责手机采购和分销，市分公司负责制定合约计划（如“购机送费”）。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 设计院/规划院： 网络部提出建设需求（如“某小区信号弱”），设计院负责勘察设计出图。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "equation_inline",
+                                "content": "\\bullet"
+                            },
+                            {
+                                "type": "text",
+                                "content": "在线服务公司： 10086呼叫中心大多已集中运营，市分公司主要处理通过系统派发下来的疑难工单。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "equation_inline",
+                                "content": "\\bullet"
+                            },
+                            {
+                                "type": "text",
+                                "content": "系统集成公司/数智公司： 在大型政企项目（如智慧城市）中，由专业公司提供软件开发和平台搭建能力，市分公司负责客户关系和落地交付 4。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                502,
+                872,
+                633
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "6.2外部生态管理"
+                    }
+                ],
+                "level": 3
+            },
+            "bbox": [
+                112,
+                652,
+                295,
+                672
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 代维公司： 网络的日常维护大量外包。市分公司对代维公司进行KPI考核（响应速度、修复质量），考核结果直接影响代维费用的结算。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "● 代理商/加盟商： 社会渠道（专营店）是市场拓展的重要力量。市分公司通过佣金系统（酬金）对代理商进行管理，严禁代理商违规养卡、套取酬金 25。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                684,
+                867,
+                758
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "7. 结论与展望 "
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                112,
+                801,
+                292,
+                825
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "中国移动市级与县级分公司的组织架构，是一套经过精密设计、高度标准化的科层制与矩阵式结合的体系。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                839,
+                875,
+                875
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "1. 集权与分权的平衡： 在战略制定、网络规划、大额采购上，权力高度集中于集团和省公司，体"
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                883,
+                875,
+                902
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "现了“管”的意志；而在市场营销、网格运营、客户服务上，权力充分下放给市县及网格，体现了“战”的灵活。"
+                    }
+                ]
+            },
+            "bbox": [
+                150,
+                89,
+                864,
+                125
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "text_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "2. 合规性至上： 从“三重一大”决策机制到严格的合同签字授权，再到采购权限的细分，无不体现出作为央企对风险控制和反腐败的极高要求。这在一定程度上牺牲了流程效率，但保证了经营的安全稳健。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "3. 未来的挑战： 随着B2B业务占比的提升，现有的以地市为核心的架构正面临挑战。如何让属地化的分公司更好地销售和交付专业化程度极高的云网融合产品，如何打通“纵向专业线”与“横向行政线”的壁垒，将是未来组织变革的重点。"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "4. 人才结构的重塑： 随着数字化转型的深入，Z岗体系中技术类人才的权重将持续上升。未来，既懂技术又懂市场的复合型人才（解决方案专家）将在组织中占据更核心的位置，而简单的事务性岗位将面临被AI或外包替代的风险。"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                120,
+                127,
+                879,
+                296
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "本报告基于现有的公开资料与行业惯例整理，具体执行中各省公司可能存在细微的本地化差异，但整体逻辑框架保持一致。"
+                    }
+                ]
+            },
+            "bbox": [
+                111,
+                311,
+                867,
+                349
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "附录：关键数据表与参考索引"
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                112,
+                398,
+                483,
+                422
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/c2114b1dfcff228937bd59ab482cbbc1bff84ba6a0d2c3280f00d35f48d0c45f.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "表1：市级分公司主要部门职能与协同关系矩阵"
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>部门名称</td><td>核心职能(KPI导向)</td><td>内部主要协同部门</td><td>外部主要接口</td></tr><tr><td>市场经营部</td><td>收入、用户数、ARPU 值</td><td>网络部(保障网络体验)、财务部(资费审批)</td><td>终端厂商、代理商</td></tr><tr><td>政企客户部</td><td>集团收入、专线数、云收入</td><td>网络部(开通支撑)、省政企部(产品支持)</td><td>政府机关、企业客户</td></tr><tr><td>网络部</td><td>掉话率、覆盖率、故障时长</td><td>市场部(投诉处理)、计划部(建设需求)</td><td>铁塔公司、代维公司</td></tr><tr><td>综合部</td><td>行政效能、安全保密</td><td>所有部门(后勤保障、印章管理)</td><td>地方政府、信访局</td></tr><tr><td>人力资源部</td><td>人岗匹配度、员工满意度</td><td>所有部门(绩效考核、人员调配)</td><td>社保局、人才市场</td></tr><tr><td>财务部</td><td>利润率、资金安全</td><td>所有部门(预算控</td><td>税务局、银行</td></tr><tr><td></td><td></td><td>制、报销审核)</td><td></td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                467,
+                883,
+                902
+            ]
+        }
+    ],
+    [
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/"
+                },
+                "table_caption": [],
+                "table_footnote": [],
+                "html": "",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                88,
+                885,
+                133
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/54714be638e77d8aaadcd3c50e7dddfded7045dd83663b1a13c2326c88b3924e.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "表2：典型采购与支出审批权限阶梯（参考模型）"
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>业务类型</td><td>金额范围 (RMB)</td><td>决策/审批主体</td><td>备注</td></tr><tr><td>日常报销</td><td>&lt;1万</td><td>部门经理</td><td>需附发票及清单</td></tr><tr><td>日常报销</td><td>1万-5万</td><td>分管副总经理</td><td>13</td></tr><tr><td>日常报销</td><td>&gt;5万</td><td>总经理</td><td>部分公司需会签财务总监</td></tr><tr><td>项目立项</td><td>预算内</td><td>计划建设部/归口部门</td><td>需符合年度投资计划</td></tr><tr><td>大额采购</td><td>&gt;50万</td><td>总经理办公会/党委\n会</td><td>“三重一大”事项7</td></tr><tr><td>合同签署</td><td>任意金额</td><td>法定代表人/授权代表</td><td>县公司无权签署10</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                205,
+                885,
+                583
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/5682dabc6c990798e6761f13d55590571d8faa685361fd8225aac4ae6dfd95eb.jpg"
+                },
+                "table_caption": [
+                    {
+                        "type": "text",
+                        "content": "表3：Z岗级体系与职业发展对照表"
+                    }
+                ],
+                "table_footnote": [],
+                "html": "<table><tr><td>Z岗级</td><td>角色定位</td><td>晋升难点与特征</td><td>薪酬特征</td></tr><tr><td>Z13-15</td><td>高层管理</td><td>省管干部，需省公司党委任命。</td><td>年薪制，与地市整体业绩挂钩。</td></tr><tr><td>Z10-12</td><td>中层管理/专家</td><td>处级/科级干部，竞争最激烈，需竞聘上岗。</td><td>岗位工资较高，绩效系数高。</td></tr><tr><td>Z8-9</td><td>基层骨干</td><td>多数员工的职业终点。晋升Z10有学历、年龄、业绩硬门槛。</td><td>工龄工资占比较大。</td></tr><tr><td>Z5-7</td><td>新锐力量</td><td>主要是校招新员工，处于成长期。</td><td>起薪较低，成长空间大。</td></tr></table>",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                614,
+                885,
+                902
+            ]
+        }
+    ],
+    [
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/"
+                },
+                "table_caption": [],
+                "table_footnote": [],
+                "html": "",
+                "table_type": "simple_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                114,
+                88,
+                883,
+                152
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "Works cited "
+                    }
+                ],
+                "level": 2
+            },
+            "bbox": [
+                112,
+                167,
+                230,
+                184
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "reference_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "1. 中共中国移动通信集团有限公司党组关于十九届中央第三轮巡视整改进展情况的通报, accessed December 20, 2025,https://www.10086.cn/aboutus/news/groupnews/index_detail_35721.html"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "2. 优化公司治理体系 - 中国移动, accessed December 20, 2025, https://www.10086.cn/download/csrreport/cmcc_2022_csr_report_017.pdf "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "3. 中国移动 "
+                            },
+                            {
+                                "type": "equation_inline",
+                                "content": "\\ \" { \\mathsf { A l } } + \\ \""
+                            },
+                            {
+                                "type": "text",
+                                "content": "闪耀2024世界互联网大会, accessed December 20, 2025, https://www.10086.cn/aboutus/news/groupnews/index_detail_51152.html "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "4. 副部级央企：中国移动“管、战、建”最新组织体系！ - 新浪财经, accessedDecember 20, 2025,https://t.cj.sina.cn/articles/view/1673438413/63bea4cd01901dxa0"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "5. 中国移动已确定进行组织架构调整，拆分政企客户分公司,accessedDecember20, 2025, https://m.cyzone.cn/article/544471.html "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "6. 官宣！中国移动员工薪酬每月1.67万，增长10.7%？ - 新浪财经, accessedDecember 20, 2025,https://t.cj.sina.cn/articles/view/1673438413/63bea4cd019016ii5?vt=4"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "7. 中共深圳市东部城市轨道交通投资建设有限公司支部委员会关于二届区委第六轮巡察整改进展情况的通报-坪山区人民政府, accessed December 20, 2025,https://www.szpsq.gov.cn/zwgk/tzgg/content/post_11975653.html"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "8. 网站服务协议 - 中国移动, accessed December 20, 2025, https://www.10086.cn/web_notice/protocol/ "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "9. 公司合同该怎么管理七大痛点致远互联AI-COP高效风控方案, accessed December20, 2025, https://www.seeyon.com/article/RLyG0tyr.html"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "10. 对外签订合同权限告知书 - 掌上门户-中国移动, accessed December 20, 2025, https://wap.10086.cn/sd/index_531_532_detail_50174.html "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "11. 可持续发展报告2024, accessed December 20, 2025, https://www.chinamobileltd.com/sc/ir/reports/sd2024_ashare.pdf "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "12. 【招聘信息】中国移动浙江公司2021届校园招聘, accessed December 20, 2025, https://radio.seu.edu.cn/2020/0914/c19245a345698/pagem.htm "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "13. 科研经费报销管理办法（修订） - 中国石油大学（北京）财务处, accessed December20, 2025,https://www.cup.edu.cn/pub/cwc/zczd/xxzd/c32e2f280687495cbe87c92472485447.htm"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "14.科研经费报销管理办法（修订）-中国石油大学（北京）克拉玛依校区财务部, accessed December 20, 2025, https://www.cupk.edu.cn/cwb/c/2019-04-10/509334.shtml "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "15. 《北京理工大学采购管理办法》, accessed December 20, 2025, https://jhcwb.bit.edu.cn/docs/20190905063559629130.pdf "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "16. 关于印发《辽宁省政府采购网上商城采购管理办法（试行）》的通知, accessedDecember 20, 2025,"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                133,
+                200,
+                877,
+                902
+            ]
+        }
+    ],
+    [
+        {
+            "type": "list",
+            "content": {
+                "list_type": "reference_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "https://czt.ln.gov.cn/czt/attachDir/2024/05/2024051114375959042.pdf "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "17. 中國移動有限公司, accessed December 20, 2025, https://www.chinamobileltd.com/en/file/view.php?id=261735 "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "18. 国家知识产权局, accessed December 20, 2025, https://www.cnipa.gov.cn/2018-09/20180914094003459155.doc "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "19. 公司公告_中国移动：2024年可持续发展报告新浪财经, accessed December 20,2025,https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=600941&id=10795368"
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "20. 爆！中国移动内部人员薪资，基层慎入！ - 新浪财经, accessed December 20, 2025, https://finance.sina.com.cn/roll/2025-01-19/doc-inefnxma0659609.shtml "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "21.中国移动通信有限公司2024年度社会招聘劳动合同制员工公告-高校人才网, accessed December 20, 2025, https://www.gaoxiaojob.com/announcement/detail/244622.html "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "22. 招标文件 - 司法部, accessed December 20, 2025, https://www.moj.gov.cn/pub/sfbgw/zwxxgk/fdzdgknr/fdzdgknrtzwj/202307/W020 230714597365560602.pdf "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "23. 附件-采购框架协议.doc - 圣阳, accessed December 20, 2025, https://www.sacredsun.cn/uploads/shengyang/%E9%99%84%E4%BB%B6-%E9%8 7%87%E8%B4%AD%E6%A1%86%E6%9E%B6%E5%8D%8F%E8%AE%AE.doc "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "24. 科研经费报销指南 - 财务处, accessed December 20, 2025, https://cwc.bfsu.edu.cn/__local/6/C9/2F/D296817C3AC5B156D215A023A55_6A74 D23C_1C5A1E.pdf?e=.pdf "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "25. 关于福建移动线下业务代办提供授权委托书的公告, accessed December 20, 2025, https://www.10086.cn/aboutus/news/pannounce/fj/index_591_591_detail_38373.ht ml "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                133,
+                89,
+                882,
+                559
+            ]
+        }
+    ]
+]
