@@ -1,3 +1,4 @@
+-- Active: 1765636755796@@127.0.0.1@3306@contract_system
 /*
  * 合同审查相关表结构
  * 
@@ -63,7 +64,6 @@ CREATE TABLE `t_contract_review_rule` (
 INSERT INTO `t_contract_review_rule` 
 (`contract_type`, `rule_category`, `rule_code`, `rule_name`, `rule_config`, `mandate_level`, `priority`, `description`) 
 VALUES 
--- 附件检查规则
 ('TYPE_A', 'ATTACHMENT', 'DOC_A_001', '安全生产协议', 
  '{"keywords": ["安全生产协议", "Safety Responsibility Agreement"], "filePattern": ".*安全生产.*"}', 
  'CRITICAL', 10, '工程施工合同必须包含安全生产协议'),
@@ -80,7 +80,6 @@ VALUES
  '{"keywords": ["履约保证金", "Performance Bond"], "filePattern": ".*履约.*保证.*"}', 
  'HIGH', 20, '建议包含履约保证金相关文件'),
 
--- 数值逻辑规则
 ('TYPE_A', 'LOGIC', 'LOGIC_A_001', '安全费比例检查', 
  '{"field": "safetyFeeRatio", "operator": ">=", "threshold": 0.015, "message": "安全费比例必须≥1.5%"}', 
  'CRITICAL', 10, '安全生产费用占合同总额的比例必须≥1.5%'),
@@ -89,7 +88,6 @@ VALUES
  '{"field": "retainageRate", "operator": "==", "threshold": 0.03, "tolerance": 0.001, "message": "质保金比例应为3%"}', 
  'HIGH', 20, '质保金比例标准为3%'),
 
--- 风险检查规则
 ('TYPE_A', 'RISK', 'RISK_A_001', '违法转包检测', 
  '{"keywords": ["转包", "分包给", "subcontract to"], "context": "negative", "message": "检测到可能的违法转包条款"}', 
  'CRITICAL', 10, '检测合同中是否存在违法转包条款'),
@@ -125,7 +123,6 @@ VALUES
  '{"keywords": ["安全生产责任", "Safety Responsibility"], "filePattern": ".*安全.*责任.*"}', 
  'CRITICAL', 10, '代维服务合同必须包含安全生产责任书'),
 
--- 数值逻辑规则
 ('TYPE_B', 'LOGIC', 'LOGIC_B_001', 'SLA可用性目标', 
  '{"field": "slaAvailability", "operator": ">=", "threshold": 0.995, "message": "SLA可用性目标必须≥99.5%"}', 
  'CRITICAL', 10, '网络可用性SLA目标必须≥99.5%'),
@@ -134,7 +131,6 @@ VALUES
  '{"field": "frameworkCapUsage", "operator": "<=", "threshold": 1.0, "message": "订单金额不得超过框架上限"}', 
  'CRITICAL', 10, '订单累计金额不得超过框架协议上限'),
 
--- 风险检查规则
 ('TYPE_B', 'RISK', 'RISK_B_001', '伪造记录风险', 
  '{"keywords": ["伪造", "falsify"], "context": "no_penalty", "message": "检测到伪造记录相关条款可能不追责"}', 
  'CRITICAL', 10, '检测是否存在对伪造记录不予处罚的条款'),
@@ -149,7 +145,6 @@ VALUES
 INSERT INTO `t_contract_review_rule` 
 (`contract_type`, `rule_category`, `rule_code`, `rule_name`, `rule_config`, `mandate_level`, `priority`, `description`) 
 VALUES 
--- 附件检查规则
 ('TYPE_C', 'ATTACHMENT', 'DOC_C_001', '数据安全承诺', 
  '{"keywords": ["数据安全", "Data Security", "数据保护"], "filePattern": ".*数据安全.*"}', 
  'CRITICAL', 10, 'IT服务合同必须包含数据安全承诺'),
@@ -166,7 +161,6 @@ VALUES
  '{"keywords": ["廉洁", "Integrity Pact"], "filePattern": ".*廉洁.*"}', 
  'CRITICAL', 10, 'IT服务合同必须包含廉洁承诺'),
 
--- 数值逻辑规则
 ('TYPE_C', 'LOGIC', 'LOGIC_C_001', 'DICT背靠背付款', 
  '{"field": "dictFlag", "condition": "true", "requiredField": "paymentMode", "requiredValue": "Back2Back", "message": "DICT项目必须采用背靠背付款方式"}', 
  'CRITICAL', 10, 'DICT项目必须采用背靠背付款条款'),
@@ -175,7 +169,6 @@ VALUES
  '{"field": "uatDuration", "operator": ">=", "threshold": 3, "message": "稳定运行期必须≥3个月"}', 
  'HIGH', 20, '软件稳定运行期（UAT）必须≥3个月'),
 
--- 风险检查规则
 ('TYPE_C', 'RISK', 'RISK_C_001', '数据出境风险', 
  '{"keywords": ["境外", "Cross-border", "Overseas", "海外"], "context": "data_transfer", "message": "检测到数据可能出境的条款"}', 
  'CRITICAL', 10, '检测是否存在数据跨境传输的条款'),
