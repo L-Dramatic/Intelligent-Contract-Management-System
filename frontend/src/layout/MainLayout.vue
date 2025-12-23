@@ -27,48 +27,29 @@ const userStore = useUserStore()
 const isCollapse = ref(false)
 
 const menuList = computed(() => {
-  const menus = [
-    {
-      path: '/dashboard',
-      title: '工作台',
-      icon: 'HomeFilled'
-    },
-    {
-      path: '/contract',
-      title: '合同管理',
-      icon: 'Document',
-      children: [
-        { path: '/contract/list', title: '合同列表' },
-        { path: '/contract/create', title: '创建合同' },
-        { path: '/contract/my', title: '我的合同' }
-      ]
-    },
-    {
-      path: '/workflow',
-      title: '审批中心',
-      icon: 'Checked',
-      children: [
-        { path: '/workflow/pending', title: '待办任务' },
-        { path: '/workflow/completed', title: '已办任务' },
-        { path: '/workflow/initiated', title: '我发起的' }
-      ]
-    }
-  ]
+  const role = userStore.role
+  const menus: any[] = []
 
-  // 流程管理员可见
-  if (userStore.hasRole('WORKFLOW_ADMIN') || userStore.hasRole('ADMIN')) {
+  // 工作台 - 所有人可见
+  menus.push({
+    path: '/dashboard',
+    title: '工作台',
+    icon: 'HomeFilled'
+  })
+
+  // ============ ADMIN 管理员界面 ============
+  if (role === 'ADMIN') {
+    // 流程管理
     menus.push({
       path: '/workflow-admin',
       title: '流程管理',
       icon: 'Setting',
       children: [
-        { path: '/workflow-admin/definition', title: '流程模板' }
+        { path: '/workflow-admin/definition', title: '流程模板' },
+        { path: '/workflow-admin/scenarios', title: '审批场景' }
       ]
     })
-  }
-
-  // 系统管理员可见
-  if (userStore.hasRole('ADMIN')) {
+    // 系统管理
     menus.push({
       path: '/system',
       title: '系统管理',
@@ -77,6 +58,45 @@ const menuList = computed(() => {
         { path: '/system/user', title: '用户管理' },
         { path: '/system/department', title: '组织架构' },
         { path: '/system/knowledge', title: '知识库管理' }
+      ]
+    })
+  }
+
+  // ============ STAFF/BOSS 工作人员界面 ============
+  if (role === 'STAFF' || role === 'BOSS') {
+    // 合同管理
+    menus.push({
+      path: '/contract',
+      title: '合同管理',
+      icon: 'Document',
+      children: [
+        { path: '/contract/create', title: '创建合同' },
+        { path: '/contract/my', title: '我的合同' },
+        { path: '/contract/list', title: '合同列表' }
+      ]
+    })
+    // 审批中心
+    menus.push({
+      path: '/workflow',
+      title: '审批中心',
+      icon: 'Checked',
+      children: [
+        { path: '/workflow/pending', title: '待办任务' },
+        { path: '/workflow/completed', title: '已办任务' },
+        { path: '/workflow/initiated', title: '我发起的' }
+      ]
+    })
+  }
+
+  // ============ BOSS 领导层附加 ============
+  if (role === 'BOSS') {
+    menus.push({
+      path: '/statistics',
+      title: '数据统计',
+      icon: 'DataLine',
+      children: [
+        { path: '/statistics/overview', title: '审批概览' },
+        { path: '/statistics/department', title: '部门统计' }
       ]
     })
   }

@@ -32,11 +32,9 @@ const form = reactive({
 })
 
 const roleOptions = [
-  { label: '普通用户', value: 'USER' },
-  { label: '审批人', value: 'APPROVER' },
-  { label: '法务人员', value: 'LEGAL' },
-  { label: '流程管理员', value: 'WORKFLOW_ADMIN' },
-  { label: '系统管理员', value: 'ADMIN' }
+  { label: '系统管理员', value: 'ADMIN' },
+  { label: '工作人员', value: 'STAFF' },
+  { label: '领导层', value: 'BOSS' }
 ]
 
 const rules: FormRules = {
@@ -57,9 +55,14 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getUserList(queryParams)
-    tableData.value = res.data?.records || []
-    total.value = res.data?.total || 0
-  } catch {
+    if (res.data?.records) {
+      tableData.value = res.data.records
+      total.value = res.data.total || 0
+      return
+    }
+    throw new Error('empty')
+  } catch (e) {
+    console.log('API未实现，使用模拟数据')
     // 模拟数据
     tableData.value = [
       {
@@ -216,10 +219,8 @@ const getRoleLabel = (role: string) => {
 const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' => {
   const map: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
     'ADMIN': 'danger',
-    'WORKFLOW_ADMIN': 'warning',
-    'LEGAL': 'success',
-    'APPROVER': 'primary',
-    'USER': 'info'
+    'BOSS': 'warning',
+    'STAFF': 'primary'
   }
   return map[role] || 'info'
 }
@@ -284,8 +285,12 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
       <el-table-column prop="username" label="用户名" width="120" />
       <el-table-column prop="realName" label="真实姓名" width="120" />
       <el-table-column prop="email" label="邮箱" width="200" />
-      <el-table-column prop="phone" label="手机号" width="140" />
-      <el-table-column prop="departmentName" label="所属部门" width="120" />
+      <el-table-column prop="mobile" label="手机号" width="140" />
+      <el-table-column label="所属部门" width="150">
+        <template #default="{ row }">
+          {{ row.dept?.name || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="role" label="角色" width="120">
         <template #default="{ row }">
           <el-tag :type="getRoleType(row.role)">
@@ -293,7 +298,11 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180" />
+      <el-table-column prop="primaryRole" label="职位" width="140">
+        <template #default="{ row }">
+          <span>{{ row.primaryRole || '-' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>

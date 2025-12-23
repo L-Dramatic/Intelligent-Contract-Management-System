@@ -60,6 +60,20 @@ public class ContractController {
     }
 
     // ==========================================
+    // 查 (Read - My Contracts)
+    // ==========================================
+    @GetMapping("/my")
+    @Operation(summary = "获取我的合同列表", description = "获取当前登录用户创建的合同")
+    @PreAuthorize("hasAuthority('contract:view')")
+    public Result<IPage<Contract>> myContracts(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        IPage<Contract> page = contractService.getMyContracts(pageNum, pageSize);
+        return Result.success(page);
+    }
+
+    // ==========================================
     // 查 (Read - Detail)
     // ==========================================
     @GetMapping("/{id}")

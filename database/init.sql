@@ -34,44 +34,61 @@ DROP TABLE IF EXISTS `sys_dept`;
 -- 3. 创建表结构 (Create Tables)
 -- =======================================================
 
--- 3.1 部门表 (融合了 db_upgrade_v2 的升级字段)
+-- 3.1 部门表 (支持省-市-县三级组织架构)
 CREATE TABLE `sys_dept` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `parent_id` bigint DEFAULT '0' COMMENT '父部门ID',
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `parent_id` bigint DEFAULT '0' COMMENT '父部门ID（0表示根节点）',
   `name` varchar(100) NOT NULL COMMENT '部门名称',
-  `manager_id` bigint DEFAULT NULL COMMENT '部门负责人ID',
-  -- 新增字段
   `code` varchar(50) DEFAULT NULL COMMENT '部门代码',
-  `type` varchar(20) DEFAULT 'DEPT' COMMENT '类型: PROVINCE, CITY, DEPT',
-  `level` int DEFAULT 1 COMMENT '树层级',
-  PRIMARY KEY (`id`)
-) COMMENT='部门表';
+  `type` varchar(20) DEFAULT 'DEPT' COMMENT '类型: PROVINCE（省公司）, CITY（市公司）, COUNTY（县公司）, DEPT（职能部门）',
+  `level` int DEFAULT 1 COMMENT '树层级（1=根节点）',
+  `manager_id` bigint DEFAULT NULL COMMENT '部门负责人用户ID',
+  `sort_order` int DEFAULT 0 COMMENT '排序序号',
+  `is_deleted` tinyint DEFAULT 0 COMMENT '是否删除（软删除）',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_parent_id` (`parent_id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_code` (`code`)
+) COMMENT='组织架构表';
 
--- 3.2 用户表 (融合了 db_upgrade_v2 的升级字段)
+-- 3.2 用户表 (支持角色和Z岗级体系)
 CREATE TABLE `sys_user` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL COMMENT '用户名',
   `password` varchar(100) NOT NULL COMMENT '加密密码',
   `real_name` varchar(50) DEFAULT NULL COMMENT '真实姓名',
-  `role` varchar(20) DEFAULT 'USER' COMMENT '角色标识(简单逻辑用)',
+  `role` varchar(20) DEFAULT 'USER' COMMENT '角色标识(简单逻辑用，兼容旧版)',
+  `primary_role` varchar(50) DEFAULT NULL COMMENT '主要角色编码（关联sys_role.role_code）',
+  `z_level` varchar(10) DEFAULT NULL COMMENT 'Z岗级（Z8, Z9, Z10, Z11, Z12, Z13, Z14, Z15）',
   `dept_id` bigint DEFAULT NULL COMMENT '所属部门ID',
-  -- 新增字段
-  `direct_leader_id` bigint DEFAULT NULL COMMENT '直属上级ID',
+  `direct_leader_id` bigint DEFAULT NULL COMMENT '直属上级用户ID',
+  `mobile` varchar(20) DEFAULT NULL COMMENT '手机号',
+  `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
+  `is_active` tinyint DEFAULT 1 COMMENT '是否启用',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`)
+  UNIQUE KEY `uk_username` (`username`),
+  KEY `idx_dept_id` (`dept_id`),
+  KEY `idx_primary_role` (`primary_role`),
+  KEY `idx_z_level` (`z_level`)
 ) COMMENT='用户表';
 
--- 3.3 角色表 (来自 rbac_schema)
+-- 3.3 角色表 (审批角色定义)
 CREATE TABLE `sys_role` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `role_code` varchar(50) NOT NULL COMMENT '角色编码',
+  `role_code` varchar(50) NOT NULL COMMENT '角色编码（对应Master Workflow中的Role Code）',
   `role_name` varchar(100) NOT NULL COMMENT '角色名称',
-  `description` varchar(200) DEFAULT NULL,
+  `role_category` varchar(50) DEFAULT NULL COMMENT '角色类别（BUSINESS/TECHNICAL/LEGAL/FINANCE/IT/MANAGEMENT/EXECUTIVE/PROCUREMENT/DICT/ADMIN）',
+  `dept_type_required` varchar(50) DEFAULT NULL COMMENT '要求的部门类型关键字（如NET-网络部, LEGAL-法务部）',
+  `z_level_min` varchar(10) DEFAULT NULL COMMENT '最低Z岗级要求',
+  `description` varchar(200) DEFAULT NULL COMMENT '角色说明',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_role_code` (`role_code`)
-) COMMENT='角色表';
+) COMMENT='角色定义表';
 
 -- 3.4 权限表 (来自 rbac_schema)
 CREATE TABLE `sys_permission` (
@@ -85,10 +102,24 @@ CREATE TABLE `sys_permission` (
 -- 3.5 角色权限关联表 (来自 rbac_schema)
 CREATE TABLE `sys_role_permission` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `role_code` varchar(20) NOT NULL COMMENT '角色代码',
+  `role_code` varchar(50) NOT NULL COMMENT '角色代码',
   `permission_id` bigint NOT NULL COMMENT '权限ID',
   PRIMARY KEY (`id`)
 ) COMMENT='角色权限关联表';
+
+-- 3.5.1 用户角色关联表（支持一人多角色）
+CREATE TABLE `sys_user_role` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `role_code` varchar(50) NOT NULL COMMENT '角色编码',
+  `effective_dept_id` bigint DEFAULT NULL COMMENT '生效部门ID（可选，用于跨部门兼职）',
+  `is_primary` tinyint DEFAULT 0 COMMENT '是否主要角色',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_role_dept` (`user_id`, `role_code`, `effective_dept_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_role_code` (`role_code`)
+) COMMENT='用户角色关联表';
 
 -- 3.6 合同主表 (融合了 db_upgrade_v2 的升级字段)
 CREATE TABLE `t_contract` (
@@ -138,6 +169,42 @@ CREATE TABLE `wf_definition` (
   PRIMARY KEY (`id`)
 ) COMMENT='流程定义表';
 
+-- 3.8.1 审批场景配置表（对应Master Workflow矩阵）
+CREATE TABLE `wf_scenario_config` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `scenario_id` varchar(50) NOT NULL COMMENT '场景ID（如A1-Tier1, B2-Tier2）',
+  `sub_type_code` varchar(10) NOT NULL COMMENT '合同子类型代码（A1, A2, B1, B2, C1, C2, C3）',
+  `sub_type_name` varchar(100) NOT NULL COMMENT '合同子类型名称',
+  `amount_min` decimal(18,2) DEFAULT 0 COMMENT '金额下限（含）',
+  `amount_max` decimal(18,2) DEFAULT NULL COMMENT '金额上限（不含，NULL表示无上限）',
+  `is_fast_track` tinyint DEFAULT 0 COMMENT '是否快速通道',
+  `description` varchar(500) DEFAULT NULL COMMENT '场景描述',
+  `is_active` tinyint DEFAULT 1 COMMENT '是否启用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_scenario_id` (`scenario_id`),
+  KEY `idx_sub_type_code` (`sub_type_code`),
+  KEY `idx_amount` (`amount_min`, `amount_max`)
+) COMMENT='审批场景配置表';
+
+-- 3.8.2 场景审批节点表
+CREATE TABLE `wf_scenario_node` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `scenario_id` varchar(50) NOT NULL COMMENT '场景ID（关联wf_scenario_config）',
+  `node_order` int NOT NULL COMMENT '节点顺序',
+  `role_code` varchar(50) NOT NULL COMMENT '审批角色编码（关联sys_role）',
+  `node_level` varchar(20) NOT NULL COMMENT '审批级别（COUNTY/CITY/PROVINCE）',
+  `action_type` varchar(20) NOT NULL COMMENT '动作类型（INITIATE/REVIEW/VERIFY/APPROVE/FINAL_APPROVE）',
+  `is_mandatory` tinyint DEFAULT 1 COMMENT '是否必须节点',
+  `can_skip` tinyint DEFAULT 0 COMMENT '是否可跳过',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_scenario_id` (`scenario_id`),
+  KEY `idx_role_code` (`role_code`),
+  UNIQUE KEY `uk_scenario_order` (`scenario_id`, `node_order`)
+) COMMENT='场景审批节点配置表';
+
 -- 3.9 工作流节点 (来自 init.sql)
 CREATE TABLE `wf_node` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -163,26 +230,37 @@ CREATE TABLE `wf_transition` (
 -- 3.11 流程实例 (来自 init.sql)
 CREATE TABLE `wf_instance` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `def_id` bigint NOT NULL,
-  `contract_id` bigint NOT NULL,
-  `current_node_id` bigint DEFAULT NULL,
-  `status` tinyint DEFAULT '1',
-  `requester_id` bigint NOT NULL,
+  `def_id` bigint DEFAULT NULL COMMENT '流程定义ID（兼容旧版）',
+  `scenario_id` varchar(50) DEFAULT NULL COMMENT '审批场景ID（新版）',
+  `contract_id` bigint NOT NULL COMMENT '合同ID',
+  `current_node_id` bigint DEFAULT NULL COMMENT '当前节点ID（旧版）',
+  `current_node_order` int DEFAULT 0 COMMENT '当前节点顺序（新版）',
+  `status` tinyint DEFAULT '1' COMMENT '状态：1-进行中，2-已完成，3-已驳回，4-已撤销',
+  `requester_id` bigint NOT NULL COMMENT '发起人ID',
   `start_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  `end_time` datetime DEFAULT NULL COMMENT '结束时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_contract_id` (`contract_id`),
+  KEY `idx_scenario_id` (`scenario_id`),
+  KEY `idx_requester_id` (`requester_id`)
 ) COMMENT='流程实例表';
 
 -- 3.12 审批任务 (来自 init.sql)
 CREATE TABLE `wf_task` (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `instance_id` bigint NOT NULL,
-  `node_id` bigint NOT NULL,
-  `approver_id` bigint NOT NULL,
-  `status` tinyint DEFAULT '0',
-  `comment` varchar(500) DEFAULT NULL,
+  `instance_id` bigint NOT NULL COMMENT '流程实例ID',
+  `node_id` bigint DEFAULT NULL COMMENT '节点ID（旧版）',
+  `scenario_node_id` bigint DEFAULT NULL COMMENT '场景节点ID（新版）',
+  `parallel_group_id` varchar(50) DEFAULT NULL COMMENT '并行审批组ID（用于会签）',
+  `assignee_id` bigint NOT NULL COMMENT '审批人ID',
+  `status` tinyint DEFAULT '0' COMMENT '状态：0-待审批，1-已通过，2-已驳回，3-已否决',
+  `comment` varchar(500) DEFAULT NULL COMMENT '审批意见',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
   `finish_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_instance_id` (`instance_id`),
+  KEY `idx_assignee_id` (`assignee_id`),
+  KEY `idx_status` (`status`)
 ) COMMENT='审批任务表';
 
 -- 3.13 审批日志表 (来自 upgrade_schema - 之前漏掉的)
@@ -233,5 +311,43 @@ CREATE TABLE `sys_file` (
   `upload_time` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) COMMENT='文件存储表';
+
+-- 3.17 合同审查报告表
+CREATE TABLE `t_contract_review` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `contract_id` bigint NOT NULL COMMENT '关联的合同ID',
+  `risk_level` varchar(20) DEFAULT NULL COMMENT '风险等级: LOW, MEDIUM, HIGH',
+  `score` int DEFAULT NULL COMMENT '综合评分 (0-100)',
+  `review_content` json DEFAULT NULL COMMENT '审查内容 (JSON格式)',
+  `review_type` varchar(20) DEFAULT NULL COMMENT '审查类型: AUTO(自动), MANUAL(手动)',
+  `rag_used` tinyint DEFAULT 0 COMMENT '是否使用了RAG检索',
+  `status` varchar(20) DEFAULT NULL COMMENT '审查状态: PENDING(进行中), COMPLETED(完成), FAILED(失败)',
+  `error_message` varchar(500) DEFAULT NULL COMMENT '错误信息(如果审查失败)',
+  `triggered_by` bigint DEFAULT NULL COMMENT '审查触发人ID (如果是手动触发)',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `completed_at` datetime DEFAULT NULL COMMENT '完成时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_contract_id` (`contract_id`)
+) COMMENT='合同审查报告表';
+
+-- 3.18 合同审查规则配置表
+CREATE TABLE `t_contract_review_rule` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `contract_type` varchar(20) NOT NULL COMMENT '合同类型: TYPE_A, TYPE_B, TYPE_C',
+  `rule_category` varchar(50) NOT NULL COMMENT '规则类别: ATTACHMENT(附件), LOGIC(逻辑), RISK(风险)',
+  `rule_code` varchar(50) NOT NULL COMMENT '规则编码: DOC_A_001, LOGIC_A_001, RISK_A_001等',
+  `rule_name` varchar(200) NOT NULL COMMENT '规则名称',
+  `rule_config` json DEFAULT NULL COMMENT '规则配置 (JSON格式)',
+  `mandate_level` varchar(20) DEFAULT NULL COMMENT '强制级别: CRITICAL, HIGH, MEDIUM, LOW',
+  `priority` int DEFAULT 0 COMMENT '优先级 (数值越小优先级越高)',
+  `is_enabled` tinyint DEFAULT 1 COMMENT '是否启用',
+  `description` varchar(500) DEFAULT NULL COMMENT '规则描述',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_rule_code` (`rule_code`),
+  KEY `idx_contract_type` (`contract_type`),
+  KEY `idx_rule_category` (`rule_category`)
+) COMMENT='合同审查规则配置表';
 
 SET FOREIGN_KEY_CHECKS = 1;

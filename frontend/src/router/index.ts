@@ -69,6 +69,12 @@ const routes: RouteRecordRaw[] = [
             name: 'AiGenerate',
             component: () => import('@/views/contract/AiGenerate.vue'),
             meta: { title: 'AI智能生成' }
+          },
+          {
+            path: 'draft',
+            name: 'ContractDraft',
+            component: () => import('@/views/contract/ContractDraft.vue'),
+            meta: { title: '起草合同' }
           }
         ]
       },
@@ -123,6 +129,12 @@ const routes: RouteRecordRaw[] = [
             name: 'WorkflowEdit',
             component: () => import('@/views/workflow/WorkflowEdit.vue'),
             meta: { title: '编辑流程' }
+          },
+          {
+            path: 'scenarios',
+            name: 'WorkflowScenarios',
+            component: () => import('@/views/workflow/WorkflowScenarios.vue'),
+            meta: { title: '审批场景' }
           }
         ]
       },
@@ -150,6 +162,27 @@ const routes: RouteRecordRaw[] = [
             name: 'KnowledgeManage',
             component: () => import('@/views/system/KnowledgeManage.vue'),
             meta: { title: '知识库管理' }
+          }
+        ]
+      },
+      // 数据统计（领导层专属）
+      {
+        path: 'statistics',
+        name: 'Statistics',
+        redirect: '/statistics/overview',
+        meta: { title: '数据统计', roles: ['BOSS'] },
+        children: [
+          {
+            path: 'overview',
+            name: 'StatisticsOverview',
+            component: () => import('@/views/statistics/OverviewPage.vue'),
+            meta: { title: '审批概览' }
+          },
+          {
+            path: 'department',
+            name: 'DepartmentStatistics',
+            component: () => import('@/views/statistics/DepartmentStats.vue'),
+            meta: { title: '部门统计' }
           }
         ]
       }

@@ -23,6 +23,11 @@ public interface ContractService extends IService<Contract> {
     IPage<Contract> getContractPage(int pageNum, int pageSize, String name, String type);
     
     /**
+     * 获取当前用户创建的合同
+     */
+    IPage<Contract> getMyContracts(int pageNum, int pageSize);
+    
+    /**
      * 删除合同（带级联检查）
      */
     Boolean deleteContract(Long id);

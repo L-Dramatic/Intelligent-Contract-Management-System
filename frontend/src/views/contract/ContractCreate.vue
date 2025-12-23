@@ -1,229 +1,281 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { ContractType } from '@/types'
+import { ElMessage } from 'element-plus'
+import { getContractTypesGrouped, type ContractTypeGroup, type SubType } from '@/api/contractType'
 
 const router = useRouter()
 
-const contractTypes = [
-  {
-    value: 'STATION_LEASE' as ContractType,
-    label: '基站租赁合同',
-    icon: 'OfficeBuilding',
-    description: '适用于基站站址租赁场景，包括楼顶、铁塔、地面机房等',
-    color: '#1890ff'
-  },
-  {
-    value: 'NETWORK_CONSTRUCTION' as ContractType,
-    label: '网络建设合同',
-    icon: 'Connection',
-    description: '适用于4G/5G基站建设、光缆铺设、机房建设等工程',
-    color: '#52c41a'
-  },
-  {
-    value: 'EQUIPMENT_PURCHASE' as ContractType,
-    label: '设备采购合同',
-    icon: 'Box',
-    description: '适用于通信主设备、传输设备、动力设备等采购',
-    color: '#faad14'
-  },
-  {
-    value: 'MAINTENANCE_SERVICE' as ContractType,
-    label: '运维服务合同',
-    icon: 'SetUp',
-    description: '适用于网络维护、故障处理、优化服务等场景',
-    color: '#722ed1'
-  }
-]
+// 合同类型数据（从后端获取）
+const typeGroups = ref<ContractTypeGroup[]>([])
+const loading = ref(false)
 
-const createMethods = [
-  {
-    value: 'ai',
-    label: 'AI对话式生成',
-    icon: 'ChatDotRound',
-    description: '与AI助手对话，快速生成专业合同（推荐）',
-    tag: '推荐'
-  },
-  {
-    value: 'template',
-    label: '使用标准模板',
-    icon: 'Document',
-    description: '选择预置模板，手动填写合同内容'
-  },
-  {
-    value: 'upload',
-    label: '上传已有合同',
-    icon: 'Upload',
-    description: '上传Word/PDF文件，系统自动解析'
-  }
-]
+// 选中的类型
+const selectedMainType = ref<string | null>(null)
+const selectedSubType = ref<SubType | null>(null)
 
-const selectedType = ref<ContractType | null>(null)
-const selectedMethod = ref<string | null>(null)
-const step = ref(1)
-
-const selectType = (type: ContractType) => {
-  selectedType.value = type
+// 主类型图标和颜色配置
+const mainTypeConfig: Record<string, { icon: string; color: string; bgColor: string }> = {
+  'TYPE_A': { icon: 'Box', color: '#1890ff', bgColor: '#e6f7ff' },
+  'TYPE_B': { icon: 'SetUp', color: '#52c41a', bgColor: '#f6ffed' },
+  'TYPE_C': { icon: 'Monitor', color: '#722ed1', bgColor: '#f9f0ff' }
 }
 
-const selectMethod = (method: string) => {
-  selectedMethod.value = method
+// 加载合同类型
+const loadContractTypes = async () => {
+  loading.value = true
+  try {
+    const res = await getContractTypesGrouped()
+    typeGroups.value = res.data || []
+  } catch (error) {
+    console.error('加载合同类型失败', error)
+    // 使用备用数据
+    typeGroups.value = [
+      {
+        typeCode: 'TYPE_A',
+        typeName: '采购类',
+        subTypes: [
+          { subTypeCode: 'A1', subTypeName: '土建工程', description: '基站建设、传输管线、机房土建等' },
+          { subTypeCode: 'A2', subTypeName: '装修工程', description: '营业厅装修、办公场所装修' },
+          { subTypeCode: 'A3', subTypeName: '零星维修', description: '小额维修、日常维护' }
+        ]
+      },
+      {
+        typeCode: 'TYPE_B',
+        typeName: '工程类',
+        subTypes: [
+          { subTypeCode: 'B1', subTypeName: '光缆代维', description: '光缆线路日常维护、故障抢修' },
+          { subTypeCode: 'B2', subTypeName: '基站代维', description: '基站设备日常维护、巡检' },
+          { subTypeCode: 'B3', subTypeName: '家宽代维', description: '家庭宽带安装、维护' },
+          { subTypeCode: 'B4', subTypeName: '应急保障', description: '重大活动通信保障' }
+        ]
+      },
+      {
+        typeCode: 'TYPE_C',
+        typeName: '服务类',
+        subTypes: [
+          { subTypeCode: 'C1', subTypeName: '定制开发', description: '软件系统定制开发' },
+          { subTypeCode: 'C2', subTypeName: '商用软件采购', description: '软件许可、SaaS服务' },
+          { subTypeCode: 'C3', subTypeName: 'DICT集成', description: '数字化转型、ICT集成' }
+        ]
+      }
+    ]
+  } finally {
+    loading.value = false
+  }
 }
 
-const nextStep = () => {
-  if (step.value === 1 && selectedType.value) {
-    step.value = 2
-  } else if (step.value === 2 && selectedMethod.value) {
-    // 根据选择的方式跳转
-    if (selectedMethod.value === 'ai') {
-      router.push({
-        path: '/contract/ai-generate',
-        query: { type: selectedType.value }
-      })
-    } else if (selectedMethod.value === 'template') {
-      router.push({
-        path: '/contract/edit/new',
-        query: { type: selectedType.value, mode: 'template' }
-      })
-    } else {
-      router.push({
-        path: '/contract/edit/new',
-        query: { type: selectedType.value, mode: 'upload' }
-      })
+// 选择主类型
+const selectMainType = (typeCode: string) => {
+  selectedMainType.value = typeCode
+  selectedSubType.value = null
+}
+
+// 选择子类型
+const selectSubType = (subType: SubType) => {
+  selectedSubType.value = subType
+}
+
+// 获取当前主类型的子类型列表
+const currentSubTypes = () => {
+  if (!selectedMainType.value) return []
+  const group = typeGroups.value.find(g => g.typeCode === selectedMainType.value)
+  return group?.subTypes || []
+}
+
+// 开始起草
+const startDraft = () => {
+  if (!selectedSubType.value) {
+    ElMessage.warning('请先选择合同子类型')
+    return
+  }
+  
+  // 跳转到起草页面，传递子类型代码
+  router.push({
+    path: '/contract/draft',
+    query: { 
+      subType: selectedSubType.value.subTypeCode,
+      mainType: selectedMainType.value
     }
-  }
-}
-
-const prevStep = () => {
-  if (step.value === 2) {
-    step.value = 1
-    selectedMethod.value = null
-  }
+  })
 }
 
 const goBack = () => {
   router.back()
 }
+
+onMounted(() => {
+  loadContractTypes()
+})
 </script>
 
 <template>
-  <div class="page-container">
+  <div class="page-container" v-loading="loading">
     <div class="page-header">
       <h2 class="page-title">创建合同</h2>
       <el-button @click="goBack">返回</el-button>
     </div>
     
-    <!-- 步骤条 -->
-    <el-steps :active="step" align-center class="steps">
-      <el-step title="选择合同类型" />
-      <el-step title="选择创建方式" />
-      <el-step title="填写合同内容" />
-    </el-steps>
+    <!-- 步骤提示 -->
+    <div class="step-hint">
+      <el-steps :active="selectedSubType ? 2 : (selectedMainType ? 1 : 0)" align-center>
+        <el-step title="选择主类型" />
+        <el-step title="选择子类型" />
+        <el-step title="开始起草" />
+      </el-steps>
+    </div>
     
-    <!-- 步骤1：选择合同类型 -->
-    <div v-if="step === 1" class="step-content">
-      <h3 class="step-title">请选择合同类型</h3>
-      <div class="type-grid">
-        <div 
-          v-for="type in contractTypes"
-          :key="type.value"
-          class="type-card"
-          :class="{ active: selectedType === type.value }"
-          @click="selectType(type.value)"
-        >
-          <div class="type-icon" :style="{ backgroundColor: type.color }">
-            <el-icon :size="32"><component :is="type.icon" /></el-icon>
-          </div>
-          <div class="type-info">
-            <h4 class="type-label">{{ type.label }}</h4>
-            <p class="type-desc">{{ type.description }}</p>
-          </div>
-          <div v-if="selectedType === type.value" class="check-icon">
-            <el-icon :size="24" color="#52c41a"><CircleCheck /></el-icon>
+    <div class="type-selection">
+      <!-- 左侧：主类型 -->
+      <div class="main-types">
+        <h3 class="section-title">合同主类型</h3>
+        <div class="main-type-list">
+          <div 
+            v-for="group in typeGroups"
+            :key="group.typeCode"
+            class="main-type-card"
+            :class="{ active: selectedMainType === group.typeCode }"
+            :style="{ 
+              borderColor: selectedMainType === group.typeCode ? mainTypeConfig[group.typeCode]?.color : '',
+              backgroundColor: selectedMainType === group.typeCode ? mainTypeConfig[group.typeCode]?.bgColor : ''
+            }"
+            @click="selectMainType(group.typeCode)"
+          >
+            <div 
+              class="type-icon"
+              :style="{ backgroundColor: mainTypeConfig[group.typeCode]?.color || '#1890ff' }"
+            >
+              <el-icon :size="28">
+                <component :is="mainTypeConfig[group.typeCode]?.icon || 'Document'" />
+              </el-icon>
+            </div>
+            <div class="type-info">
+              <div class="type-name">{{ group.typeName }}</div>
+              <div class="type-count">{{ group.subTypes?.length || 0 }} 个子类型</div>
+            </div>
+            <el-icon v-if="selectedMainType === group.typeCode" class="check-icon" color="#52c41a">
+              <CircleCheck />
+            </el-icon>
           </div>
         </div>
       </div>
-    </div>
-    
-    <!-- 步骤2：选择创建方式 -->
-    <div v-if="step === 2" class="step-content">
-      <h3 class="step-title">请选择创建方式</h3>
-      <div class="method-grid">
-        <div 
-          v-for="method in createMethods"
-          :key="method.value"
-          class="method-card"
-          :class="{ active: selectedMethod === method.value }"
-          @click="selectMethod(method.value)"
-        >
-          <div class="method-icon">
-            <el-icon :size="40"><component :is="method.icon" /></el-icon>
-          </div>
-          <div class="method-info">
-            <h4 class="method-label">
-              {{ method.label }}
-              <el-tag v-if="method.tag" size="small" type="success">{{ method.tag }}</el-tag>
-            </h4>
-            <p class="method-desc">{{ method.description }}</p>
-          </div>
-          <div v-if="selectedMethod === method.value" class="check-icon">
-            <el-icon :size="24" color="#52c41a"><CircleCheck /></el-icon>
+      
+      <!-- 右侧：子类型 -->
+      <div class="sub-types" v-if="selectedMainType">
+        <h3 class="section-title">
+          选择具体类型
+          <span class="selected-main">
+            （{{ typeGroups.find(g => g.typeCode === selectedMainType)?.typeName }}）
+          </span>
+        </h3>
+        <div class="sub-type-list">
+          <div 
+            v-for="subType in currentSubTypes()"
+            :key="subType.subTypeCode"
+            class="sub-type-card"
+            :class="{ active: selectedSubType?.subTypeCode === subType.subTypeCode }"
+            @click="selectSubType(subType)"
+          >
+            <div class="sub-type-header">
+              <span class="sub-type-code">{{ subType.subTypeCode }}</span>
+              <span class="sub-type-name">{{ subType.subTypeName }}</span>
+            </div>
+            <div class="sub-type-desc">{{ subType.description }}</div>
+            <el-icon v-if="selectedSubType?.subTypeCode === subType.subTypeCode" class="check-icon" color="#52c41a">
+              <CircleCheck />
+            </el-icon>
           </div>
         </div>
+      </div>
+      
+      <!-- 占位：未选择主类型时 -->
+      <div class="sub-types empty" v-else>
+        <el-empty description="请先选择合同主类型" />
       </div>
     </div>
     
     <!-- 底部操作 -->
-    <div class="step-actions">
-      <el-button v-if="step > 1" @click="prevStep">上一步</el-button>
+    <div class="action-bar">
+      <div class="selected-info" v-if="selectedSubType">
+        <el-tag type="success" size="large">
+          已选择：{{ selectedSubType.subTypeName }} ({{ selectedSubType.subTypeCode }})
+        </el-tag>
+      </div>
       <el-button 
         type="primary" 
-        :disabled="(step === 1 && !selectedType) || (step === 2 && !selectedMethod)"
-        @click="nextStep"
+        size="large"
+        :disabled="!selectedSubType"
+        @click="startDraft"
       >
-        {{ step === 2 ? '开始创建' : '下一步' }}
+        <el-icon><EditPen /></el-icon>
+        开始起草
       </el-button>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { CircleCheck, OfficeBuilding, Connection, Box, SetUp, ChatDotRound, Document, Upload } from '@element-plus/icons-vue'
+import { CircleCheck, Box, SetUp, Monitor, Document, EditPen } from '@element-plus/icons-vue'
 export default {
-  components: { CircleCheck, OfficeBuilding, Connection, Box, SetUp, ChatDotRound, Document, Upload }
+  components: { CircleCheck, Box, SetUp, Monitor, Document, EditPen }
 }
 </script>
 
 <style scoped>
-.steps {
-  margin: 30px 0;
+.step-hint {
+  margin: 20px 0 30px;
+  padding: 0 50px;
 }
 
-.step-content {
-  padding: 30px 0;
+.type-selection {
+  display: flex;
+  gap: 30px;
+  min-height: 400px;
 }
 
-.step-title {
-  text-align: center;
-  font-size: 18px;
+.main-types {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.sub-types {
+  flex: 1;
+  min-width: 0;
+}
+
+.sub-types.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
   color: #303133;
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 }
 
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  max-width: 800px;
-  margin: 0 auto;
+.selected-main {
+  font-weight: 400;
+  color: #909399;
+  font-size: 14px;
 }
 
-.type-card {
+.main-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.main-type-card {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 24px;
+  padding: 20px;
   background: #fff;
   border: 2px solid #e4e7ed;
   border-radius: 12px;
@@ -231,65 +283,57 @@ export default {
   transition: all 0.3s;
 }
 
-.type-card:hover {
-  border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+.main-type-card:hover {
+  border-color: #c0c4cc;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
-.type-card.active {
-  border-color: #52c41a;
-  background: #f6ffed;
+.main-type-card.active {
+  border-width: 2px;
 }
 
 .type-icon {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
   color: #fff;
-  flex-shrink: 0;
 }
 
 .type-info {
   flex: 1;
 }
 
-.type-label {
+.type-name {
   font-size: 16px;
   font-weight: 600;
   color: #303133;
-  margin: 0 0 8px;
+  margin-bottom: 4px;
 }
 
-.type-desc {
+.type-count {
   font-size: 13px;
   color: #909399;
-  margin: 0;
-  line-height: 1.5;
 }
 
 .check-icon {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
+  font-size: 20px;
 }
 
-.method-grid {
-  display: flex;
-  flex-direction: column;
+.sub-type-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
-  max-width: 600px;
-  margin: 0 auto;
 }
 
-.method-card {
+.sub-type-card {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
+  padding: 20px;
   background: #fff;
   border: 2px solid #e4e7ed;
   border-radius: 12px;
@@ -297,54 +341,59 @@ export default {
   transition: all 0.3s;
 }
 
-.method-card:hover {
+.sub-type-card:hover {
   border-color: #1890ff;
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
 }
 
-.method-card.active {
+.sub-type-card.active {
   border-color: #52c41a;
   background: #f6ffed;
 }
 
-.method-icon {
-  width: 72px;
-  height: 72px;
+.sub-type-header {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sub-type-code {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, #1890ff, #40a9ff);
-  border-radius: 12px;
   color: #fff;
-  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
 }
 
-.method-info {
-  flex: 1;
-}
-
-.method-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
+.sub-type-name {
+  font-size: 15px;
   font-weight: 600;
   color: #303133;
-  margin: 0 0 8px;
 }
 
-.method-desc {
+.sub-type-desc {
   font-size: 13px;
   color: #909399;
-  margin: 0;
+  line-height: 1.5;
 }
 
-.step-actions {
+.action-bar {
   display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding-top: 30px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20px;
+  margin-top: 30px;
+  padding-top: 20px;
   border-top: 1px solid #e4e7ed;
 }
-</style>
 
+.selected-info {
+  margin-right: auto;
+}
+</style>

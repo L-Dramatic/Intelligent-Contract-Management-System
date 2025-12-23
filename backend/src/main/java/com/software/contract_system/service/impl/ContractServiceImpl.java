@@ -120,6 +120,22 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
     }
 
     @Override
+    public IPage<Contract> getMyContracts(int pageNum, int pageSize) {
+        Long currentUserId = securityUtils.getCurrentUserId();
+        
+        Page<Contract> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<Contract> wrapper = new LambdaQueryWrapper<>();
+        
+        // 只查询当前用户创建的合同
+        wrapper.eq(Contract::getCreatorId, currentUserId);
+        
+        // 按创建时间倒序
+        wrapper.orderByDesc(Contract::getCreatedAt);
+        
+        return this.page(page, wrapper);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteContract(Long id) {
         // 1. 检查合同是否存在

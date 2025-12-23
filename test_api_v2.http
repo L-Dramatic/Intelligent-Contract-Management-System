@@ -1,0 +1,290 @@
+### ==========================================
+### 组织树 + 审批流程 API 测试
+### 基于 Master Workflow Configuration Matrix
+### ==========================================
+
+### ==========================================
+### Part 1: 基础测试 - 登录获取Token
+### ==========================================
+
+### 1.1 系统管理员登录
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "123456"
+}
+
+### 1.2 A市总经理登录
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "a_gm",
+    "password": "123456"
+}
+
+### 1.3 C县网络部员工登录（发起人）
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "c_net_user",
+    "password": "123456"
+}
+
+### 1.4 A市项目经理登录
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "a_pm",
+    "password": "123456"
+}
+
+### ==========================================
+### Part 2: 组织树 API 测试
+### ==========================================
+
+### 2.1 获取完整组织树
+# @name getTree
+GET http://localhost:8080/dept/tree
+
+### 2.2 获取根节点的子部门（省公司下属）
+GET http://localhost:8080/dept/children/1
+
+### 2.3 获取A市分公司的子部门
+GET http://localhost:8080/dept/children/100
+
+### 2.4 根据ID获取部门详情
+GET http://localhost:8080/dept/100
+
+### 2.5 根据代码获取部门
+GET http://localhost:8080/dept/code/CITY-A
+
+### 2.6 查询所有市级公司
+GET http://localhost:8080/dept/type/CITY
+
+### 2.7 查询所有县级公司
+GET http://localhost:8080/dept/type/COUNTY
+
+### 2.8 获取C县网络部的祖先链
+GET http://localhost:8080/dept/153/ancestors
+
+### 2.9 获取A市分公司的所有后代
+GET http://localhost:8080/dept/100/descendants
+
+### 2.10 县级部门找对应市级部门（核心功能！）
+GET http://localhost:8080/dept/153/city-level
+
+### 2.11 获取C县网络部所属的市级公司
+GET http://localhost:8080/dept/153/city-company
+
+### ==========================================
+### Part 3: 角色 API 测试
+### ==========================================
+
+### 3.1 获取所有角色
+GET http://localhost:8080/role/list
+
+### 3.2 获取所有审批角色
+GET http://localhost:8080/role/approval-roles
+
+### 3.3 根据编码获取角色
+GET http://localhost:8080/role/PROJECT_MANAGER
+
+### 3.4 根据类别获取角色（技术类）
+GET http://localhost:8080/role/category/TECHNICAL
+
+### 3.5 获取用户的角色（A市项目经理）
+GET http://localhost:8080/role/user/113
+
+### 3.6 获取用户角色详情
+GET http://localhost:8080/role/user/113/details
+
+### ==========================================
+### Part 4: 审批场景 API 测试
+### ==========================================
+
+### 4.1 获取所有审批场景配置
+GET http://localhost:8080/workflow/scenario/scenarios
+
+### 4.2 获取A1-Tier1场景详情（土建工程<1万）
+GET http://localhost:8080/workflow/scenario/scenarios/A1-Tier1
+
+### 4.3 获取B2-Tier2场景详情（基站代维1-5万）
+GET http://localhost:8080/workflow/scenario/scenarios/B2-Tier2
+
+### ==========================================
+### Part 5: 完整审批流程测试
+### ==========================================
+
+### === 步骤1: C县员工登录并创建合同 ===
+
+### 5.1 C县网络部员工登录
+# @name loginCountyUser
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "c_net_user",
+    "password": "123456"
+}
+
+### 5.2 创建土建工程合同（金额2万，应匹配A1-Tier2场景）
+# 替换 Token 为上一步获取的
+POST http://localhost:8080/contract/create
+Content-Type: application/json
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+{
+    "name": "C县基站土建施工合同",
+    "type": "A1",
+    "partyA": "中国移动XX省A市C县分公司",
+    "partyB": "XX建筑工程有限公司",
+    "amount": 20000,
+    "content": "土建工程施工合同正文..."
+}
+
+### 5.3 检查合同是否可以提交
+# 替换 contractId 为上一步返回的ID
+GET http://localhost:8080/workflow/scenario/contract/1/check-submittable
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### 5.4 预览匹配的审批场景
+GET http://localhost:8080/workflow/scenario/contract/1/matched-scenario
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### 5.5 提交合同审批
+POST http://localhost:8080/workflow/submit/1
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### === 步骤2: A市项目经理审批 ===
+
+### 5.6 A市项目经理登录
+# @name loginPM
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "a_pm",
+    "password": "123456"
+}
+
+### 5.7 获取待办任务
+GET http://localhost:8080/workflow/scenario/tasks/pending
+Authorization: Bearer {{loginPM.response.body.$.data.token}}
+
+### 5.8 审批通过
+# 替换 taskId 为上一步返回的任务ID
+POST http://localhost:8080/workflow/scenario/tasks/1/approve
+Content-Type: application/json
+Authorization: Bearer {{loginPM.response.body.$.data.token}}
+
+{
+    "comment": "技术方案可行，同意"
+}
+
+### === 步骤3: 后续审批人继续审批 ===
+
+### 5.9 A市成本审计员登录
+# @name loginCostAuditor
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+    "username": "a_cost_audit",
+    "password": "123456"
+}
+
+### 5.10 获取待办任务
+GET http://localhost:8080/workflow/scenario/tasks/pending
+Authorization: Bearer {{loginCostAuditor.response.body.$.data.token}}
+
+### 5.11 审批通过
+POST http://localhost:8080/workflow/scenario/tasks/2/approve
+Content-Type: application/json
+Authorization: Bearer {{loginCostAuditor.response.body.$.data.token}}
+
+{
+    "comment": "成本审核通过"
+}
+
+### === 步骤4: 查看审批进度和历史 ===
+
+### 5.12 获取合同审批进度
+GET http://localhost:8080/workflow/scenario/contract/1/progress
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### 5.13 获取审批历史
+GET http://localhost:8080/workflow/scenario/contract/1/history
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### 5.14 查看合同详情（检查状态）
+GET http://localhost:8080/contract/1
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### ==========================================
+### Part 6: 测试驳回和撤销
+### ==========================================
+
+### 6.1 创建另一个测试合同
+POST http://localhost:8080/contract/create
+Content-Type: application/json
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+{
+    "name": "测试驳回流程合同",
+    "type": "B2",
+    "partyA": "中国移动XX省A市C县分公司",
+    "partyB": "XX通信设备公司",
+    "amount": 5000,
+    "content": "基站代维合同..."
+}
+
+### 6.2 提交审批
+POST http://localhost:8080/workflow/submit/2
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### 6.3 审批驳回测试
+POST http://localhost:8080/workflow/scenario/tasks/3/reject
+Content-Type: application/json
+Authorization: Bearer {{loginPM.response.body.$.data.token}}
+
+{
+    "comment": "技术方案需要修改，请补充施工计划"
+}
+
+### 6.4 检查合同状态（应为3-已驳回）
+GET http://localhost:8080/contract/2
+Authorization: Bearer {{loginCountyUser.response.body.$.data.token}}
+
+### ==========================================
+### Part 7: 旧版工作流API（兼容测试）
+### ==========================================
+
+### 7.1 获取我的待办任务（旧版）
+GET http://localhost:8080/workflow/tasks
+Authorization: Bearer {{loginPM.response.body.$.data.token}}
+
+### ==========================================
+### 注意事项
+### ==========================================
+# 1. 首次测试前需要执行数据库初始化：
+#    - 运行 database/init.sql
+#    - 运行 database/init_data_v2.sql
+#
+# 2. Token 需要根据实际登录返回值替换
+#
+# 3. contractId 和 taskId 需要根据实际返回值替换
+#
+# 4. 用户密码都是 123456
+
+
+
+
+
+
+
+

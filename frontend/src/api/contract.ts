@@ -19,9 +19,9 @@ export function getContractDetail(id: number) {
 }
 
 // 创建合同
-export function createContract(data: Partial<Contract>) {
-  return request<Contract>({
-    url: '/contract',
+export function createContract(data: Partial<Contract> & { isDraft?: boolean }) {
+  return request<{ id: number }>({
+    url: '/contract/create',
     method: 'post',
     data
   })
@@ -29,10 +29,10 @@ export function createContract(data: Partial<Contract>) {
 
 // 更新合同
 export function updateContract(id: number, data: Partial<Contract>) {
-  return request<Contract>({
-    url: `/contract/${id}`,
+  return request<boolean>({
+    url: '/contract/update',
     method: 'put',
-    data
+    data: { id, ...data }
   })
 }
 

@@ -38,8 +38,13 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getDepartmentTree()
-    treeData.value = res.data || []
-  } catch {
+    if (res.data && res.data.length > 0) {
+      treeData.value = res.data
+      return
+    }
+    throw new Error('empty')
+  } catch (e) {
+    console.log('API未实现，使用模拟数据')
     // 模拟数据
     treeData.value = [
       {

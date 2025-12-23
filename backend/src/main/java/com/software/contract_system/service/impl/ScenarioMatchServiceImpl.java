@@ -1,0 +1,330 @@
+package com.software.contract_system.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.software.contract_system.entity.*;
+import com.software.contract_system.mapper.*;
+import com.software.contract_system.service.ScenarioMatchService;
+import com.software.contract_system.service.SysDeptService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * 审批场景匹配服务实现类
+ * 这是审批引擎的核心实现！
+ */
+@Service
+public class ScenarioMatchServiceImpl implements ScenarioMatchService {
+    
+    @Autowired
+    private WfScenarioConfigMapper scenarioConfigMapper;
+    
+    @Autowired
+    private WfScenarioNodeMapper scenarioNodeMapper;
+    
+    @Autowired
+    private SysDeptService deptService;
+    
+    @Autowired
+    private SysUserMapper userMapper;
+    
+    @Autowired
+    private SysDeptMapper deptMapper;
+    
+    @Override
+    public WfScenarioConfig matchScenario(String subTypeCode, BigDecimal amount) {
+        return scenarioConfigMapper.matchScenario(subTypeCode, amount);
+    }
+    
+    @Override
+    public List<WfScenarioNode> getScenarioNodes(String scenarioId) {
+        return scenarioNodeMapper.selectByScenarioId(scenarioId);
+    }
+    
+    @Override
+    public WfScenarioNode getNextNode(String scenarioId, int currentNodeOrder) {
+        if (currentNodeOrder == 0) {
+            // 获取第一个节点
+            return scenarioNodeMapper.selectByScenarioAndOrder(scenarioId, 1);
+        }
+        return scenarioNodeMapper.selectNextNode(scenarioId, currentNodeOrder);
+    }
+    
+    @Override
+    public SysUser matchApprover(WfScenarioNode node, Long initiatorDeptId) {
+        List<SysUser> candidates = matchApproverCandidates(node, initiatorDeptId);
+        return candidates.isEmpty() ? null : candidates.get(0);
+    }
+    
+    @Override
+    public List<SysUser> matchApproverCandidates(WfScenarioNode node, Long initiatorDeptId) {
+        String roleCode = node.getRoleCode();
+        String nodeLevel = node.getNodeLevel();
+        
+        // 确定审批人所在的部门范围
+        Long targetDeptId = determineTargetDept(initiatorDeptId, nodeLevel);
+        if (targetDeptId == null) {
+            return List.of();
+        }
+        
+        // 根据角色和部门查找用户
+        return findUsersByRoleAndDept(roleCode, targetDeptId, nodeLevel);
+    }
+    
+    @Override
+    public boolean isLastNode(String scenarioId, int nodeOrder) {
+        WfScenarioNode lastNode = scenarioNodeMapper.selectLastNode(scenarioId);
+        return lastNode != null && lastNode.getNodeOrder() == nodeOrder;
+    }
+    
+    @Override
+    public List<WfScenarioConfig> getAllScenarios() {
+        return scenarioConfigMapper.selectAllActive();
+    }
+    
+    @Override
+    public List<WfScenarioConfig> getScenariosBySubType(String subTypeCode) {
+        return scenarioConfigMapper.selectBySubTypeCode(subTypeCode);
+    }
+    
+    @Override
+    public WfScenarioConfig getScenarioWithNodes(String scenarioId) {
+        WfScenarioConfig config = scenarioConfigMapper.selectByScenarioId(scenarioId);
+        if (config != null) {
+            config.setNodes(scenarioNodeMapper.selectByScenarioId(scenarioId));
+        }
+        return config;
+    }
+    
+    /**
+     * 确定审批人所在的目标部门
+     * 
+     * 核心逻辑：
+     * - COUNTY 级别：返回发起人所在部门（仅用于发起节点）
+     * - CITY 级别：返回对应的市级部门
+     * - PROVINCE 级别：返回对应的省级部门
+     */
+    private Long determineTargetDept(Long initiatorDeptId, String nodeLevel) {
+        SysDept initiatorDept = deptMapper.selectById(initiatorDeptId);
+        if (initiatorDept == null) {
+            return null;
+        }
+        
+        switch (nodeLevel) {
+            case WfScenarioNode.LEVEL_COUNTY:
+                // 县级审批：直接使用发起人部门
+                return initiatorDeptId;
+                
+            case WfScenarioNode.LEVEL_CITY:
+                // 市级审批：需要找到对应的市级部门
+                return findCityLevelDept(initiatorDept);
+                
+            case WfScenarioNode.LEVEL_PROVINCE:
+                // 省级审批：需要找到对应的省级部门
+                return findProvinceLevelDept(initiatorDept);
+                
+            default:
+                return null;
+        }
+    }
+    
+    /**
+     * 查找市级部门
+     */
+    private Long findCityLevelDept(SysDept initiatorDept) {
+        // 如果发起人本身就在市级部门
+        if (SysDept.TYPE_DEPT.equals(initiatorDept.getType())) {
+            // 检查父节点是否是市公司
+            SysDept parent = deptMapper.selectById(initiatorDept.getParentId());
+            if (parent != null && SysDept.TYPE_CITY.equals(parent.getType())) {
+                // 已经是市级部门
+                return initiatorDept.getId();
+            }
+        }
+        
+        // 如果发起人在县级部门，需要找到对应的市级部门
+        SysDept cityDept = deptService.findCityLevelDept(initiatorDept.getId());
+        if (cityDept != null) {
+            return cityDept.getId();
+        }
+        
+        // 兜底：找到市公司
+        SysDept cityCompany = deptService.getCityCompany(initiatorDept.getId());
+        return cityCompany != null ? cityCompany.getId() : null;
+    }
+    
+    /**
+     * 查找省级部门
+     */
+    private Long findProvinceLevelDept(SysDept initiatorDept) {
+        // 获取祖先链
+        List<SysDept> ancestors = deptMapper.selectAncestors(initiatorDept.getId());
+        
+        // 找到省公司
+        SysDept province = ancestors.stream()
+                .filter(d -> SysDept.TYPE_PROVINCE.equals(d.getType()))
+                .findFirst()
+                .orElse(null);
+        
+        if (province == null) {
+            return null;
+        }
+        
+        // 提取部门关键字
+        String deptKeyword = extractDeptKeyword(initiatorDept.getCode());
+        if (deptKeyword != null) {
+            // 查找省级对应部门
+            SysDept provDept = deptMapper.selectCityDeptByKeyword(province.getId(), deptKeyword);
+            if (provDept != null) {
+                return provDept.getId();
+            }
+        }
+        
+        // 兜底：返回省公司本身
+        return province.getId();
+    }
+    
+    /**
+     * 根据角色和部门查找用户
+     * 
+     * 匹配策略：
+     * 1. 高管角色（副总、总经理、三重一大）：在市公司层级查找
+     * 2. 部门经理：在市级职能部门查找
+     * 3. 技术审批角色：先精确匹配部门，失败则扩大到市级同类部门
+     */
+    private List<SysUser> findUsersByRoleAndDept(String roleCode, Long deptId, String nodeLevel) {
+        List<SysUser> result;
+        
+        // 高管角色特殊处理（副总、总经理、三重一大）
+        if (isExecutiveRole(roleCode)) {
+            result = findExecutiveUsers(roleCode, deptId);
+            if (!result.isEmpty()) return result;
+        }
+        
+        // 部门经理角色
+        if (SysRole.ROLE_DEPT_MANAGER.equals(roleCode)) {
+            result = findDeptManagerUsers(deptId, nodeLevel);
+            if (!result.isEmpty()) return result;
+        }
+        
+        // 普通技术审批角色：先尝试精确匹配
+        result = findUsersByRoleInDept(roleCode, deptId);
+        if (!result.isEmpty()) return result;
+        
+        // 精确匹配失败，尝试在市公司范围内查找
+        if (WfScenarioNode.LEVEL_CITY.equals(nodeLevel)) {
+            result = findUsersByRoleInCityScope(roleCode, deptId);
+            if (!result.isEmpty()) return result;
+        }
+        
+        return List.of();
+    }
+    
+    /**
+     * 查找高管用户（副总、总经理、三重一大）
+     */
+    private List<SysUser> findExecutiveUsers(String roleCode, Long deptId) {
+        SysDept cityCompany = deptService.getCityCompany(deptId);
+        if (cityCompany == null) {
+            return List.of();
+        }
+        
+        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getPrimaryRole, roleCode)
+                .eq(SysUser::getDeptId, cityCompany.getId())
+                .eq(SysUser::getIsActive, 1)
+                .orderByDesc(SysUser::getZLevel));
+    }
+    
+    /**
+     * 查找部门经理
+     */
+    private List<SysUser> findDeptManagerUsers(Long deptId, String nodeLevel) {
+        // 先尝试在指定部门查找
+        List<SysUser> managers = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getPrimaryRole, SysRole.ROLE_DEPT_MANAGER)
+                .eq(SysUser::getDeptId, deptId)
+                .eq(SysUser::getIsActive, 1)
+                .orderByDesc(SysUser::getZLevel));
+        
+        if (!managers.isEmpty()) return managers;
+        
+        // 如果是市级审批，扩大到市公司范围
+        if (WfScenarioNode.LEVEL_CITY.equals(nodeLevel)) {
+            SysDept cityCompany = deptService.getCityCompany(deptId);
+            if (cityCompany != null) {
+                // 查找市公司下所有部门的部门经理
+                List<SysDept> cityDepts = deptMapper.selectByParentId(cityCompany.getId());
+                for (SysDept dept : cityDepts) {
+                    managers = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                            .eq(SysUser::getPrimaryRole, SysRole.ROLE_DEPT_MANAGER)
+                            .eq(SysUser::getDeptId, dept.getId())
+                            .eq(SysUser::getIsActive, 1)
+                            .orderByDesc(SysUser::getZLevel)
+                            .last("LIMIT 1"));
+                    if (!managers.isEmpty()) return managers;
+                }
+            }
+        }
+        
+        return List.of();
+    }
+    
+    /**
+     * 在指定部门查找角色用户
+     */
+    private List<SysUser> findUsersByRoleInDept(String roleCode, Long deptId) {
+        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getPrimaryRole, roleCode)
+                .eq(SysUser::getDeptId, deptId)
+                .eq(SysUser::getIsActive, 1)
+                .orderByDesc(SysUser::getZLevel));
+    }
+    
+    /**
+     * 在市公司范围内查找角色用户
+     */
+    private List<SysUser> findUsersByRoleInCityScope(String roleCode, Long deptId) {
+        SysDept cityCompany = deptService.getCityCompany(deptId);
+        if (cityCompany == null) {
+            return List.of();
+        }
+        
+        // 获取市公司下所有部门
+        List<SysDept> cityDepts = deptMapper.selectByParentId(cityCompany.getId());
+        
+        // 在所有市级部门中查找
+        for (SysDept dept : cityDepts) {
+            List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getPrimaryRole, roleCode)
+                    .eq(SysUser::getDeptId, dept.getId())
+                    .eq(SysUser::getIsActive, 1)
+                    .orderByDesc(SysUser::getZLevel));
+            if (!users.isEmpty()) return users;
+        }
+        
+        return List.of();
+    }
+    
+    /**
+     * 判断是否是高管角色（需要在市公司层级查找）
+     */
+    private boolean isExecutiveRole(String roleCode) {
+        return SysRole.ROLE_VICE_PRESIDENT.equals(roleCode)
+                || SysRole.ROLE_GENERAL_MANAGER.equals(roleCode)
+                || SysRole.ROLE_T1M.equals(roleCode);
+    }
+    
+    /**
+     * 从部门代码提取关键字
+     */
+    private String extractDeptKeyword(String code) {
+        if (code == null || !code.contains("-")) {
+            return null;
+        }
+        String[] parts = code.split("-");
+        return parts.length > 0 ? parts[parts.length - 1] : null;
+    }
+}

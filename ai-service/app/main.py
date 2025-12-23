@@ -389,9 +389,160 @@ async def check_compliance(request: dict):
 @app.get("/api/knowledge/stats")
 async def get_knowledge_stats():
     """获取知识库统计信息"""
+    stats = {
+        "document_count": 0,
+        "rag_enabled": RAG_ENABLED,
+        "files": {
+            "contracts": 0,
+            "laws": 0,
+            "total": 0
+        }
+    }
+    
+    # 获取ChromaDB统计
     if RAG_ENABLED and rag_service:
-        return rag_service.get_collection_stats()
-    return {"error": "RAG服务未启用", "document_count": 0}
+        chroma_stats = rag_service.get_collection_stats()
+        stats["document_count"] = chroma_stats.get("document_count", 0)
+        stats["collection_name"] = chroma_stats.get("collection_name", "")
+        stats["embedding_model"] = chroma_stats.get("embedding_model", "")
+    
+    # 统计知识库文件
+    kb_path = Path(__file__).parent.parent / 'knowledge_base'
+    if kb_path.exists():
+        contracts_path = kb_path / 'contracts'
+        laws_path = kb_path / 'laws_and_regulations'
+        
+        contract_files = list(contracts_path.rglob('*.md')) if contracts_path.exists() else []
+        law_files = list(laws_path.rglob('*.md')) if laws_path.exists() else []
+        
+        stats["files"]["contracts"] = len(contract_files)
+        stats["files"]["laws"] = len(law_files)
+        stats["files"]["total"] = len(contract_files) + len(law_files)
+    
+    return stats
+
+
+@app.get("/api/knowledge/files")
+async def list_knowledge_files():
+    """列出知识库中的所有文件"""
+    kb_path = Path(__file__).parent.parent / 'knowledge_base'
+    files = []
+    
+    if not kb_path.exists():
+        return {"files": [], "error": "知识库目录不存在"}
+    
+    # 遍历合同模板
+    contracts_path = kb_path / 'contracts'
+    if contracts_path.exists():
+        for md_file in contracts_path.rglob('*.md'):
+            rel_path = md_file.relative_to(kb_path)
+            # 确定类型
+            if 'template_A' in str(rel_path):
+                category = 'A类-工程施工'
+            elif 'template_B' in str(rel_path):
+                category = 'B类-代维服务'
+            elif 'template_C' in str(rel_path):
+                category = 'C类-IT服务'
+            else:
+                category = '合同模板'
+            
+            files.append({
+                "name": md_file.name,
+                "path": str(rel_path),
+                "type": "CONTRACT",
+                "category": category,
+                "size": md_file.stat().st_size,
+                "modified": datetime.fromtimestamp(md_file.stat().st_mtime).isoformat()
+            })
+    
+    # 遍历法规文件
+    laws_path = kb_path / 'laws_and_regulations'
+    if laws_path.exists():
+        for md_file in laws_path.glob('*.md'):
+            rel_path = md_file.relative_to(kb_path)
+            files.append({
+                "name": md_file.name,
+                "path": str(rel_path),
+                "type": "LAW",
+                "category": "法律法规",
+                "size": md_file.stat().st_size,
+                "modified": datetime.fromtimestamp(md_file.stat().st_mtime).isoformat()
+            })
+    
+    # 按类型和名称排序
+    files.sort(key=lambda x: (x["type"], x["name"]))
+    
+    return {"files": files, "total": len(files)}
+
+
+@app.get("/api/knowledge/search")
+async def search_knowledge(query: str, limit: int = 5):
+    """搜索知识库"""
+    if not RAG_ENABLED or not rag_service:
+        return {"results": [], "error": "RAG服务未启用"}
+    
+    if not query or len(query.strip()) < 2:
+        return {"results": [], "error": "查询词过短"}
+    
+    results = rag_service.search(query, n_results=limit)
+    
+    # 格式化结果
+    formatted = []
+    for r in results:
+        formatted.append({
+            "content": r["content"][:500] + "..." if len(r["content"]) > 500 else r["content"],
+            "source": r["metadata"].get("source", "未知"),
+            "type": r["metadata"].get("doc_type", "未知"),
+            "relevance": round(1 - r["distance"], 3) if r["distance"] else 0
+        })
+    
+    return {"results": formatted, "query": query, "count": len(formatted)}
+
+
+@app.post("/api/knowledge/rebuild")
+async def rebuild_knowledge_index():
+    """重建知识库索引"""
+    import subprocess
+    import sys
+    
+    script_path = Path(__file__).parent.parent / 'scripts' / 'process_documents.py'
+    
+    if not script_path.exists():
+        return {"success": False, "error": "索引脚本不存在"}
+    
+    try:
+        # 异步执行索引脚本（不阻塞）
+        result = subprocess.run(
+            [sys.executable, str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=300  # 5分钟超时
+        )
+        
+        if result.returncode == 0:
+            # 重新加载RAG服务
+            global rag_service, RAG_ENABLED
+            if RAG_AVAILABLE:
+                try:
+                    rag_service = RAGService(chroma_db_path=chroma_db_path)
+                    RAG_ENABLED = True
+                except:
+                    pass
+            
+            return {
+                "success": True,
+                "message": "索引重建完成",
+                "output": result.stdout[-500:] if result.stdout else ""
+            }
+        else:
+            return {
+                "success": False,
+                "error": result.stderr[-500:] if result.stderr else "未知错误"
+            }
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "索引重建超时（超过5分钟）"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 # ============================================================

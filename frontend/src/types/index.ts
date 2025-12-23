@@ -33,34 +33,62 @@ export interface RegisterForm {
 export interface Contract {
   id: number
   contractNo: string
-  contractName: string
-  contractType: ContractType
+  name: string              // 合同名称
+  type: string              // 主类型: TYPE_A, TYPE_B, TYPE_C
   partyA: string
   partyB: string
   amount: number
-  content: string
-  status: ContractStatus
-  isAiGenerated: boolean
+  content: string           // 合同正文
+  status: number            // 0:草稿, 1:审批中, 2:生效, 3:驳回
+  isAiGenerated: number     // 0:否, 1:是
+  version: string
   creatorId: number
-  creatorName: string
-  createTime: string
-  updateTime: string
-  // 基站租赁合同扩展字段
-  siteLocation?: string
-  siteType?: string
-  siteArea?: number
-  annualRent?: number
-  leaseStartDate?: string
-  leaseEndDate?: string
-  // 网络建设合同扩展字段
-  constructionArea?: string
-  networkType?: string
-  plannedStations?: number
-  coverageRequirement?: number
+  creatorName?: string
+  attributes?: ContractAttributes  // 扩展属性（JSON）
+  createdAt: string
+  updatedAt: string
 }
 
-export type ContractType = 'STATION_LEASE' | 'NETWORK_CONSTRUCTION' | 'EQUIPMENT_PURCHASE' | 'MAINTENANCE_SERVICE'
+// 合同扩展属性
+export interface ContractAttributes {
+  subTypeCode?: string      // 子类型代码: A1, A2, B1...
+  // 土建工程(A1)
+  projectName?: string
+  projectLocation?: string
+  projectScope?: string
+  safetyFeeRate?: number
+  // 代维服务(B1-B4)
+  maintenanceArea?: string
+  cableLength?: number
+  stationCount?: number
+  // 软件开发(C1)
+  developmentDays?: number
+  maintenancePeriod?: number
+  // 通用
+  startDate?: string
+  endDate?: string
+  [key: string]: any
+}
 
+// 合同主类型
+export type ContractMainType = 'TYPE_A' | 'TYPE_B' | 'TYPE_C'
+
+// 合同子类型
+export type ContractSubType = 'A1' | 'A2' | 'A3' | 'B1' | 'B2' | 'B3' | 'B4' | 'C1' | 'C2' | 'C3'
+
+// 合同状态
+export const ContractStatusMap: Record<number, string> = {
+  0: '草稿',
+  1: '审批中',
+  2: '已生效',
+  3: '已驳回',
+  4: '已终止',
+  5: '待签署',
+  6: '已作废'
+}
+
+// 兼容旧类型（逐步废弃）
+export type ContractType = ContractMainType | 'STATION_LEASE' | 'NETWORK_CONSTRUCTION' | 'EQUIPMENT_PURCHASE' | 'MAINTENANCE_SERVICE'
 export type ContractStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export interface ContractQuery {

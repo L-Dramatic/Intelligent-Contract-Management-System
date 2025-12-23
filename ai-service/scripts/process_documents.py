@@ -149,7 +149,7 @@ def process_documents():
             file_extension = file_path.suffix.lower()
             
             # 跳过非文档文件
-            if file_extension not in ['.pdf', '.docx', '.txt', '.doc']:
+            if file_extension not in ['.pdf', '.docx', '.txt', '.doc', '.md']:
                 continue
             
             print(f"    处理文件: {file_path.name}")
@@ -159,7 +159,7 @@ def process_documents():
                 text = extract_text_from_pdf(file_path)
             elif file_extension in ['.docx', '.doc']:
                 text = extract_text_from_docx(file_path)
-            elif file_extension == '.txt':
+            elif file_extension in ['.txt', '.md']:
                 text = extract_text_from_txt(file_path)
             
             if not text:

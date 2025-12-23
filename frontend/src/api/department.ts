@@ -4,7 +4,7 @@ import type { Department, Position, UserInfo } from '@/types'
 // 获取组织架构树
 export function getDepartmentTree() {
   return request<Department[]>({
-    url: '/department/tree',
+    url: '/dept/tree',  // 后端接口是 /dept/tree
     method: 'get'
   })
 }
