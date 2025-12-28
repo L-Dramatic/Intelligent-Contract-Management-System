@@ -31,6 +31,9 @@ public class WfScenarioNode {
     /** 审批级别（COUNTY-县级, CITY-市级, PROVINCE-省级） */
     private String nodeLevel;
     
+    /** 节点名称 */
+    private String nodeName;
+    
     /** 动作类型 */
     private String actionType;
     

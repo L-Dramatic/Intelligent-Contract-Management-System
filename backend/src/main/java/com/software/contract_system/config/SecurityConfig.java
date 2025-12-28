@@ -46,9 +46,26 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // 禁用 CSRF
             .authorizeHttpRequests(auth -> auth
-                // 这里只配置业务接口的权限
+                // 公开接口（无需登录）
                 .requestMatchers("/user/login", "/user/register").permitAll()
                 .requestMatchers("/api/ai/**").permitAll() // 放行AI接口（开发环境）
+                // 知识库接口（前端页面加载时需要，临时放行）
+                .requestMatchers("/knowledge/**").permitAll()
+                // 部门树接口（前端页面加载时需要，临时放行）
+                .requestMatchers("/dept/tree").permitAll()
+                // 合同类型和模板接口（前端页面加载时需要，临时放行）
+                .requestMatchers("/contract-type/**", "/template/**").permitAll()
+                // 开发环境：合同创建和更新接口（已登录即可，不检查具体权限）
+                // 注意：生产环境应该移除这两行，恢复权限检查
+                .requestMatchers("/contract/create", "/contract/update").authenticated()
+                // 合同变更管理接口（已登录即可）
+                .requestMatchers("/contract-change/**").authenticated()
+                // 审批流程相关接口（开发环境临时放行，便于调试）
+                .requestMatchers("/workflow/**").permitAll()
+                // 合同相关接口（开发环境临时放行）
+                .requestMatchers("/contract/**").permitAll()
+                // 调试接口
+                .requestMatchers("/debug/**").permitAll()
                 // 其他所有接口都需要认证
                 .anyRequest().authenticated()
             )

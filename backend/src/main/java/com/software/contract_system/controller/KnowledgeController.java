@@ -20,7 +20,7 @@ import java.util.Map;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class KnowledgeController {
     
-    @Value("${ai.service.url:http://localhost:8765}")
+    @Value("${ai.service.base-url:http://localhost:8765}")
     private String aiServiceUrl;
     
     private final RestTemplate restTemplate = new RestTemplate();

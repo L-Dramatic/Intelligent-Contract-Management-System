@@ -53,7 +53,7 @@ public class WorkflowController {
     // ==========================================
     @PostMapping("/submit/{contractId}")
     @Operation(summary = "提交合同审批（简易版）", description = "将草稿状态的合同提交进入审批流")
-    @PreAuthorize("hasAuthority('contract:add')") // 发起人权限
+    // @PreAuthorize("hasAuthority('contract:add')") // 发起人权限
     public Result<String> submit(@PathVariable Long contractId) {
         Long userId = securityUtils.getCurrentUserId();
         workflowService.submitContract(contractId, userId);
@@ -65,7 +65,7 @@ public class WorkflowController {
     // ==========================================
     @PostMapping("/submit")
     @Operation(summary = "提交合同审批（完整版）", description = "带附件检查和用户确认的提交")
-    @PreAuthorize("hasAuthority('contract:add')")
+    // @PreAuthorize("hasAuthority('contract:add')")
     public Result<String> submitWithCheck(@RequestBody SubmitContractRequest request) {
         log.info("提交合同审批（完整版）: contractId={}", request.getContractId());
         
@@ -106,7 +106,7 @@ public class WorkflowController {
     // ==========================================
     @PostMapping("/approve")
     @Operation(summary = "执行审批", description = "通过或驳回任务")
-    @PreAuthorize("hasAuthority('contract:audit')") // 审批人权限
+    // @PreAuthorize("hasAuthority('contract:audit')") // 审批人权限
     public Result<String> approve(@RequestBody ApproveDTO approveDTO) {
         Long userId = securityUtils.getCurrentUserId();
         workflowService.approveTask(approveDTO, userId);

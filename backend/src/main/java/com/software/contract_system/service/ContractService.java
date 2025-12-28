@@ -25,7 +25,7 @@ public interface ContractService extends IService<Contract> {
     /**
      * 获取当前用户创建的合同
      */
-    IPage<Contract> getMyContracts(int pageNum, int pageSize);
+    IPage<Contract> getMyContracts(int pageNum, int pageSize, Integer status);
     
     /**
      * 删除合同（带级联检查）

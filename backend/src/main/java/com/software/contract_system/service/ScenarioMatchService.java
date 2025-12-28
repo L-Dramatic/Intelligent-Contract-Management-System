@@ -73,4 +73,9 @@ public interface ScenarioMatchService {
      * 获取场景详情（包含节点列表）
      */
     WfScenarioConfig getScenarioWithNodes(String scenarioId);
+    
+    /**
+     * 根据场景ID和节点顺序获取节点
+     */
+    WfScenarioNode getNodeByOrder(String scenarioId, int nodeOrder);
 }

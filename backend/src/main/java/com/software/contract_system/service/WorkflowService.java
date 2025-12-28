@@ -44,4 +44,27 @@ public interface WorkflowService {
      * @return 任务列表
      */
     List<WfTask> getMyTasks(Long userId);
+
+    /**
+     * 启动合同变更审批流程
+     * @param changeId 变更申请ID
+     * @param contractType 合同类型
+     * @param isMajorChange 是否重大变更
+     * @param userId 发起人ID
+     * @return 流程实例ID
+     */
+    Long startContractChangeWorkflow(Long changeId, String contractType, Boolean isMajorChange, Long userId);
+
+    /**
+     * 终止流程实例
+     * @param instanceId 流程实例ID
+     * @param reason 终止原因
+     */
+    void terminateInstance(Long instanceId, String reason);
+
+    /**
+     * 变更审批通过回调
+     * @param changeId 变更申请ID
+     */
+    void onChangeApproved(Long changeId);
 }

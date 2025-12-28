@@ -47,7 +47,7 @@ export function deleteContract(id: number) {
 // 提交合同审批
 export function submitContract(id: number) {
   return request({
-    url: `/contract/${id}/submit`,
+    url: `/workflow/submit/${id}`,
     method: 'post'
   })
 }

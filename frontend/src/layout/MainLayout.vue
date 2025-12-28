@@ -64,16 +64,34 @@ const menuList = computed(() => {
 
   // ============ STAFF/BOSS 工作人员界面 ============
   if (role === 'STAFF' || role === 'BOSS') {
+    // 合同管理子菜单
+    const contractChildren = [
+      { path: '/contract/create', title: '创建合同' },
+      { path: '/contract/my', title: '我的合同' }
+    ]
+    
+    // 只有BOSS（经理/领导）或有contract:list:all权限的用户才能看到合同列表
+    // 同时检查用户名是否包含 mgr/manager/director 等关键词（经理级别）
+    const username = userStore.username?.toLowerCase() || ''
+    const canViewAllContracts = role === 'BOSS' || 
+                                userStore.hasPermission('contract:list:all') ||
+                                username.includes('mgr') || 
+                                username.includes('manager') ||
+                                username.includes('director') ||
+                                username.includes('admin')
+    
+    if (canViewAllContracts) {
+      contractChildren.push({ path: '/contract/list', title: '合同列表' })
+    }
+    
+    contractChildren.push({ path: '/contract/change/list', title: '变更管理' })
+    
     // 合同管理
     menus.push({
       path: '/contract',
       title: '合同管理',
       icon: 'Document',
-      children: [
-        { path: '/contract/create', title: '创建合同' },
-        { path: '/contract/my', title: '我的合同' },
-        { path: '/contract/list', title: '合同列表' }
-      ]
+      children: contractChildren
     })
     // 审批中心
     menus.push({

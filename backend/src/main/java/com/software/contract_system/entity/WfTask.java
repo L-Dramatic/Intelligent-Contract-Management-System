@@ -56,6 +56,10 @@ public class WfTask {
     @TableField(exist = false)
     private String roleName;
     
+    /** 节点名称 */
+    @TableField(exist = false)
+    private String nodeName;
+    
     /** 合同名称 */
     @TableField(exist = false)
     private String contractName;
@@ -68,9 +72,22 @@ public class WfTask {
     @TableField(exist = false)
     private java.math.BigDecimal contractAmount;
     
+    /** 发起人姓名 */
+    @TableField(exist = false)
+    private String initiatorName;
+    
+    /** 合同类型 */
+    @TableField(exist = false)
+    private String contractType;
+    
+    /** 合同ID（非数据库字段，从流程实例获取） */
+    @TableField(exist = false)
+    private Long contractId;
+    
     // ========== 任务状态常量 ==========
     public static final int STATUS_PENDING = 0;   // 待处理
     public static final int STATUS_APPROVED = 1;  // 已通过
     public static final int STATUS_REJECTED = 2;  // 已驳回
     public static final int STATUS_VETOED = 3;    // 已否决
+    public static final int STATUS_CANCELLED = 4; // 已取消（流程终止时）
 }

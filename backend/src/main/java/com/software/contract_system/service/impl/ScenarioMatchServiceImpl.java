@@ -98,6 +98,17 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
         return config;
     }
     
+    @Override
+    public WfScenarioNode getNodeByOrder(String scenarioId, int nodeOrder) {
+        List<WfScenarioNode> nodes = scenarioNodeMapper.selectByScenarioId(scenarioId);
+        for (WfScenarioNode node : nodes) {
+            if (node.getNodeOrder() != null && node.getNodeOrder() == nodeOrder) {
+                return node;
+            }
+        }
+        return null;
+    }
+    
     /**
      * 确定审批人所在的目标部门
      * 

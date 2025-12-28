@@ -133,18 +133,69 @@ public class WorkflowScenarioServiceImpl implements WorkflowScenarioService {
     
     @Override
     public List<WfTask> getPendingTasks(Long userId) {
-        return taskMapper.selectList(new LambdaQueryWrapper<WfTask>()
+        List<WfTask> tasks = taskMapper.selectList(new LambdaQueryWrapper<WfTask>()
                 .eq(WfTask::getAssigneeId, userId)
                 .eq(WfTask::getStatus, WfTask.STATUS_PENDING)
                 .orderByDesc(WfTask::getCreateTime));
+        
+        // 补充合同信息和节点信息
+        enrichTasksWithContractInfo(tasks);
+        return tasks;
     }
     
     @Override
     public List<WfTask> getCompletedTasks(Long userId) {
-        return taskMapper.selectList(new LambdaQueryWrapper<WfTask>()
+        List<WfTask> tasks = taskMapper.selectList(new LambdaQueryWrapper<WfTask>()
                 .eq(WfTask::getAssigneeId, userId)
                 .ne(WfTask::getStatus, WfTask.STATUS_PENDING)
                 .orderByDesc(WfTask::getFinishTime));
+        
+        // 补充合同信息和节点信息
+        enrichTasksWithContractInfo(tasks);
+        return tasks;
+    }
+    
+    /**
+     * 补充任务的合同信息和节点信息
+     */
+    private void enrichTasksWithContractInfo(List<WfTask> tasks) {
+        for (WfTask task : tasks) {
+            try {
+                // 获取流程实例
+                WfInstance instance = instanceMapper.selectById(task.getInstanceId());
+                if (instance != null && instance.getContractId() != null) {
+                    // 获取合同信息
+                    Contract contract = contractMapper.selectById(instance.getContractId());
+                    if (contract != null) {
+                        task.setContractName(contract.getName());
+                        task.setContractNo(contract.getContractNo());
+                        task.setContractAmount(contract.getAmount());
+                        task.setContractType(contract.getType());
+                        task.setContractId(contract.getId());
+                    }
+                    
+                    // 获取发起人信息
+                    SysUser requester = userMapper.selectById(instance.getRequesterId());
+                    if (requester != null) {
+                        task.setInitiatorName(requester.getRealName());
+                    }
+                }
+                
+                // 补充节点名称
+                if (task.getScenarioNodeId() != null) {
+                    WfScenarioNode node = scenarioNodeMapper.selectById(task.getScenarioNodeId());
+                    if (node != null) {
+                        String nodeName = node.getNodeName();
+                        if (nodeName == null || nodeName.isEmpty()) {
+                            nodeName = generateNodeName(node.getRoleCode(), node.getNodeLevel());
+                        }
+                        task.setNodeName(nodeName);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("补充任务 {} 信息时出错: {}", task.getId(), e.getMessage());
+            }
+        }
     }
     
     @Override
@@ -157,15 +208,54 @@ public class WorkflowScenarioServiceImpl implements WorkflowScenarioService {
     
     @Override
     public List<WfTask> getApprovalHistory(Long contractId) {
-        // 先获取流程实例
-        WfInstance instance = getWorkflowProgress(contractId);
-        if (instance == null) {
-            return List.of();
+        try {
+            // 先获取流程实例
+            WfInstance instance = getWorkflowProgress(contractId);
+            if (instance == null) {
+                log.info("getApprovalHistory: 合同 {} 没有流程实例", contractId);
+                return List.of();
+            }
+            
+            // 获取该实例下的所有任务（包括待处理的）
+            List<WfTask> tasks = taskMapper.selectList(new LambdaQueryWrapper<WfTask>()
+                    .eq(WfTask::getInstanceId, instance.getId())
+                    .orderByAsc(WfTask::getCreateTime));
+            
+            log.info("getApprovalHistory: 找到 {} 个任务", tasks.size());
+                    
+            // 补充审批人信息和节点信息
+            for (WfTask task : tasks) {
+                try {
+                    // 补充审批人姓名
+                    if (task.getAssigneeId() != null) {
+                        SysUser assignee = userMapper.selectById(task.getAssigneeId());
+                        if (assignee != null) {
+                            task.setAssigneeName(assignee.getRealName());
+                        }
+                    }
+                    
+                    // 补充节点名称
+                    if (task.getScenarioNodeId() != null) {
+                        WfScenarioNode node = scenarioNodeMapper.selectById(task.getScenarioNodeId());
+                        if (node != null) {
+                            String nodeName = node.getNodeName();
+                            // 如果数据库中没有 node_name，则根据 role_code 和 node_level 生成
+                            if (nodeName == null || nodeName.isEmpty()) {
+                                nodeName = generateNodeName(node.getRoleCode(), node.getNodeLevel());
+                            }
+                            task.setNodeName(nodeName);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("补充任务 {} 信息时出错: {}", task.getId(), e.getMessage());
+                }
+            }
+            
+            return tasks;
+        } catch (Exception e) {
+            log.error("getApprovalHistory 出错: contractId={}", contractId, e);
+            throw e;
         }
-        
-        return taskMapper.selectList(new LambdaQueryWrapper<WfTask>()
-                .eq(WfTask::getInstanceId, instance.getId())
-                .orderByAsc(WfTask::getCreateTime));
     }
     
     @Override
@@ -221,6 +311,93 @@ public class WorkflowScenarioServiceImpl implements WorkflowScenarioService {
             scenario.setNodes(scenarioMatchService.getScenarioNodes(scenario.getScenarioId()));
         }
         return scenario;
+    }
+    
+    @Override
+    public List<WfInstance> getMyInitiatedInstances(Long userId) {
+        List<WfInstance> instances = instanceMapper.selectList(new LambdaQueryWrapper<WfInstance>()
+                .eq(WfInstance::getRequesterId, userId)
+                .orderByDesc(WfInstance::getStartTime));
+        
+        // 补充合同信息和当前节点信息
+        for (WfInstance instance : instances) {
+            try {
+                // 补充合同名称
+                if (instance.getContractId() != null) {
+                    Contract contract = contractMapper.selectById(instance.getContractId());
+                    if (contract != null) {
+                        instance.setContractName(contract.getName());
+                    }
+                }
+                
+                // 补充当前节点名称
+                if (instance.getScenarioId() != null && instance.getCurrentNodeOrder() != null) {
+                    WfScenarioNode currentNode = scenarioMatchService.getNodeByOrder(
+                            instance.getScenarioId(), instance.getCurrentNodeOrder());
+                    if (currentNode != null) {
+                        String nodeName = currentNode.getNodeName();
+                        if (nodeName == null || nodeName.isEmpty()) {
+                            nodeName = generateNodeName(currentNode.getRoleCode(), currentNode.getNodeLevel());
+                        }
+                        instance.setCurrentNodeName(nodeName);
+                    }
+                }
+                
+                // 如果流程已结束，设置节点名称为"结束"
+                if (instance.getStatus() != null && instance.getStatus() != WfInstance.STATUS_RUNNING) {
+                    instance.setCurrentNodeName("结束");
+                }
+            } catch (Exception e) {
+                log.warn("补充流程实例 {} 信息时出错: {}", instance.getId(), e.getMessage());
+            }
+        }
+        
+        return instances;
+    }
+    
+    @Override
+    public WfTask getTaskDetail(Long taskId) {
+        WfTask task = taskMapper.selectById(taskId);
+        if (task == null) {
+            return null;
+        }
+        
+        // 补充合同信息
+        try {
+            WfInstance instance = instanceMapper.selectById(task.getInstanceId());
+            if (instance != null && instance.getContractId() != null) {
+                Contract contract = contractMapper.selectById(instance.getContractId());
+                if (contract != null) {
+                    task.setContractName(contract.getName());
+                    task.setContractNo(contract.getContractNo());
+                    task.setContractAmount(contract.getAmount());
+                    task.setContractType(contract.getType());
+                    task.setContractId(contract.getId());
+                }
+                
+                // 补充发起人信息
+                SysUser requester = userMapper.selectById(instance.getRequesterId());
+                if (requester != null) {
+                    task.setInitiatorName(requester.getRealName());
+                }
+            }
+            
+            // 补充节点名称
+            if (task.getScenarioNodeId() != null) {
+                WfScenarioNode node = scenarioNodeMapper.selectById(task.getScenarioNodeId());
+                if (node != null) {
+                    String nodeName = node.getNodeName();
+                    if (nodeName == null || nodeName.isEmpty()) {
+                        nodeName = generateNodeName(node.getRoleCode(), node.getNodeLevel());
+                    }
+                    task.setNodeName(nodeName);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("补充任务 {} 详情时出错: {}", taskId, e.getMessage());
+        }
+        
+        return task;
     }
     
     // ========== 私有方法 ==========
@@ -389,5 +566,38 @@ public class WorkflowScenarioServiceImpl implements WorkflowScenarioService {
         contractMapper.updateById(contract);
         
         log.info("合同已生效: contractId={}", contract.getId());
+    }
+    
+    /**
+     * 根据角色代码和节点级别生成节点名称
+     */
+    private String generateNodeName(String roleCode, String nodeLevel) {
+        StringBuilder sb = new StringBuilder();
+        
+        // 级别前缀
+        if (nodeLevel != null) {
+            switch (nodeLevel) {
+                case "COUNTY": sb.append("县级"); break;
+                case "CITY": sb.append("市级"); break;
+                case "PROVINCE": sb.append("省级"); break;
+            }
+        }
+        
+        // 角色后缀
+        if (roleCode != null) {
+            if (roleCode.contains("MANAGER")) {
+                sb.append("经理审批");
+            } else if (roleCode.contains("DIRECTOR")) {
+                sb.append("总监审批");
+            } else if (roleCode.contains("LEGAL")) {
+                sb.append("法务审核");
+            } else {
+                sb.append("审批");
+            }
+        } else {
+            sb.append("审批");
+        }
+        
+        return sb.toString();
     }
 }
