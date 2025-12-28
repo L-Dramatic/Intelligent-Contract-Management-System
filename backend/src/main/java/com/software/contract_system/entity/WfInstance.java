@@ -58,9 +58,17 @@ public class WfInstance {
     @TableField(exist = false)
     private String scenarioName;
     
+    /** 当前节点名称 */
+    @TableField(exist = false)
+    private String currentNodeName;
+    
+    /** 备注（如CONTRACT_CHANGE表示变更审批） */
+    private String remark;
+    
     // ========== 状态常量 ==========
     public static final int STATUS_RUNNING = 1;    // 进行中
     public static final int STATUS_COMPLETED = 2;  // 已完成
     public static final int STATUS_REJECTED = 3;   // 已驳回
     public static final int STATUS_CANCELLED = 4;  // 已撤销
+    public static final int STATUS_TERMINATED = 5; // 已终止
 }

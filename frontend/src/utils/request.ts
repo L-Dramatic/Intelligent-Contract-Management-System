@@ -45,7 +45,12 @@ request.interceptors.response.use(
   },
   (error) => {
     // 非关键接口静默处理
-    const silentUrls = ['/user/list', '/dept/tree', '/workflow/scenario/scenarios']
+    const silentUrls = [
+      '/user/list', 
+      '/dept/tree', 
+      '/workflow/scenario/scenarios',
+      '/history' // 审批历史加载失败不弹窗
+    ]
     const isSilent = silentUrls.some(url => error.config?.url?.includes(url))
     
     if (error.response) {

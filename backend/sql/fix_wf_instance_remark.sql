@@ -1,0 +1,3 @@
+
+ALTER TABLE `wf_instance` ADD COLUMN IF NOT EXISTS `remark` VARCHAR(100) COMMENT '备注';
+

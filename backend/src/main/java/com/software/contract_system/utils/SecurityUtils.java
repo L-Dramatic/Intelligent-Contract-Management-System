@@ -19,17 +19,17 @@ public class SecurityUtils {
     @Autowired
     private SysUserMapper userMapper;
     
+    // 使用请求级别的缓存，避免同一请求内多次查询数据库
+    private static final ThreadLocal<Long> requestUserIdCache = new ThreadLocal<>();
+    
     /**
      * 获取当前登录用户ID
-     * 使用ThreadLocal缓存避免重复查询
      */
-    private static final ThreadLocal<Long> userIdCache = new ThreadLocal<>();
-    
     public Long getCurrentUserId() {
-        // 尝试从缓存获取
-        Long userId = userIdCache.get();
-        if (userId != null) {
-            return userId;
+        // 尝试从请求级缓存获取
+        Long cachedUserId = requestUserIdCache.get();
+        if (cachedUserId != null) {
+            return cachedUserId;
         }
         
         // 从Security上下文获取
@@ -39,6 +39,10 @@ public class SecurityUtils {
         }
         
         Object principal = auth.getPrincipal();
+        if (principal == null || "anonymousUser".equals(principal)) {
+            throw BusinessException.forbidden("用户未登录");
+        }
+        
         if (!(principal instanceof String)) {
             throw new BusinessException(500, "用户认证信息格式错误");
         }
@@ -51,11 +55,11 @@ public class SecurityUtils {
         );
         
         if (user == null || user.getId() == null) {
-            throw BusinessException.notFound("用户数据异常");
+            throw BusinessException.notFound("用户数据异常: " + username);
         }
         
-        // 缓存到ThreadLocal
-        userIdCache.set(user.getId());
+        // 缓存到请求级ThreadLocal
+        requestUserIdCache.set(user.getId());
         
         return user.getId();
     }
@@ -69,10 +73,10 @@ public class SecurityUtils {
     }
     
     /**
-     * 清除ThreadLocal缓存（在请求结束时调用）
+     * 清除ThreadLocal缓存（由Filter在请求开始和结束时调用）
      */
     public static void clearCache() {
-        userIdCache.remove();
+        requestUserIdCache.remove();
     }
 }
 

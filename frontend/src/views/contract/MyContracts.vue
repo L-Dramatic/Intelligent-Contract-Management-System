@@ -2,8 +2,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { Contract, ContractQuery, ContractStatus } from '@/types'
+import type { Contract, ContractQuery } from '@/types'
 import { getMyContracts, deleteContract, submitContract } from '@/api/contract'
+import { Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -17,25 +18,34 @@ const queryParams = reactive<ContractQuery>({
   pageSize: 10
 })
 
-const statusOptions: { label: string; value: ContractStatus }[] = [
-  { label: '草稿', value: 'DRAFT' },
-  { label: '审批中', value: 'PENDING' },
-  { label: '已生效', value: 'APPROVED' },
-  { label: '已驳回', value: 'REJECTED' }
+// 状态选项：使用 Integer 值
+const statusOptions = [
+  { label: '草稿', value: 0 },
+  { label: '审批中', value: 1 },
+  { label: '已生效', value: 2 },
+  { label: '已驳回', value: 3 }
 ]
 
+// 合同类型映射
 const contractTypeMap: Record<string, string> = {
-  'STATION_LEASE': '基站租赁',
+  'TYPE_A': '工程施工合同',
+  'TYPE_B': '代维服务合同',
+  'TYPE_C': 'IT服务合同',
+  'STATION_LEASE': '基站租赁', // 兼容旧数据
   'NETWORK_CONSTRUCTION': '网络建设',
   'EQUIPMENT_PURCHASE': '设备采购',
   'MAINTENANCE_SERVICE': '运维服务'
 }
 
-const statusMap: Record<string, { text: string; type: string }> = {
-  'DRAFT': { text: '草稿', type: 'info' },
-  'PENDING': { text: '审批中', type: 'warning' },
-  'APPROVED': { text: '已生效', type: 'success' },
-  'REJECTED': { text: '已驳回', type: 'danger' }
+// 状态映射：使用 Integer 键
+const statusMap: Record<number, { text: string; type: string }> = {
+  0: { text: '草稿', type: 'info' },
+  1: { text: '审批中', type: 'warning' },
+  2: { text: '已生效', type: 'success' },
+  3: { text: '已驳回', type: 'danger' },
+  4: { text: '已终止', type: 'info' },
+  5: { text: '待签署', type: 'warning' },
+  6: { text: '已作废', type: 'danger' }
 }
 
 onMounted(() => {
@@ -45,46 +55,15 @@ onMounted(() => {
 const loadData = async () => {
   loading.value = true
   try {
+    console.log('[MyContracts] 请求参数:', queryParams)
     const res = await getMyContracts(queryParams)
+    console.log('[MyContracts] 返回数据:', res.data)
     tableData.value = res.data?.records || []
     total.value = res.data?.total || 0
-  } catch {
-    // 模拟数据
-    tableData.value = [
-      {
-        id: 1,
-        contractNo: 'HT-ZL-20251201-001',
-        contractName: '某大厦5G基站租赁合同',
-        contractType: 'STATION_LEASE',
-        partyA: '中国电信股份有限公司',
-        partyB: 'XX物业管理公司',
-        amount: 50000,
-        content: '',
-        status: 'DRAFT',
-        isAiGenerated: true,
-        creatorId: 1,
-        creatorName: '我',
-        createTime: '2025-12-01 10:30:00',
-        updateTime: '2025-12-01 10:30:00'
-      },
-      {
-        id: 2,
-        contractNo: 'HT-JS-20251202-002',
-        contractName: '某区5G网络建设合同',
-        contractType: 'NETWORK_CONSTRUCTION',
-        partyA: '中国电信股份有限公司',
-        partyB: '华为技术有限公司',
-        amount: 8000000,
-        content: '',
-        status: 'PENDING',
-        isAiGenerated: false,
-        creatorId: 1,
-        creatorName: '我',
-        createTime: '2025-12-02 14:20:00',
-        updateTime: '2025-12-03 09:15:00'
-      }
-    ]
-    total.value = 2
+    console.log('[MyContracts] 合同数量:', tableData.value.length, '总数:', total.value)
+  } catch (err) {
+    console.error('[MyContracts] 加载失败:', err)
+    ElMessage.error('加载失败')
   } finally {
     loading.value = false
   }
@@ -122,8 +101,11 @@ const handleSubmit = async (row: Contract) => {
     await submitContract(row.id)
     ElMessage.success('已提交审批')
     loadData()
-  } catch {
-    // 取消或失败
+  } catch (err: any) {
+    if (err !== 'cancel') {
+      console.error(err)
+      ElMessage.error(err.message || '提交失败')
+    }
   }
 }
 
@@ -176,36 +158,44 @@ const handleDelete = async (id: number) => {
       <el-table-column prop="contractNo" label="合同编号" width="200" />
       <el-table-column prop="contractName" label="合同名称" min-width="200">
         <template #default="{ row }">
+          <!-- 这里的 row.name 是后端返回的字段名，之前mock用contractName -->
           <el-link type="primary" @click="goToDetail(row.id)">
-            {{ row.contractName }}
+            {{ row.name || row.contractName }}
           </el-link>
           <el-tag v-if="row.isAiGenerated" size="small" type="success" style="margin-left: 8px">
             AI
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="contractType" label="类型" width="100">
+      <el-table-column prop="contractType" label="类型" width="140">
         <template #default="{ row }">
-          {{ contractTypeMap[row.contractType] }}
+          <!-- 后端返回 type，之前mock用contractType -->
+          {{ contractTypeMap[row.type || row.contractType] || row.type }}
         </template>
       </el-table-column>
       <el-table-column prop="amount" label="金额" width="140" align="right">
         <template #default="{ row }">
-          <span class="amount">¥{{ row.amount.toLocaleString() }}</span>
+          <span class="amount">¥{{ (row.amount || 0).toLocaleString() }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="statusMap[row.status]?.type as any">
-            {{ statusMap[row.status]?.text }}
+          <el-tag :type="statusMap[row.status]?.type || 'info'">
+            {{ statusMap[row.status]?.text || '未知' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="updateTime" label="更新时间" width="180" />
+      <el-table-column prop="updatedAt" label="更新时间" width="180">
+        <template #default="{ row }">
+          <!-- 后端返回 updatedAt，之前mock用 updateTime -->
+          {{ row.updatedAt ? new Date(row.updatedAt).toLocaleString() : (row.updateTime || '-') }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="goToDetail(row.id)">查看</el-button>
-          <template v-if="row.status === 'DRAFT'">
+          <!-- 只有草稿(0)或已驳回(3)可以编辑删除 -->
+          <template v-if="row.status === 0 || row.status === 3">
             <el-button type="primary" link @click="goToEdit(row.id)">编辑</el-button>
             <el-button type="success" link @click="handleSubmit(row)">提交</el-button>
             <el-button type="danger" link @click="handleDelete(row.id)">删除</el-button>
@@ -227,13 +217,6 @@ const handleDelete = async (id: number) => {
   </div>
 </template>
 
-<script lang="ts">
-import { Plus } from '@element-plus/icons-vue'
-export default {
-  components: { Plus }
-}
-</script>
-
 <style scoped>
 .filter-bar {
   margin-bottom: 20px;
@@ -250,4 +233,3 @@ export default {
   color: #f56c6c;
 }
 </style>
-

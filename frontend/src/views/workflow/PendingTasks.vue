@@ -19,7 +19,18 @@ const contractTypeMap: Record<string, string> = {
   'STATION_LEASE': '基站租赁',
   'NETWORK_CONSTRUCTION': '网络建设',
   'EQUIPMENT_PURCHASE': '设备采购',
-  'MAINTENANCE_SERVICE': '运维服务'
+  'MAINTENANCE_SERVICE': '运维服务',
+  // 场景审批的合同类型
+  'A1': '土建工程',
+  'A2': '装修工程',
+  'A3': '零星维修',
+  'B1': '光缆代维',
+  'B2': '基站代维',
+  'B3': '家宽代维',
+  'B4': '应急保障',
+  'C1': '定制开发',
+  'C2': '软件采购',
+  'C3': 'DICT集成'
 }
 
 onMounted(() => {
@@ -30,59 +41,14 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getMyPendingTasks(queryParams)
-    tableData.value = res.data?.records || []
-    total.value = res.data?.total || 0
-  } catch {
-    // 模拟数据
-    tableData.value = [
-      {
-        id: 1,
-        instanceId: 1,
-        nodeId: 2,
-        nodeName: '部门经理审批',
-        approverId: 1,
-        approverName: '当前用户',
-        status: 'PENDING',
-        contractId: 1,
-        contractName: '某大厦5G基站租赁合同',
-        contractNo: 'HT-ZL-20251201-001',
-        contractType: 'STATION_LEASE',
-        initiatorName: '张三',
-        createTime: '2025-12-01 10:30:00'
-      },
-      {
-        id: 2,
-        instanceId: 2,
-        nodeId: 3,
-        nodeName: '法务审核',
-        approverId: 1,
-        approverName: '当前用户',
-        status: 'PENDING',
-        parallelGroupId: 'pg-001',
-        contractId: 2,
-        contractName: '某区5G网络建设合同',
-        contractNo: 'HT-JS-20251202-002',
-        contractType: 'NETWORK_CONSTRUCTION',
-        initiatorName: '李四',
-        createTime: '2025-12-02 14:20:00'
-      },
-      {
-        id: 3,
-        instanceId: 3,
-        nodeId: 2,
-        nodeName: '采购部门审核',
-        approverId: 1,
-        approverName: '当前用户',
-        status: 'PENDING',
-        contractId: 3,
-        contractName: '通信设备采购合同',
-        contractNo: 'HT-SB-20251203-003',
-        contractType: 'EQUIPMENT_PURCHASE',
-        initiatorName: '王五',
-        createTime: '2025-12-03 09:15:00'
-      }
-    ]
-    total.value = 3
+    // 后端直接返回数组，不是分页对象
+    const tasks = res.data || []
+    tableData.value = tasks
+    total.value = tasks.length
+  } catch (error) {
+    console.error('加载待办任务失败:', error)
+    tableData.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -118,10 +84,10 @@ const goToContractDetail = (id: number) => {
       >
         <div class="task-header">
           <div class="task-title">
-            <el-tag size="small">{{ contractTypeMap[task.contractType] }}</el-tag>
-            <span class="contract-name">{{ task.contractName }}</span>
+            <el-tag size="small">{{ contractTypeMap[task.contractType] || task.contractType || '合同' }}</el-tag>
+            <span class="contract-name">{{ task.contractName || '未知合同' }}</span>
           </div>
-          <el-tag type="warning">{{ task.nodeName }}</el-tag>
+          <el-tag type="warning">{{ task.nodeName || '审批节点' }}</el-tag>
         </div>
         
         <div class="task-info">

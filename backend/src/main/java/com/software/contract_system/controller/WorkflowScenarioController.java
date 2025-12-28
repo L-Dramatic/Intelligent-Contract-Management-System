@@ -105,6 +105,30 @@ public class WorkflowScenarioController {
     // ========== 流程实例相关 ==========
     
     /**
+     * 获取我发起的流程实例列表
+     */
+    @GetMapping("/instances/my")
+    @Operation(summary = "我发起的", description = "获取当前用户发起的所有审批流程")
+    public Result<List<WfInstance>> getMyInitiatedInstances() {
+        Long userId = securityUtils.getCurrentUserId();
+        List<WfInstance> instances = workflowScenarioService.getMyInitiatedInstances(userId);
+        return Result.success(instances);
+    }
+    
+    /**
+     * 获取任务详情（包含合同信息）
+     */
+    @GetMapping("/tasks/{taskId}/detail")
+    @Operation(summary = "获取任务详情", description = "获取审批任务的详细信息")
+    public Result<WfTask> getTaskDetail(@PathVariable Long taskId) {
+        WfTask task = workflowScenarioService.getTaskDetail(taskId);
+        if (task == null) {
+            return Result.error("任务不存在");
+        }
+        return Result.success(task);
+    }
+    
+    /**
      * 获取合同的审批进度
      */
     @GetMapping("/contract/{contractId}/progress")

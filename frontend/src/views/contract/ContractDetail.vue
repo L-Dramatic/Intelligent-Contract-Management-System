@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Contract, AiReviewResult, ApprovalTask } from '@/types'
 import { getContractDetail, submitContract, aiReviewContract } from '@/api/contract'
 import { getInstanceHistory } from '@/api/workflow'
+import { getChangeHistory, type ContractChangeVO } from '@/api/contractChange'
 
 const router = useRouter()
 const route = useRoute()
@@ -17,6 +18,7 @@ const reviewing = ref(false)
 const contract = ref<Contract | null>(null)
 const reviewResult = ref<AiReviewResult | null>(null)
 const approvalHistory = ref<ApprovalTask[]>([])
+const changeHistory = ref<ContractChangeVO[]>([])
 
 const activeTab = ref('content')
 
@@ -48,59 +50,12 @@ const loadContract = async () => {
     if (contract.value?.status !== 'DRAFT') {
       loadApprovalHistory()
     }
+    
+    // 加载变更历史
+    loadChangeHistory()
   } catch (error) {
-    // 模拟数据
-    contract.value = {
-      id: contractId.value,
-      contractNo: 'HT-ZL-20251201-001',
-      contractName: '某大厦5G基站租赁合同',
-      contractType: 'STATION_LEASE',
-      partyA: '中国电信股份有限公司',
-      partyB: 'XX物业管理公司',
-      amount: 50000,
-      status: 'DRAFT',
-      isAiGenerated: true,
-      creatorId: 1,
-      creatorName: '张三',
-      createTime: '2025-12-01 10:30:00',
-      updateTime: '2025-12-01 10:30:00',
-      siteLocation: '北京市朝阳区某大厦楼顶',
-      siteType: '楼顶',
-      siteArea: 100,
-      annualRent: 50000,
-      leaseStartDate: '2025-01-01',
-      leaseEndDate: '2034-12-31',
-      content: `基站租赁合同
-
-甲方：中国电信股份有限公司
-乙方：XX物业管理公司
-
-第一条 租赁标的
-乙方同意将位于北京市朝阳区某大厦楼顶约100平方米的场地出租给甲方，用于建设和运营移动通信基站。
-
-第二条 租赁期限
-租赁期限为10年，自2025年1月1日起至2034年12月31日止。
-
-第三条 租金及支付方式
-1. 年租金为人民币伍万元整（¥50,000）
-2. 租金按年支付，甲方应于每年1月15日前支付当年租金
-
-第四条 甲方权利与义务
-1. 甲方有权在租赁场地内建设、维护通信基站及配套设施
-2. 甲方应确保基站运行符合国家电磁辐射安全标准
-3. 甲方应承担基站运行所需的水电费用
-
-第五条 乙方权利与义务
-1. 乙方应保证甲方人员可24小时进入场地进行设备维护
-2. 乙方不得擅自切断基站供电
-3. 乙方应协助甲方完成应急通信保障任务
-
-第六条 违约责任
-任何一方违反本合同约定，应向对方支付违约金人民币壹万元整。
-
-第七条 争议解决
-本合同发生争议，双方应协商解决；协商不成的，提交甲方所在地人民法院诉讼解决。`
-    }
+    console.error(error)
+    ElMessage.error('加载合同详情失败')
   } finally {
     loading.value = false
   }
@@ -110,27 +65,19 @@ const loadApprovalHistory = async () => {
   try {
     const res = await getInstanceHistory(contractId.value)
     approvalHistory.value = res.data || []
+  } catch (error) {
+    console.error(error)
+    // 审批历史加载失败不影响主详情显示
+  }
+}
+
+const loadChangeHistory = async () => {
+  try {
+    const res = await getChangeHistory(contractId.value)
+    changeHistory.value = res.data || []
   } catch {
-    // 模拟审批历史
-    approvalHistory.value = [
-      {
-        id: 1,
-        instanceId: 1,
-        nodeId: 1,
-        nodeName: '发起申请',
-        approverId: 1,
-        approverName: '张三',
-        status: 'APPROVED',
-        opinion: '提交审批',
-        approvalTime: '2025-12-01 10:30:00',
-        contractId: contractId.value,
-        contractName: '',
-        contractNo: '',
-        contractType: 'STATION_LEASE',
-        initiatorName: '张三',
-        createTime: '2025-12-01 10:30:00'
-      }
-    ]
+    // 获取变更历史失败时不显示错误，保持空列表
+    changeHistory.value = []
   }
 }
 
@@ -203,6 +150,10 @@ const goBack = () => {
   router.back()
 }
 
+const goToChange = () => {
+  router.push(`/contract/change/create/${contractId.value}`)
+}
+
 const getRiskLevelInfo = (level: string) => {
   const map: Record<string, { text: string; type: string; color: string }> = {
     'LOW': { text: '低风险', type: 'success', color: '#52c41a' },
@@ -254,6 +205,14 @@ const getRiskLevelInfo = (level: string) => {
         >
           <el-icon><Promotion /></el-icon>
           提交审批
+        </el-button>
+        <el-button 
+          v-if="contract?.status === 'APPROVED'" 
+          type="warning"
+          @click="goToChange"
+        >
+          <el-icon><EditPen /></el-icon>
+          发起变更
         </el-button>
       </div>
     </div>
@@ -429,24 +388,65 @@ const getRiskLevelInfo = (level: string) => {
             <el-timeline-item
               v-for="item in approvalHistory"
               :key="item.id"
-              :timestamp="item.approvalTime || item.createTime"
-              :type="item.status === 'APPROVED' ? 'success' : item.status === 'REJECTED' ? 'danger' : 'primary'"
+              :timestamp="item.createTime"
+              :type="item.status === 1 ? 'success' : item.status === 2 ? 'danger' : 'primary'"
               placement="top"
             >
               <el-card>
                 <div class="timeline-content">
                   <div class="timeline-header">
-                    <span class="node-name">{{ item.nodeName }}</span>
-                    <el-tag :type="item.status === 'APPROVED' ? 'success' : 'warning'" size="small">
-                      {{ item.status === 'APPROVED' ? '已通过' : item.status === 'REJECTED' ? '已驳回' : '待处理' }}
+                    <span class="node-name">{{ item.nodeName || '审批节点' }}</span>
+                    <el-tag :type="item.status === 1 ? 'success' : item.status === 2 ? 'danger' : 'warning'" size="small">
+                      {{ item.status === 1 ? '已通过' : item.status === 2 ? '已驳回' : '待处理' }}
                     </el-tag>
                   </div>
                   <div class="timeline-info">
-                    <span>处理人：{{ item.approverName }}</span>
+                    <span>处理人：{{ item.assigneeName || '待分配' }}</span>
                   </div>
-                  <div v-if="item.opinion" class="timeline-opinion">
-                    审批意见：{{ item.opinion }}
+                  <div v-if="item.comment" class="timeline-opinion">
+                    审批意见：{{ item.comment }}
                   </div>
+                </div>
+              </el-card>
+            </el-timeline-item>
+          </el-timeline>
+        </div>
+      </el-tab-pane>
+      
+      <!-- 变更历史 -->
+      <el-tab-pane label="变更历史" name="changes" :disabled="contract?.status === 'DRAFT'">
+        <div class="change-history">
+          <el-empty v-if="changeHistory.length === 0" description="暂无变更记录" />
+          <el-timeline v-else>
+            <el-timeline-item
+              v-for="item in changeHistory"
+              :key="item.id"
+              :timestamp="item.createdAt"
+              :type="item.status === 2 ? 'success' : item.status === 3 ? 'danger' : 'warning'"
+              placement="top"
+            >
+              <el-card>
+                <div class="change-item">
+                  <div class="change-header">
+                    <span class="change-title">{{ item.title }}</span>
+                    <el-tag v-if="item.isMajorChange" type="danger" size="small">重大变更</el-tag>
+                    <el-tag :type="item.status === 2 ? 'success' : item.status === 3 ? 'danger' : 'warning'" size="small">
+                      {{ item.statusName }}
+                    </el-tag>
+                  </div>
+                  <div class="change-info">
+                    <span>变更单号：{{ item.changeNo }}</span>
+                    <span>版本：{{ item.changeVersion }}</span>
+                    <span>类型：{{ item.changeTypeName }}</span>
+                  </div>
+                  <div v-if="item.amountDiff" class="change-amount">
+                    金额变化：
+                    <span :class="item.amountDiff > 0 ? 'increase' : 'decrease'">
+                      {{ item.amountDiff > 0 ? '+' : '' }}{{ item.amountDiff.toLocaleString() }}元
+                      ({{ item.changePercent?.toFixed(1) || 0 }}%)
+                    </span>
+                  </div>
+                  <div class="change-desc">{{ item.description }}</div>
                 </div>
               </el-card>
             </el-timeline-item>
@@ -458,9 +458,9 @@ const getRiskLevelInfo = (level: string) => {
 </template>
 
 <script lang="ts">
-import { ArrowLeft, MagicStick, Edit, Promotion, CircleCheck, Check } from '@element-plus/icons-vue'
+import { ArrowLeft, MagicStick, Edit, EditPen, Promotion, CircleCheck, Check } from '@element-plus/icons-vue'
 export default {
-  components: { ArrowLeft, MagicStick, Edit, Promotion, CircleCheck, Check }
+  components: { ArrowLeft, MagicStick, Edit, EditPen, Promotion, CircleCheck, Check }
 }
 </script>
 
@@ -634,6 +634,57 @@ export default {
   border-radius: 4px;
   font-size: 13px;
   color: #606266;
+}
+
+/* 变更历史样式 */
+.change-history {
+  padding: 20px;
+}
+
+.change-item {
+  .change-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    
+    .change-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+  }
+  
+  .change-info {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: #909399;
+    margin-bottom: 8px;
+  }
+  
+  .change-amount {
+    font-size: 14px;
+    margin-bottom: 8px;
+    
+    .increase {
+      color: #f56c6c;
+      font-weight: 600;
+    }
+    
+    .decrease {
+      color: #67c23a;
+      font-weight: 600;
+    }
+  }
+  
+  .change-desc {
+    padding: 10px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #606266;
+    line-height: 1.6;
+  }
 }
 </style>
 

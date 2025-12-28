@@ -273,6 +273,42 @@ async def websocket_chat(websocket: WebSocket, user_id: str):
             del active_connections[user_id]
 
 
+@app.post("/api/chat")
+async def chat(request: dict):
+    """
+    通用对话接口（用于后端AIChatService调用）
+    
+    请求体：
+    {
+        "prompt": "用户的问题或指令",
+        "max_tokens": 2000
+    }
+    """
+    prompt = request.get("prompt", "")
+    max_tokens = request.get("max_tokens", 2000)
+    
+    if not prompt:
+        return {"error": "prompt is required"}
+    
+    try:
+        # 调用通义千问
+        response = Generation.call(
+            model='qwen-turbo',
+            api_key=API_KEY,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=0.7
+        )
+        
+        if response.status_code == 200:
+            return response.output.text
+        else:
+            return f"AI服务调用失败: {response.message}"
+    except Exception as e:
+        print(f"[AI Chat Error] {e}")
+        return f"AI服务异常: {str(e)}"
+
+
 @app.post("/api/generate")
 async def generate_clause(request: dict):
     """

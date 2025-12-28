@@ -90,4 +90,14 @@ public interface WorkflowScenarioService {
      * 获取合同匹配的审批场景详情（包含节点列表）
      */
     WfScenarioConfig getMatchedScenario(Contract contract);
+    
+    /**
+     * 获取用户发起的流程实例列表
+     */
+    List<WfInstance> getMyInitiatedInstances(Long userId);
+    
+    /**
+     * 获取任务详情（包含合同信息）
+     */
+    WfTask getTaskDetail(Long taskId);
 }

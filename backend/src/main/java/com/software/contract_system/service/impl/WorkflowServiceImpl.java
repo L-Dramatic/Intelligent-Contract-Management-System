@@ -5,6 +5,7 @@ import com.software.contract_system.dto.ApproveDTO;
 import com.software.contract_system.dto.PreFlightCheckResult;
 import com.software.contract_system.entity.*;
 import com.software.contract_system.mapper.*;
+import com.software.contract_system.entity.ContractChange;
 import com.software.contract_system.service.ContractReviewRuleEngine;
 import com.software.contract_system.service.ContractReviewService;
 import com.software.contract_system.service.ScenarioMatchService;
@@ -219,6 +220,9 @@ public class WorkflowServiceImpl implements WorkflowService {
      * 【新版引擎】处理审批
      */
     private void handleApprovalScenario(ApproveDTO dto, WfInstance instance, Contract contract) {
+        // 判断是合同审批还是变更审批
+        boolean isChangeApproval = "CONTRACT_CHANGE".equals(instance.getRemark());
+        
         if (dto.getPass()) {
             // --- 通过：流转到下一节点 ---
             SysUser requester = userMapper.selectById(instance.getRequesterId());
@@ -231,10 +235,22 @@ public class WorkflowServiceImpl implements WorkflowService {
             instance.setEndTime(LocalDateTime.now());
             instanceMapper.updateById(instance);
             
-            contract.setStatus(3); // 合同驳回
-            contractMapper.updateById(contract);
-            
-            log.info("【新版引擎】合同审批被驳回: contractId={}", contract.getId());
+            if (isChangeApproval) {
+                // 变更审批驳回：更新变更状态
+                if (contractChangeMapper != null) {
+                    ContractChange change = contractChangeMapper.selectById(instance.getContractId());
+                    if (change != null) {
+                        change.setStatus(3); // 变更已驳回
+                        contractChangeMapper.updateById(change);
+                        log.info("【新版引擎】变更审批被驳回: changeId={}", change.getId());
+                    }
+                }
+            } else {
+                // 合同审批驳回：更新合同状态
+                contract.setStatus(3); // 合同驳回
+                contractMapper.updateById(contract);
+                log.info("【新版引擎】合同审批被驳回: contractId={}", contract.getId());
+            }
         }
     }
 
@@ -287,13 +303,22 @@ public class WorkflowServiceImpl implements WorkflowService {
             instance.setEndTime(LocalDateTime.now());
             instanceMapper.updateById(instance);
             
-            // 更新合同状态 -> 已生效(2)
-            Contract contract = contractMapper.selectById(instance.getContractId());
-            contract.setStatus(2);
-            contractMapper.updateById(contract);
+            // 判断是合同审批还是变更审批
+            boolean isChangeApproval = "CONTRACT_CHANGE".equals(instance.getRemark());
             
-            log.info("【新版引擎】流程完成: instanceId={}, scenarioId={}", 
-                    instance.getId(), scenarioId);
+            if (isChangeApproval) {
+                // 变更审批完成：调用回调处理
+                onChangeApproved(instance.getContractId()); // contractId 实际存的是 changeId
+                log.info("【新版引擎】变更审批流程完成: changeId={}, scenarioId={}", 
+                        instance.getContractId(), scenarioId);
+            } else {
+                // 合同审批完成：更新合同状态 -> 已生效(2)
+                Contract contract = contractMapper.selectById(instance.getContractId());
+                contract.setStatus(2);
+                contractMapper.updateById(contract);
+                log.info("【新版引擎】合同审批流程完成: contractId={}, scenarioId={}", 
+                        instance.getContractId(), scenarioId);
+            }
             return;
         }
         
@@ -418,5 +443,157 @@ public class WorkflowServiceImpl implements WorkflowService {
             default:
                 return null; // 未知类型，将使用兜底场景
         }
+    }
+
+    // ==========================================
+    // 4. 合同变更审批相关方法
+    // ==========================================
+    
+    @Autowired(required = false)
+    private ContractChangeMapper contractChangeMapper;
+
+    /**
+     * 启动合同变更审批流程
+     * 
+     * 【重要修改】变更审批现在使用与原合同相同的审批流程
+     * 根据原合同的类型和金额匹配审批场景
+     */
+    @Override
+    @Transactional
+    public Long startContractChangeWorkflow(Long changeId, String contractType, Boolean isMajorChange, Long userId) {
+        log.info("启动变更审批流程: changeId={}, contractType={}, isMajorChange={}", 
+                changeId, contractType, isMajorChange);
+        
+        // 获取变更申请信息
+        ContractChange change = contractChangeMapper.selectById(changeId);
+        if (change == null) {
+            throw new RuntimeException("变更申请不存在");
+        }
+        
+        // 获取原合同信息
+        Contract contract = contractMapper.selectById(change.getContractId());
+        if (contract == null) {
+            throw new RuntimeException("原合同不存在");
+        }
+        
+        // ★★★ 使用与合同审批相同的场景匹配逻辑 ★★★
+        // 根据原合同的子类型和金额匹配审批场景
+        String subTypeCode = extractSubTypeCode(contract);
+        BigDecimal amount = contract.getAmount() != null ? contract.getAmount() : BigDecimal.ZERO;
+        
+        // 如果变更涉及金额变化，使用变更后的新金额来匹配场景
+        if (change.getAmountDiff() != null && change.getAmountDiff().compareTo(BigDecimal.ZERO) != 0) {
+            // 使用变更后的金额（原金额 + 变更差额）
+            amount = amount.add(change.getAmountDiff());
+            log.info("变更涉及金额变化，使用变更后金额匹配场景: 原金额={}, 变更差额={}, 新金额={}", 
+                    contract.getAmount(), change.getAmountDiff(), amount);
+        }
+        
+        WfScenarioConfig scenario = scenarioMatchService.matchScenario(subTypeCode, amount);
+        
+        // 如果没有匹配到场景，使用兜底场景
+        if (scenario == null) {
+            log.warn("未匹配到变更审批场景，使用兜底流程: subTypeCode={}, amount={}", subTypeCode, amount);
+            scenario = scenarioMatchService.getScenarioWithNodes(FALLBACK_SCENARIO_ID);
+            if (scenario == null) {
+                throw new RuntimeException("系统错误：未找到审批流程配置");
+            }
+        }
+        
+        log.info("变更审批匹配场景成功: scenarioId={}, subTypeName={}", 
+                scenario.getScenarioId(), scenario.getSubTypeName());
+        
+        // 创建流程实例
+        WfInstance instance = new WfInstance();
+        instance.setScenarioId(scenario.getScenarioId());
+        instance.setContractId(changeId);  // 这里存储的是变更申请ID
+        instance.setCurrentNodeOrder(1);
+        instance.setStatus(WfInstance.STATUS_RUNNING);
+        instance.setRequesterId(userId);
+        instance.setStartTime(LocalDateTime.now());
+        // 标记这是变更审批流程
+        instance.setRemark("CONTRACT_CHANGE");
+        instanceMapper.insert(instance);
+        
+        // 获取发起人部门
+        SysUser requester = userMapper.selectById(userId);
+        Long initiatorDeptId = requester != null ? requester.getDeptId() : null;
+        
+        // 流转到第一个审批节点
+        toNextNodeScenario(instance, initiatorDeptId);
+        
+        log.info("变更审批流程启动成功: changeId={}, instanceId={}", changeId, instance.getId());
+        return instance.getId();
+    }
+
+    /**
+     * 终止流程实例
+     */
+    @Override
+    @Transactional
+    public void terminateInstance(Long instanceId, String reason) {
+        log.info("终止流程实例: instanceId={}, reason={}", instanceId, reason);
+        
+        WfInstance instance = instanceMapper.selectById(instanceId);
+        if (instance == null) {
+            throw new RuntimeException("流程实例不存在");
+        }
+        
+        if (instance.getStatus() != WfInstance.STATUS_RUNNING) {
+            log.warn("流程实例已结束，无需终止: instanceId={}, status={}", instanceId, instance.getStatus());
+            return;
+        }
+        
+        // 更新实例状态
+        instance.setStatus(WfInstance.STATUS_TERMINATED);
+        instance.setEndTime(LocalDateTime.now());
+        instance.setRemark(reason);
+        instanceMapper.updateById(instance);
+        
+        // 取消所有待处理的任务
+        LambdaQueryWrapper<WfTask> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(WfTask::getInstanceId, instanceId)
+               .eq(WfTask::getStatus, WfTask.STATUS_PENDING);
+        
+        List<WfTask> pendingTasks = taskMapper.selectList(wrapper);
+        for (WfTask task : pendingTasks) {
+            task.setStatus(WfTask.STATUS_CANCELLED);
+            task.setComment("流程被终止: " + reason);
+            task.setFinishTime(LocalDateTime.now());
+            taskMapper.updateById(task);
+        }
+        
+        log.info("流程实例已终止: instanceId={}, 取消任务数={}", instanceId, pendingTasks.size());
+    }
+
+    /**
+     * 变更审批通过回调
+     * 在审批流程完成时，自动应用变更到合同
+     */
+    @Override
+    @Transactional
+    public void onChangeApproved(Long changeId) {
+        log.info("变更审批通过回调: changeId={}", changeId);
+        
+        if (contractChangeMapper == null) {
+            log.error("ContractChangeMapper未注入，无法处理变更回调");
+            return;
+        }
+        
+        ContractChange change = contractChangeMapper.selectById(changeId);
+        if (change == null) {
+            log.error("变更申请不存在: changeId={}", changeId);
+            return;
+        }
+        
+        // 更新变更状态为已通过
+        change.setStatus(2);  // 已通过
+        change.setApprovedAt(LocalDateTime.now());
+        contractChangeMapper.updateById(change);
+        
+        log.info("变更已标记为通过: changeId={}", changeId);
+        
+        // 注意：实际应用变更到合同的操作由 ContractChangeService.applyChange 方法完成
+        // 这里只是更新变更状态
     }
 }

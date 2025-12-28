@@ -17,17 +17,19 @@ const queryParams = reactive({
 })
 
 const statusOptions = [
-  { label: '进行中', value: 'RUNNING' },
-  { label: '已完成', value: 'COMPLETED' },
-  { label: '已驳回', value: 'REJECTED' },
-  { label: '已终止', value: 'TERMINATED' }
+  { label: '进行中', value: 1 },
+  { label: '已完成', value: 2 },
+  { label: '已驳回', value: 3 },
+  { label: '已终止', value: 5 }
 ]
 
-const statusMap: Record<string, { text: string; type: string }> = {
-  'RUNNING': { text: '进行中', type: 'primary' },
-  'COMPLETED': { text: '已完成', type: 'success' },
-  'REJECTED': { text: '已驳回', type: 'danger' },
-  'TERMINATED': { text: '已终止', type: 'info' }
+// 状态映射：后端返回数字状态
+const statusMap: Record<number, { text: string; type: string }> = {
+  1: { text: '进行中', type: 'primary' },
+  2: { text: '已完成', type: 'success' },
+  3: { text: '已驳回', type: 'danger' },
+  4: { text: '已撤销', type: 'info' },
+  5: { text: '已终止', type: 'info' }
 }
 
 onMounted(() => {
@@ -38,50 +40,14 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await getInstanceList(queryParams)
-    tableData.value = res.data?.records || []
-    total.value = res.data?.total || 0
-  } catch {
-    // 模拟数据
-    tableData.value = [
-      {
-        id: 1,
-        workflowDefinitionId: 1,
-        contractId: 1,
-        contractName: '某大厦5G基站租赁合同',
-        currentNodeId: 2,
-        currentNodeName: '部门经理审批',
-        status: 'RUNNING',
-        initiatorId: 1,
-        initiatorName: '当前用户',
-        startTime: '2025-12-01 10:30:00'
-      },
-      {
-        id: 2,
-        workflowDefinitionId: 2,
-        contractId: 2,
-        contractName: '某区5G网络建设合同',
-        currentNodeId: 4,
-        currentNodeName: '分管领导审批',
-        status: 'RUNNING',
-        initiatorId: 1,
-        initiatorName: '当前用户',
-        startTime: '2025-12-02 14:20:00'
-      },
-      {
-        id: 10,
-        workflowDefinitionId: 1,
-        contractId: 10,
-        contractName: '某商场基站租赁合同',
-        currentNodeId: 5,
-        currentNodeName: '结束',
-        status: 'COMPLETED',
-        initiatorId: 1,
-        initiatorName: '当前用户',
-        startTime: '2025-11-30 10:00:00',
-        endTime: '2025-12-01 16:00:00'
-      }
-    ]
-    total.value = 3
+    // 后端返回数组
+    const instances = res.data || []
+    tableData.value = instances
+    total.value = instances.length
+  } catch (error) {
+    console.error('加载我发起的流程失败:', error)
+    tableData.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -137,10 +103,10 @@ const goToContractDetail = (id: number) => {
       </el-table-column>
       <el-table-column prop="currentNodeName" label="当前环节" width="140">
         <template #default="{ row }">
-          <el-tag v-if="row.status === 'RUNNING'" type="warning">
-            {{ row.currentNodeName }}
+          <el-tag v-if="row.status === 1" type="warning">
+            {{ row.currentNodeName || '审批中' }}
           </el-tag>
-          <span v-else>{{ row.currentNodeName }}</span>
+          <span v-else>{{ row.currentNodeName || '结束' }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="100" align="center">

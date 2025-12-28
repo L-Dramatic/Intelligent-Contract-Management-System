@@ -82,15 +82,15 @@ export function saveWorkflowTransitions(workflowId: number, transitions: Partial
 
 // ==================== 流程实例管理 ====================
 
-// 获取流程实例列表
+// 获取我发起的流程实例列表
 export function getInstanceList(params: { 
   status?: string
   contractId?: number
   pageNum: number
   pageSize: number 
 }) {
-  return request<PageResult<WorkflowInstance>>({
-    url: '/workflow/instance/list',
+  return request<WorkflowInstance[]>({
+    url: '/workflow/scenario/instances/my',
     method: 'get',
     params
   })
@@ -107,7 +107,7 @@ export function getInstanceDetail(id: number) {
 // 获取流程实例的审批历史
 export function getInstanceHistory(id: number) {
   return request<ApprovalTask[]>({
-    url: `/workflow/instance/${id}/history`,
+    url: `/workflow/scenario/contract/${id}/history`,
     method: 'get'
   })
 }
@@ -115,7 +115,7 @@ export function getInstanceHistory(id: number) {
 // 终止流程实例
 export function terminateInstance(id: number, reason: string) {
   return request({
-    url: `/workflow/instance/${id}/terminate`,
+    url: `/workflow/scenario/instance/${id}/cancel`,
     method: 'post',
     data: { reason }
   })
@@ -125,8 +125,8 @@ export function terminateInstance(id: number, reason: string) {
 
 // 获取我的待办任务
 export function getMyPendingTasks(params: { pageNum: number; pageSize: number }) {
-  return request<PageResult<ApprovalTask>>({
-    url: '/workflow/task/pending',
+  return request<ApprovalTask[]>({
+    url: '/workflow/scenario/tasks/pending',
     method: 'get',
     params
   })
@@ -134,8 +134,8 @@ export function getMyPendingTasks(params: { pageNum: number; pageSize: number })
 
 // 获取我的已办任务
 export function getMyCompletedTasks(params: { pageNum: number; pageSize: number }) {
-  return request<PageResult<ApprovalTask>>({
-    url: '/workflow/task/completed',
+  return request<ApprovalTask[]>({
+    url: '/workflow/scenario/tasks/completed',
     method: 'get',
     params
   })
@@ -144,7 +144,7 @@ export function getMyCompletedTasks(params: { pageNum: number; pageSize: number 
 // 获取任务详情
 export function getTaskDetail(id: number) {
   return request<ApprovalTask>({
-    url: `/workflow/task/${id}`,
+    url: `/workflow/scenario/tasks/${id}/detail`,
     method: 'get'
   })
 }
@@ -152,18 +152,18 @@ export function getTaskDetail(id: number) {
 // 审批通过
 export function approveTask(id: number, opinion: string) {
   return request({
-    url: `/workflow/task/${id}/approve`,
+    url: `/workflow/scenario/tasks/${id}/approve`,
     method: 'post',
-    data: { opinion }
+    data: { comment: opinion }
   })
 }
 
 // 审批驳回
 export function rejectTask(id: number, opinion: string) {
   return request({
-    url: `/workflow/task/${id}/reject`,
+    url: `/workflow/scenario/tasks/${id}/reject`,
     method: 'post',
-    data: { opinion }
+    data: { comment: opinion }
   })
 }
 

@@ -120,8 +120,9 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
     }
 
     @Override
-    public IPage<Contract> getMyContracts(int pageNum, int pageSize) {
+    public IPage<Contract> getMyContracts(int pageNum, int pageSize, Integer status) {
         Long currentUserId = securityUtils.getCurrentUserId();
+        System.out.println("[getMyContracts] 当前用户ID: " + currentUserId + ", 状态筛选: " + status);
         
         Page<Contract> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Contract> wrapper = new LambdaQueryWrapper<>();
@@ -129,10 +130,21 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
         // 只查询当前用户创建的合同
         wrapper.eq(Contract::getCreatorId, currentUserId);
         
+        // 状态筛选
+        if (status != null) {
+            wrapper.eq(Contract::getStatus, status);
+        }
+        
         // 按创建时间倒序
         wrapper.orderByDesc(Contract::getCreatedAt);
         
-        return this.page(page, wrapper);
+        IPage<Contract> result = this.page(page, wrapper);
+        System.out.println("[getMyContracts] 查询到 " + result.getRecords().size() + " 条合同，总数: " + result.getTotal());
+        for (Contract c : result.getRecords()) {
+            System.out.println("  - ID:" + c.getId() + " 名称:" + c.getName() + " 状态:" + c.getStatus());
+        }
+        
+        return result;
     }
 
     @Override

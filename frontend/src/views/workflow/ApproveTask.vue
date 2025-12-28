@@ -24,7 +24,17 @@ const contractTypeMap: Record<string, string> = {
   'STATION_LEASE': '基站租赁合同',
   'NETWORK_CONSTRUCTION': '网络建设合同',
   'EQUIPMENT_PURCHASE': '设备采购合同',
-  'MAINTENANCE_SERVICE': '运维服务合同'
+  'MAINTENANCE_SERVICE': '运维服务合同',
+  'A1': '土建工程合同',
+  'A2': '装修工程合同',
+  'A3': '零星维修合同',
+  'B1': '光缆代维合同',
+  'B2': '基站代维合同',
+  'B3': '家宽代维合同',
+  'B4': '应急保障合同',
+  'C1': '定制开发合同',
+  'C2': '软件采购合同',
+  'C3': 'DICT集成合同'
 }
 
 // 模拟可转签用户
@@ -44,56 +54,13 @@ const loadData = async () => {
     const taskRes = await getTaskDetail(taskId.value)
     task.value = taskRes.data
     
-    if (task.value) {
+    if (task.value && task.value.contractId) {
       const contractRes = await getContractDetail(task.value.contractId)
       contract.value = contractRes.data
     }
-  } catch {
-    // 模拟数据
-    task.value = {
-      id: taskId.value,
-      instanceId: 1,
-      nodeId: 2,
-      nodeName: '部门经理审批',
-      approverId: 1,
-      approverName: '当前用户',
-      status: 'PENDING',
-      contractId: 1,
-      contractName: '某大厦5G基站租赁合同',
-      contractNo: 'HT-ZL-20251201-001',
-      contractType: 'STATION_LEASE',
-      initiatorName: '张三',
-      createTime: '2025-12-01 10:30:00'
-    }
-    
-    contract.value = {
-      id: 1,
-      contractNo: 'HT-ZL-20251201-001',
-      contractName: '某大厦5G基站租赁合同',
-      contractType: 'STATION_LEASE',
-      partyA: '中国电信股份有限公司',
-      partyB: 'XX物业管理公司',
-      amount: 50000,
-      status: 'PENDING',
-      isAiGenerated: true,
-      creatorId: 1,
-      creatorName: '张三',
-      createTime: '2025-12-01 10:30:00',
-      updateTime: '2025-12-01 10:30:00',
-      siteLocation: '北京市朝阳区某大厦楼顶',
-      siteType: '楼顶',
-      siteArea: 100,
-      annualRent: 50000,
-      leaseStartDate: '2025-01-01',
-      leaseEndDate: '2034-12-31',
-      content: `基站租赁合同
-
-甲方：中国电信股份有限公司
-乙方：XX物业管理公司
-
-第一条 租赁标的
-乙方同意将位于北京市朝阳区某大厦楼顶约100平方米的场地出租给甲方...`
-    }
+  } catch (error) {
+    console.error('加载任务详情失败:', error)
+    ElMessage.error('加载任务详情失败')
   } finally {
     loading.value = false
   }

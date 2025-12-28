@@ -75,6 +75,19 @@ const routes: RouteRecordRaw[] = [
             name: 'ContractDraft',
             component: () => import('@/views/contract/ContractDraft.vue'),
             meta: { title: '起草合同' }
+          },
+          // 合同变更管理
+          {
+            path: 'change/list',
+            name: 'ContractChangeList',
+            component: () => import('@/views/contract/ContractChangeList.vue'),
+            meta: { title: '变更管理' }
+          },
+          {
+            path: 'change/create/:contractId',
+            name: 'ContractChangeCreate',
+            component: () => import('@/views/contract/ContractChangeCreate.vue'),
+            meta: { title: '发起变更' }
           }
         ]
       },
