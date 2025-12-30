@@ -30,15 +30,27 @@ class KnowledgeManager:
         self.collection_name = collection_name
         self.embedding_model_name = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         
-        # 初始化ChromaDB客户端
-        self.client = chromadb.PersistentClient(path=chroma_db_path)
+        # 初始化ChromaDB客户端（兼容0.3.x和0.4.x版本）
+        try:
+            # 尝试使用新版本API (0.4.x)
+            self.client = chromadb.PersistentClient(path=chroma_db_path)
+        except AttributeError:
+            # 使用旧版本API (0.3.x) - 需要设置持久化路径
+            import chromadb.config
+            settings = chromadb.config.Settings(
+                persist_directory=chroma_db_path,
+                chroma_db_impl="duckdb+parquet"
+            )
+            self.client = chromadb.Client(settings=settings)
         
         # 加载Embedding函数
         self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=self.embedding_model_name
         )
         
-        # 获取集合
+        # 获取集合（使用get_or_create_collection确保使用相同的embedding function）
+        # 注意：必须使用get_or_create_collection而不是get_collection，
+        # 因为chromadb 0.3.23需要embedding function来正确匹配已存在的集合
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             embedding_function=self.embedding_function

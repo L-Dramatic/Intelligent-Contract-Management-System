@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   // Windows PowerShell 示例：
   //   $env:VITE_BACKEND_URL="http://localhost:8081"
   const env = loadEnv(mode, process.cwd(), '')
-  const backendTarget = env.VITE_BACKEND_URL || 'http://localhost:8082'
+  const backendTarget = env.VITE_BACKEND_URL || 'http://localhost:8080'
 
   return {
     plugins: [vue(), vueDevTools()],

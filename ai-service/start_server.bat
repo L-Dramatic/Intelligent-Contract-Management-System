@@ -17,8 +17,7 @@ echo     测试页面: test_chat.html
 echo     按 Ctrl+C 停止服务
 echo.
 
-cd app
-python -m uvicorn main:app --host 0.0.0.0 --port 8765 --reload
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8765 --reload
 
 pause
 

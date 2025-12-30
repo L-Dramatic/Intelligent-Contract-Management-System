@@ -312,42 +312,4 @@ CREATE TABLE `sys_file` (
   PRIMARY KEY (`id`)
 ) COMMENT='文件存储表';
 
--- 3.17 合同审查报告表
-CREATE TABLE `t_contract_review` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `contract_id` bigint NOT NULL COMMENT '关联的合同ID',
-  `risk_level` varchar(20) DEFAULT NULL COMMENT '风险等级: LOW, MEDIUM, HIGH',
-  `score` int DEFAULT NULL COMMENT '综合评分 (0-100)',
-  `review_content` json DEFAULT NULL COMMENT '审查内容 (JSON格式)',
-  `review_type` varchar(20) DEFAULT NULL COMMENT '审查类型: AUTO(自动), MANUAL(手动)',
-  `rag_used` tinyint DEFAULT 0 COMMENT '是否使用了RAG检索',
-  `status` varchar(20) DEFAULT NULL COMMENT '审查状态: PENDING(进行中), COMPLETED(完成), FAILED(失败)',
-  `error_message` varchar(500) DEFAULT NULL COMMENT '错误信息(如果审查失败)',
-  `triggered_by` bigint DEFAULT NULL COMMENT '审查触发人ID (如果是手动触发)',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `completed_at` datetime DEFAULT NULL COMMENT '完成时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_contract_id` (`contract_id`)
-) COMMENT='合同审查报告表';
-
--- 3.18 合同审查规则配置表
-CREATE TABLE `t_contract_review_rule` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `contract_type` varchar(20) NOT NULL COMMENT '合同类型: TYPE_A, TYPE_B, TYPE_C',
-  `rule_category` varchar(50) NOT NULL COMMENT '规则类别: ATTACHMENT(附件), LOGIC(逻辑), RISK(风险)',
-  `rule_code` varchar(50) NOT NULL COMMENT '规则编码: DOC_A_001, LOGIC_A_001, RISK_A_001等',
-  `rule_name` varchar(200) NOT NULL COMMENT '规则名称',
-  `rule_config` json DEFAULT NULL COMMENT '规则配置 (JSON格式)',
-  `mandate_level` varchar(20) DEFAULT NULL COMMENT '强制级别: CRITICAL, HIGH, MEDIUM, LOW',
-  `priority` int DEFAULT 0 COMMENT '优先级 (数值越小优先级越高)',
-  `is_enabled` tinyint DEFAULT 1 COMMENT '是否启用',
-  `description` varchar(500) DEFAULT NULL COMMENT '规则描述',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_rule_code` (`rule_code`),
-  KEY `idx_contract_type` (`contract_type`),
-  KEY `idx_rule_category` (`rule_category`)
-) COMMENT='合同审查规则配置表';
-
 SET FOREIGN_KEY_CHECKS = 1;

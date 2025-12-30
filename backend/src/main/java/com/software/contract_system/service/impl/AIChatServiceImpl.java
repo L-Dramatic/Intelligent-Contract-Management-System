@@ -197,20 +197,26 @@ public class AIChatServiceImpl implements AIChatService {
             throw BusinessException.notFound("撤销记录不存在或已撤销");
         }
 
-        // 恢复合同内容
-        Contract contract = contractMapper.selectById(history.getContractId());
-        if (contract == null) {
-            throw BusinessException.notFound("合同不存在");
-        }
-
         String restoredContent = history.getFullContentBefore();
-        contract.setContent(restoredContent);
-        contractMapper.updateById(contract);
+        
+        // 如果contractId不为null，更新数据库中的合同表
+        // 如果contractId为null（新建合同场景），只返回内容，不更新数据库
+        if (history.getContractId() != null) {
+            Contract contract = contractMapper.selectById(history.getContractId());
+            if (contract == null) {
+                throw BusinessException.notFound("合同不存在");
+            }
+            contract.setContent(restoredContent);
+            contractMapper.updateById(contract);
+            log.info("撤销Agent操作: contractId={}, undoToken={}", history.getContractId(), undoToken);
+        } else {
+            // 新建合同场景：contractId为null，只返回内容，不更新数据库
+            log.info("撤销Agent操作（新建合同）: sessionId={}, undoToken={}", history.getSessionId(), undoToken);
+        }
 
         // 标记为已撤销
         editHistoryMapper.markAsUndone(history.getId());
 
-        log.info("撤销Agent操作: contractId={}, undoToken={}", history.getContractId(), undoToken);
         return restoredContent;
     }
 
@@ -291,7 +297,7 @@ public class AIChatServiceImpl implements AIChatService {
     private String buildAgentPrompt(AISession session, AIChatRequest request) {
         StringBuilder prompt = new StringBuilder();
         
-        prompt.append("你是一个合同编辑Agent，可以直接修改合同内容。\n\n");
+        prompt.append("你是一个合同编辑Agent，需要根据用户命令精确修改合同内容。\n\n");
         prompt.append("当前合同类型: ").append(session.getSubTypeCode()).append("\n\n");
         
         if (StringUtils.hasText(request.getCurrentContent())) {
@@ -299,7 +305,12 @@ public class AIChatServiceImpl implements AIChatService {
         }
         
         prompt.append("用户命令: ").append(request.getMessage()).append("\n\n");
-        prompt.append("请分析用户的命令，并输出修改后的内容。如果是生成新内容，直接输出生成的条款。");
+        prompt.append("请严格按照以下规则执行：\n");
+        prompt.append("1. 如果用户要求修改现有内容（如\"改成XXX\"、\"把XX写成YY\"），请只输出修改后的完整合同内容（整段或整份），不要只输出修改的部分。\n");
+        prompt.append("2. 如果用户要求添加新内容，请只输出要添加的新内容片段。\n");
+        prompt.append("3. 输出内容中请使用真实的换行符（\\n），不要输出字面的\\n字符串。\n");
+        prompt.append("4. 保持合同原有格式和结构，只修改用户指定的部分。\n");
+        prompt.append("\n现在请执行用户的命令：");
         
         return prompt.toString();
     }
@@ -308,40 +319,40 @@ public class AIChatServiceImpl implements AIChatService {
         String command = request.getMessage().toLowerCase();
         String currentContent = request.getCurrentContent();
         
-        // 简化的命令解析（实际应该用AI来解析）
+        // 判断操作类型
         String actionType;
         String newValue = "";
         String oldValue = "";
         String locationDesc = "";
         String fieldPath = "content";
         
-        if (command.contains("生成") || command.contains("添加")) {
+        if (command.contains("生成") || command.contains("添加") || command.contains("增加")) {
             actionType = ContractEditHistory.ACTION_INSERT;
             // 调用AI生成内容
             newValue = callAIService(buildAgentPrompt(session, request));
+            // 处理换行符转义
+            newValue = processNewlines(newValue);
             locationDesc = "合同末尾";
-        } else if (command.contains("修改") || command.contains("改成") || command.contains("替换")) {
-            actionType = ContractEditHistory.ACTION_MODIFY;
-            // 调用AI分析并修改
-            newValue = callAIService(buildAgentPrompt(session, request));
-            oldValue = extractOldValue(command, currentContent);
-            locationDesc = "根据命令定位";
-        } else if (command.contains("删除") || command.contains("移除")) {
+        } else if (command.contains("删除") || command.contains("移除") || command.contains("去掉")) {
             actionType = ContractEditHistory.ACTION_DELETE;
             oldValue = extractOldValue(command, currentContent);
             locationDesc = "删除指定内容";
         } else {
-            // 默认当作修改处理
-            actionType = ContractEditHistory.ACTION_MODIFY;
-            newValue = callAIService(buildAgentPrompt(session, request));
+            // 修改操作：让AI返回完整修改后的内容
+            actionType = ContractEditHistory.ACTION_REPLACE;
+            String aiResponse = callAIService(buildAgentPrompt(session, request));
+            // 处理换行符转义
+            newValue = processNewlines(aiResponse);
+            // 对于修改操作，oldValue是整个当前内容，newValue是AI返回的完整新内容
+            oldValue = currentContent;
+            locationDesc = "完整替换";
         }
         
         // 保存编辑历史（用于撤销）
+        // 允许contractId为null（新建合同场景），支持数据持久化
         String undoToken = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        if (request.getContractId() != null) {
-            saveEditHistory(request.getContractId(), session.getSessionId(), actionType, 
-                    fieldPath, locationDesc, oldValue, newValue, currentContent, undoToken);
-        }
+        saveEditHistory(request.getContractId(), session.getSessionId(), actionType, 
+                fieldPath, locationDesc, oldValue, newValue, currentContent, undoToken);
         
         return AIChatResponse.AgentAction.builder()
                 .actionType(actionType)
@@ -404,6 +415,20 @@ public class AIChatServiceImpl implements AIChatService {
     private String extractOldValue(String command, String content) {
         // 简化实现：实际应该用AI或NLP来提取
         return "";
+    }
+    
+    /**
+     * 处理AI返回内容中的换行符转义问题
+     * 将字面的\n字符串转换为真实的换行符
+     */
+    private String processNewlines(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        // 将字面的\n字符串（转义后）转换为真实换行符
+        // 但要注意，Java字符串中\\n表示一个字面的\n字符
+        // AI可能返回的是字符串"\\n"，需要特殊处理
+        return text.replace("\\n", "\n").replace("\\r\\n", "\r\n").replace("\\r", "\r");
     }
 
     private List<String> extractSuggestions(String aiResponse) {

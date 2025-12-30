@@ -3,7 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Contract, ContractQuery } from '@/types'
-import { getMyContracts, deleteContract, submitContract } from '@/api/contract'
+import { getMyContracts, deleteContract, submitContract, getContractDetail } from '@/api/contract'
 import { Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -83,8 +83,25 @@ const goToDetail = (id: number) => {
   router.push(`/contract/detail/${id}`)
 }
 
-const goToEdit = (id: number) => {
-  router.push(`/contract/edit/${id}`)
+const goToEdit = async (id: number) => {
+  try {
+    // 先获取合同详情以获取类型信息
+    const res = await getContractDetail(id)
+    const contract = res.data
+    
+    // 跳转到起草页面（带AI助手）
+    router.push({
+      path: '/contract/draft',
+      query: {
+        id: id,
+        mainType: contract.type || 'TYPE_A',
+        subType: (contract.attributes as any)?.subTypeCode || 'A1'
+      }
+    })
+  } catch (error) {
+    console.error('获取合同详情失败', error)
+    ElMessage.error('获取合同信息失败')
+  }
 }
 
 const goToCreate = () => {

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, nextTick, watch } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick, watch, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getDefaultTemplate, type ContractTemplate } from '@/api/template'
 import { getSubTypeDetail } from '@/api/contractType'
-import { createAISession, askAI, executeAgent, switchAIMode, getSessionMessages, type AISession, type AIMessage, type AIChatResponse } from '@/api/aiChat'
-import { createContract, updateContract } from '@/api/contract'
+import { createAISession, askAI, executeAgent, switchAIMode, getSessionMessages, undoAgentAction, type AISession, type AIMessage, type AIChatResponse } from '@/api/aiChat'
+import { createContract, updateContract, getContractDetail } from '@/api/contract'
+import { createChange, submitChange as submitChangeAPI, getChangeDetail } from '@/api/contractChange'
+import type { ContractChangeDTO } from '@/api/contractChange'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,6 +16,11 @@ const route = useRoute()
 const subTypeCode = computed(() => route.query.subType as string || 'A1')
 const mainType = computed(() => route.query.mainType as string || 'TYPE_A')
 const contractId = computed(() => route.query.id ? Number(route.query.id) : null)
+const isChangeMode = computed(() => route.query.changeMode === 'true') // 是否为变更模式
+const changeContractId = computed(() => route.query.changeContractId ? Number(route.query.changeContractId) : null) // 变更模式下的原合同ID
+const changeId = computed(() => route.query.changeId ? Number(route.query.changeId) : null) // 编辑已有变更时的变更ID
+const originalContract = ref<any>(null) // 原合同信息
+const savedChangeId = ref<number | null>(null) // 已保存的变更ID
 
 // 状态
 const loading = ref(false)
@@ -50,8 +57,8 @@ const loadTemplate = async () => {
     const res = await getDefaultTemplate(subTypeCode.value)
     template.value = res.data
     
-    // 用模板内容初始化合同正文
-    if (res.data?.content) {
+    // 只有新建合同时才用模板内容初始化（编辑已有合同时不覆盖）
+    if (!contractId.value && res.data?.content) {
       contractForm.content = res.data.content
       contractForm.name = `${res.data.name}-${new Date().toISOString().slice(0,10)}`
     }
@@ -194,13 +201,21 @@ const sendAIMessage = async () => {
       if (response.actions && response.actions.length > 0) {
         for (const action of response.actions) {
           if (action.newValue) {
-            // 简化处理：将新内容追加或替换
+            // 处理换行符：将字面的\n转换为真实换行符
+            let processedValue = action.newValue.replace(/\\n/g, '\n').replace(/\\r\\n/g, '\r\n')
+            
             if (action.actionType === 'INSERT') {
-              contractForm.content += '\n\n' + action.newValue
-            } else if (action.actionType === 'REPLACE' || action.actionType === 'MODIFY') {
-              // 实际应该根据位置替换，这里简化处理
-              if (action.oldValue) {
-                contractForm.content = contractForm.content.replace(action.oldValue, action.newValue)
+              contractForm.content += '\n\n' + processedValue
+            } else if (action.actionType === 'REPLACE') {
+              // REPLACE操作：直接替换整个内容
+              contractForm.content = processedValue
+            } else if (action.actionType === 'MODIFY') {
+              // MODIFY操作：尝试替换指定部分
+              if (action.oldValue && contractForm.content.includes(action.oldValue)) {
+                contractForm.content = contractForm.content.replace(action.oldValue, processedValue)
+              } else {
+                // 如果找不到oldValue，直接替换整个内容（降级处理）
+                contractForm.content = processedValue
               }
             }
           }
@@ -236,6 +251,45 @@ const sendAIMessage = async () => {
   }
 }
 
+// 撤销Agent操作
+const handleUndo = async (undoToken: string, messageId: number) => {
+  if (!undoToken) {
+    ElMessage.warning('撤销令牌不存在')
+    return
+  }
+  
+  try {
+    const res = await undoAgentAction(undoToken, contractId.value || undefined)
+    const restoredContent = res.data
+    
+    // 更新合同内容
+    contractForm.content = restoredContent
+    
+    // 找到对应的消息，禁用撤销按钮
+    const message = aiMessages.value.find(m => m.id === messageId)
+    if (message && message.agentAction) {
+      message.agentAction.canUndo = false
+    }
+    
+    // 添加撤销成功的提示消息
+    aiMessages.value.push({
+      id: Date.now(),
+      sessionId: aiSession.value?.sessionId || '',
+      role: 'ASSISTANT',
+      content: '✅ 已撤销操作，合同内容已恢复。',
+      mode: 'AGENT',
+      tokenCount: 0,
+      createdAt: new Date().toISOString()
+    })
+    
+    ElMessage.success('撤销成功')
+    scrollToBottom()
+  } catch (error: any) {
+    console.error('撤销操作失败', error)
+    ElMessage.error(error?.message || '撤销失败，请稍后重试')
+  }
+}
+
 // 滚动到底部
 const scrollToBottom = async () => {
   await nextTick()
@@ -244,7 +298,7 @@ const scrollToBottom = async () => {
   }
 }
 
-// 保存合同
+// 保存合同（变更模式或普通模式）
 const saveContract = async (isDraft = true) => {
   if (!contractForm.name) {
     ElMessage.warning('请输入合同名称')
@@ -257,39 +311,107 @@ const saveContract = async (isDraft = true) => {
   
   saving.value = true
   try {
-    const data = {
-      name: contractForm.name,
-      type: mainType.value,
-      partyA: contractForm.partyA,
-      partyB: contractForm.partyB,
-      amount: contractForm.amount,
-      content: contractForm.content,
-      attributes: {
-        ...contractForm.attributes,
-        subTypeCode: subTypeCode.value
-      },
-      isDraft: isDraft
-    }
-    
-    if (contractId.value) {
-      await updateContract(contractId.value, data)
-      ElMessage.success('合同保存成功')
+    // 变更模式：调用变更API
+    if (isChangeMode.value && changeContractId.value) {
+      const changeData: ContractChangeDTO = {
+        contractId: changeContractId.value,
+        title: `${contractForm.name} - 变更申请`,
+        changeType: detectChangeType(),
+        reasonType: 'OTHER',
+        description: '通过AI编辑器修改合同',
+        newName: contractForm.name !== originalContract.value?.name ? contractForm.name : undefined,
+        newAmount: contractForm.amount !== originalContract.value?.amount ? contractForm.amount : undefined,
+        newContent: contractForm.content !== originalContract.value?.content ? contractForm.content : undefined,
+        newPartyB: contractForm.partyB !== originalContract.value?.partyB ? contractForm.partyB : undefined,
+        newAttributes: contractForm.attributes
+      }
+      
+      // 如果是编辑已有变更，需要更新（这里先创建新变更，实际应该调用更新API）
+      const res = await createChange(changeData)
+      savedChangeId.value = res.data.id
+      
+      if (!isDraft) {
+        // 保存并提交
+        await submitChangeAPI(res.data.id)
+        ElMessage.success('变更申请已提交审批')
+        router.push('/contract/change/list')
+      } else {
+        ElMessage.success('变更草稿保存成功')
+      }
     } else {
-      const res = await createContract(data)
-      ElMessage.success(isDraft ? '合同已保存为草稿' : '合同保存成功')
-      // 跳转到合同详情或列表
-      router.push('/contract/my')
+      // 普通模式：调用合同API
+      const data = {
+        name: contractForm.name,
+        type: mainType.value,
+        partyA: contractForm.partyA,
+        partyB: contractForm.partyB,
+        amount: contractForm.amount,
+        content: contractForm.content,
+        attributes: {
+          ...contractForm.attributes,
+          subTypeCode: subTypeCode.value
+        },
+        isDraft: isDraft
+      }
+      
+      if (contractId.value) {
+        await updateContract(contractId.value, data)
+        ElMessage.success('合同保存成功')
+      } else {
+        const res = await createContract(data)
+        ElMessage.success(isDraft ? '合同已保存为草稿' : '合同保存成功')
+        // 跳转到合同详情或列表
+        router.push('/contract/my')
+      }
     }
   } catch (error) {
     console.error('保存失败', error)
-    ElMessage.error('保存失败，请重试')
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '保存失败，请重试')
   } finally {
     saving.value = false
   }
 }
 
+// 检测变更类型
+const detectChangeType = (): string => {
+  if (originalContract.value) {
+    if (contractForm.amount !== originalContract.value.amount) {
+      return 'AMOUNT'
+    }
+    if (contractForm.content !== originalContract.value.content) {
+      return 'TECH'
+    }
+    if (contractForm.partyB !== originalContract.value.partyB) {
+      return 'CONTACT'
+    }
+  }
+  return 'OTHER'
+}
+
 // 返回
 const goBack = () => {
+  // 如果是变更模式，直接返回变更页面并传递内容
+  if (isChangeMode.value) {
+    const changeContext = sessionStorage.getItem('changeEditContext')
+    if (changeContext) {
+      try {
+        const context = JSON.parse(changeContext)
+        // 触发自定义事件，传递编辑后的内容
+        const event = new CustomEvent('changeContentUpdated', {
+          detail: { content: contractForm.content }
+        })
+        window.dispatchEvent(event)
+        // 跳转回变更页面
+        router.push(context.returnPath)
+        sessionStorage.removeItem('changeEditContext')
+        return
+      } catch (e) {
+        console.error('解析变更上下文失败', e)
+      }
+    }
+  }
+  
   ElMessageBox.confirm('确定要离开吗？未保存的内容将丢失。', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -304,12 +426,90 @@ const toggleSidebar = () => {
   aiSidebarVisible.value = !aiSidebarVisible.value
 }
 
+// 加载已有合同数据
+const loadContract = async () => {
+  const idToLoad = contractId.value || changeContractId.value
+  if (!idToLoad) return
+  
+  try {
+    const res = await getContractDetail(idToLoad)
+    const contract = res.data
+    originalContract.value = contract
+    
+    // 填充合同表单数据
+    contractForm.name = contract.name || ''
+    contractForm.partyA = contract.partyA || '中国移动通信集团XX省有限公司'
+    contractForm.partyB = contract.partyB || ''
+    contractForm.amount = contract.amount ? Number(contract.amount) : 0
+    contractForm.content = contract.content || ''
+    
+    // 如果是编辑已有变更，加载变更数据
+    if (changeId.value) {
+      try {
+        const changeRes = await getChangeDetail(changeId.value)
+        const changeData = changeRes.data
+        savedChangeId.value = changeData.id
+        // 如果有新内容，使用新内容
+        if (changeData.diffData?.newContent) {
+          contractForm.content = changeData.diffData.newContent
+        }
+        if (changeData.diffData?.newAmount !== undefined) {
+          contractForm.amount = changeData.diffData.newAmount
+        }
+        if (changeData.diffData?.newName) {
+          contractForm.name = changeData.diffData.newName
+        }
+        if (changeData.diffData?.newPartyB) {
+          contractForm.partyB = changeData.diffData.newPartyB
+        }
+      } catch (e) {
+        console.error('加载变更数据失败', e)
+      }
+    }
+    contractForm.type = contract.type || mainType.value
+    
+    // 填充扩展属性
+    if (contract.attributes) {
+      contractForm.attributes = { ...contract.attributes }
+    }
+  } catch (error) {
+    console.error('加载合同数据失败', error)
+    ElMessage.warning('加载合同数据失败，将使用空白模板')
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
     loadTemplate(),
     loadSubTypeInfo()
   ])
+  
+  // 如果是变更模式，先加载原合同
+  if (isChangeMode.value && changeContractId.value) {
+    await loadContract()
+  } else if (contractId.value) {
+    // 普通模式：加载已有合同数据
+    await loadContract()
+  }
+  
   await initAISession()
+})
+
+// 监听页面卸载，如果是变更模式，保存内容到sessionStorage
+onUnmounted(() => {
+  if (isChangeMode.value) {
+    // 保存当前编辑的内容，以便返回时使用
+    const changeContext = sessionStorage.getItem('changeEditContext')
+    if (changeContext) {
+      try {
+        const context = JSON.parse(changeContext)
+        context.editedContent = contractForm.content
+        sessionStorage.setItem('changeEditContext', JSON.stringify(context))
+      } catch (e) {
+        console.error('保存变更上下文失败', e)
+      }
+    }
+  }
 })
 </script>
 
@@ -322,13 +522,14 @@ onMounted(async () => {
           <el-icon><ArrowLeft /></el-icon>
           返回
         </el-button>
-        <div class="contract-title">
+          <div class="contract-title">
           <el-input 
             v-model="contractForm.name" 
             placeholder="请输入合同名称"
             class="title-input"
           />
           <el-tag type="info" size="small">{{ subTypeInfo?.subTypeName || subTypeCode }}</el-tag>
+          <el-tag v-if="isChangeMode" type="warning" size="small">变更模式</el-tag>
         </div>
       </div>
       <div class="header-right">
@@ -337,11 +538,11 @@ onMounted(async () => {
           {{ aiSidebarVisible ? '收起AI助手' : '展开AI助手' }}
         </el-button>
         <el-button @click="saveContract(true)" :loading="saving">
-          保存草稿
+          {{ isChangeMode ? '保存草稿' : '保存草稿' }}
         </el-button>
         <el-button type="primary" @click="saveContract(false)" :loading="saving">
           <el-icon><Check /></el-icon>
-          保存
+          {{ isChangeMode ? '保存并提交' : '保存' }}
         </el-button>
       </div>
     </div>
@@ -452,6 +653,16 @@ onMounted(async () => {
                 <span v-if="msg.agentAction.locationDesc">
                   {{ msg.agentAction.locationDesc }}
                 </span>
+                <!-- 撤销按钮 -->
+                <el-button 
+                  v-if="msg.agentAction.canUndo && msg.agentAction.undoToken"
+                  type="text" 
+                  size="small" 
+                  class="undo-btn"
+                  @click="handleUndo(msg.agentAction!.undoToken!, msg.id)"
+                >
+                  撤销此操作
+                </el-button>
               </div>
             </div>
           </div>
@@ -499,9 +710,19 @@ import { ArrowLeft, ChatDotRound, Check, ChatLineSquare, MagicStick, Position } 
 function formatMessage(text: string): string {
   if (!text) return ''
   return text
+    // 先处理字面的\n字符串（转义后的），转换为真实换行符
+    .replace(/\\n/g, '\n')
+    .replace(/\\r\\n/g, '\r\n')
+    .replace(/\\r/g, '\r')
+    // 移除"[撤销此操作]"文本（因为现在使用按钮）
+    .replace(/\[撤销此操作\]/g, '')
+    // 处理Markdown格式
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // 将真实换行符转换为HTML的<br>
     .replace(/\n/g, '<br>')
     .replace(/• /g, '&bull; ')
+    // 清理多余的换行
+    .replace(/<br><br><br>/g, '<br><br>')
 }
 
 export default {
@@ -701,6 +922,19 @@ export default {
   border-top: 1px dashed #e4e7ed;
   font-size: 12px;
   color: #909399;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.undo-btn {
+  margin-left: auto;
+  color: #409eff;
+  font-size: 12px;
+}
+
+.undo-btn:hover {
+  color: #66b1ff;
 }
 
 .message-content.loading {

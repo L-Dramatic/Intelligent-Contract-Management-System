@@ -124,7 +124,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getContractList, deleteContract as deleteContractApi } from '@/api/contract'
+import { getContractList, deleteContract as deleteContractApi, getContractDetail } from '@/api/contract'
 
 const router = useRouter()
 const loading = ref(false)
@@ -176,8 +176,25 @@ const viewDetail = (id: number) => {
   router.push(`/contract/detail/${id}`)
 }
 
-const editContract = (id: number) => {
-  router.push(`/contract/edit/${id}`)
+const editContract = async (id: number) => {
+  try {
+    // 先获取合同详情以获取类型信息
+    const res = await getContractDetail(id)
+    const contract = res.data
+    
+    // 跳转到起草页面（带AI助手）
+    router.push({
+      path: '/contract/draft',
+      query: {
+        id: id,
+        mainType: contract.type || 'TYPE_A',
+        subType: (contract.attributes as any)?.subTypeCode || 'A1'
+      }
+    })
+  } catch (error) {
+    console.error('获取合同详情失败', error)
+    ElMessage.error('获取合同信息失败')
+  }
 }
 
 const doDeleteContract = async (id: number) => {

@@ -27,11 +27,25 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dashboard/DashboardView.vue'),
         meta: { title: '工作台' }
       },
+      // 个人主页
+      {
+        path: 'profile',
+        name: 'UserProfile',
+        component: () => import('@/views/profile/UserProfile.vue'),
+        meta: { title: '个人主页' }
+      },
+      // AI问答
+      {
+        path: 'ai/qa',
+        name: 'AIQAChat',
+        component: () => import('@/views/ai/AIQAChat.vue'),
+        meta: { title: 'AI问答' }
+      },
       // 合同管理
       {
         path: 'contract',
         name: 'Contract',
-        redirect: '/contract/list',
+        redirect: '/contract/my',
         meta: { title: '合同管理' },
         children: [
           {

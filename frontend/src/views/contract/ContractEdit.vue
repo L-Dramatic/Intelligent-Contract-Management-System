@@ -65,7 +65,29 @@ const loadContract = async () => {
   loading.value = true
   try {
     const res = await getContractDetail(contractId.value!)
-    Object.assign(form, res.data)
+    const contractData = res.data
+    
+    // 映射后端字段到前端表单字段
+    // 后端返回的是 type，前端表单使用的是 contractType
+    Object.assign(form, {
+      contractName: contractData.name || contractData.contractName,
+      contractType: contractData.type || contractData.contractType || 'STATION_LEASE',
+      partyA: contractData.partyA,
+      partyB: contractData.partyB,
+      amount: contractData.amount,
+      content: contractData.content,
+      // 扩展字段从attributes中获取（如果是新类型系统）
+      siteLocation: contractData.siteLocation || contractData.attributes?.siteLocation,
+      siteType: contractData.siteType || contractData.attributes?.siteType,
+      siteArea: contractData.siteArea || contractData.attributes?.siteArea,
+      annualRent: contractData.annualRent || contractData.attributes?.annualRent,
+      leaseStartDate: contractData.leaseStartDate || contractData.attributes?.leaseStartDate,
+      leaseEndDate: contractData.leaseEndDate || contractData.attributes?.leaseEndDate,
+      constructionArea: contractData.constructionArea || contractData.attributes?.constructionArea,
+      networkType: contractData.networkType || contractData.attributes?.networkType,
+      plannedStations: contractData.plannedStations || contractData.attributes?.plannedStations,
+      coverageRequirement: contractData.coverageRequirement || contractData.attributes?.coverageRequirement
+    })
   } catch {
     // 模拟数据
     Object.assign(form, {
@@ -193,6 +215,7 @@ const goBack = () => {
       </el-card>
       
       <!-- 基站租赁扩展字段 -->
+      <!-- 注意：只显示旧类型系统（STATION_LEASE等）的字段，新类型系统（TYPE_A/TYPE_B/TYPE_C）不显示 -->
       <el-card v-if="form.contractType === 'STATION_LEASE'" class="form-card">
         <template #header>
           <span class="card-title">基站租赁信息</span>

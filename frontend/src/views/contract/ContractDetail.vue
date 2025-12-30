@@ -143,7 +143,20 @@ const handleAiReview = async () => {
 }
 
 const goEdit = () => {
-  router.push(`/contract/edit/${contractId.value}`)
+  if (!contract.value) {
+    ElMessage.warning('合同信息未加载')
+    return
+  }
+  
+  // 跳转到起草页面（带AI助手）
+  router.push({
+    path: '/contract/draft',
+    query: {
+      id: contractId.value,
+      mainType: contract.value.type || 'TYPE_A',
+      subType: (contract.value.attributes as any)?.subTypeCode || 'A1'
+    }
+  })
 }
 
 const goBack = () => {

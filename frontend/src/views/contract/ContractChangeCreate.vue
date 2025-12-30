@@ -14,8 +14,8 @@
       <template #header>
         <div class="card-header">
           <span>📄 原合同信息</span>
-          <el-tag :type="getContractStatusType(contract?.status)">
-            {{ getContractStatusName(contract?.status) }}
+          <el-tag :type="contract?.status !== undefined ? getContractStatusType(contract.status) : 'info'">
+            {{ contract?.status !== undefined ? getContractStatusName(contract.status) : '未知' }}
           </el-tag>
         </div>
       </template>
@@ -124,12 +124,26 @@
         </el-form-item>
 
         <el-form-item label="新合同正文">
-          <el-input
-            v-model="form.newContent"
-            type="textarea"
-            :rows="8"
-            placeholder="留空表示不变更合同正文"
-          />
+          <div style="width: 100%">
+            <el-input
+              v-model="form.newContent"
+              type="textarea"
+              :rows="8"
+              placeholder="留空表示不变更合同正文。建议使用AI编辑器进行编辑。"
+            />
+            <div style="margin-top: 10px">
+              <el-button 
+                type="primary" 
+                @click="openAIEditor"
+              >
+                <el-icon><EditPen /></el-icon>
+                使用AI编辑器编辑合同正文
+              </el-button>
+              <span style="margin-left: 10px; color: #909399; font-size: 12px">
+                使用AI助手可以更高效地修改合同内容
+              </span>
+            </div>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -192,19 +206,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Warning } from '@element-plus/icons-vue'
+import { ElMessage, type FormInstance } from 'element-plus'
+import { Warning, EditPen } from '@element-plus/icons-vue'
 import { getContractDetail } from '@/api/contract'
 import { 
   createChange, 
   submitChange, 
-  checkMajorChange,
   CHANGE_TYPE_OPTIONS,
   REASON_TYPE_OPTIONS,
   type ContractChangeDTO
 } from '@/api/contractChange'
+import type { Contract, ContractAttributes } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -213,7 +227,7 @@ const formRef = ref<FormInstance>()
 const loading = ref(false)
 const saving = ref(false)
 const submitting = ref(false)
-const contract = ref<any>(null)
+const contract = ref<Contract | null>(null)
 const isMajorChange = ref(false)
 const majorChangeDialogVisible = ref(false)
 const createdChangeId = ref<number | null>(null)
@@ -227,7 +241,7 @@ const form = reactive<ContractChangeDTO>({
   description: '',
   partyBCommunication: '',
   newName: '',
-  newAmount: undefined as any,
+  newAmount: undefined,
   newContent: '',
   newPartyB: '',
   newAttributes: {},
@@ -254,11 +268,19 @@ const changePercent = computed(() => {
   return Math.abs(amountDiff.value) / contract.value.amount * 100
 })
 
+// 变更对比项类型
+interface DiffItem {
+  fieldLabel: string
+  beforeValue: string
+  afterValue: string
+  changeDesc: string
+}
+
 // 计算变更对比项
 const diffItems = computed(() => {
   if (!contract.value) return []
   
-  const items: any[] = []
+  const items: DiffItem[] = []
   
   if (form.newName && form.newName !== contract.value.name) {
     items.push({
@@ -270,7 +292,8 @@ const diffItems = computed(() => {
   }
   
   if (form.newAmount !== undefined && form.newAmount !== null && form.newAmount !== contract.value.amount) {
-    const diff = form.newAmount - (contract.value.amount || 0)
+    const contractAmount = contract.value.amount ? Number(contract.value.amount) : 0
+    const diff = form.newAmount - contractAmount
     items.push({
       fieldLabel: '合同金额',
       beforeValue: `¥${formatAmount(contract.value.amount)}`,
@@ -319,8 +342,9 @@ const loadContract = async () => {
     // 初始化表单默认值
     form.newAmount = contract.value.amount
     form.title = `${contract.value.name} - 变更申请`
-  } catch (error: any) {
-    ElMessage.error(error.message || '加载合同失败')
+  } catch (error) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '加载合同失败')
     router.back()
   } finally {
     loading.value = false
@@ -349,8 +373,9 @@ const saveDraft = async () => {
     const res = await createChange(form)
     createdChangeId.value = res.data.id
     ElMessage.success('草稿保存成功')
-  } catch (error: any) {
-    ElMessage.error(error.message || '保存失败')
+  } catch (error) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '保存失败')
   } finally {
     saving.value = false
   }
@@ -390,11 +415,17 @@ const doSubmit = async () => {
       changeId = res.data.id
     }
     
+    if (!changeId) {
+      ElMessage.error('变更申请ID不存在')
+      return
+    }
+    
     await submitChange(changeId)
     ElMessage.success('变更申请已提交审批')
     router.push('/contract/change/list')
-  } catch (error: any) {
-    ElMessage.error(error.message || '提交失败')
+  } catch (error) {
+    const err = error as { message?: string }
+    ElMessage.error(err.message || '提交失败')
   } finally {
     submitting.value = false
   }
@@ -403,6 +434,32 @@ const doSubmit = async () => {
 // 返回上一页
 const goBack = () => {
   router.back()
+}
+
+// 打开AI编辑器
+const openAIEditor = () => {
+  if (!contract.value) {
+    ElMessage.warning('合同信息未加载')
+    return
+  }
+  
+  // 跳转到起草页面进行编辑（变更模式）
+  // 使用sessionStorage传递变更上下文，编辑完成后返回
+  sessionStorage.setItem('changeEditContext', JSON.stringify({
+    returnPath: route.fullPath,
+    contractId: contract.value.id,
+    originalContent: contract.value.content || ''
+  }))
+  
+  router.push({
+    path: '/contract/draft',
+    query: {
+      id: contract.value.id,
+      mainType: contract.value.type || 'TYPE_A',
+      subType: (contract.value.attributes as ContractAttributes)?.subTypeCode || 'A1',
+      changeMode: 'true' // 标记为变更模式
+    }
+  })
 }
 
 // 辅助函数
@@ -434,16 +491,33 @@ const formatAmount = (amount: number) => {
   return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const formatValue = (value: any) => {
+const formatValue = (value: unknown) => {
   if (value === undefined || value === null) return '-'
   if (typeof value === 'string' && value.length > 50) {
     return value.substring(0, 50) + '...'
   }
-  return value
+  return String(value)
+}
+
+// 监听从AI编辑器返回的内容更新事件
+const handleChangeContentUpdate = (event: Event) => {
+  const customEvent = event as CustomEvent
+  if (customEvent.detail?.content) {
+    form.newContent = customEvent.detail.content
+    ElMessage.success('已从AI编辑器获取修改后的合同内容')
+  }
 }
 
 onMounted(() => {
   loadContract()
+  
+  // 监听从AI编辑器返回的内容更新事件
+  window.addEventListener('changeContentUpdated', handleChangeContentUpdate)
+})
+
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  window.removeEventListener('changeContentUpdated', handleChangeContentUpdate)
 })
 </script>
 

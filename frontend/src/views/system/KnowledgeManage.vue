@@ -153,7 +153,7 @@ onMounted(() => {
     <!-- 统计卡片 -->
     <el-row :gutter="16" class="stats-row">
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card stat-card-contracts">
           <div class="stat-icon contracts">
             <el-icon :size="32"><Document /></el-icon>
           </div>
@@ -164,7 +164,7 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card stat-card-laws">
           <div class="stat-icon laws">
             <el-icon :size="32"><Reading /></el-icon>
           </div>
@@ -175,7 +175,7 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card stat-card-indexed">
           <div class="stat-icon indexed">
             <el-icon :size="32"><Collection /></el-icon>
           </div>
@@ -186,7 +186,7 @@ onMounted(() => {
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card stat-card-status" :class="{ 'stat-card-status-active': stats.rag_enabled }">
           <div class="stat-icon status" :class="{ active: stats.rag_enabled }">
             <el-icon :size="32"><Connection /></el-icon>
           </div>
@@ -312,6 +312,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 8px;
+  border: none !important;
 }
 
 .stat-card :deep(.el-card__body) {
@@ -319,6 +320,32 @@ export default {
   align-items: center;
   width: 100%;
   padding: 16px;
+  border: none !important;
+}
+
+.stat-card :deep(.el-card) {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.stat-card-contracts :deep(.el-card__body) {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+}
+
+.stat-card-laws :deep(.el-card__body) {
+  background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%);
+}
+
+.stat-card-indexed :deep(.el-card__body) {
+  background: linear-gradient(135deg, #67c23a 0%, #95d475 100%);
+}
+
+.stat-card-status :deep(.el-card__body) {
+  background: linear-gradient(135deg, #909399 0%, #c0c4cc 100%);
+}
+
+.stat-card-status-active :deep(.el-card__body) {
+  background: linear-gradient(135deg, #67c23a 0%, #95d475 100%);
 }
 
 .stat-icon {
@@ -362,13 +389,13 @@ export default {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #303133;
+  color: #ffffff;
   line-height: 1.2;
 }
 
 .stat-label {
   font-size: 13px;
-  color: #909399;
+  color: #ffffff;
   margin-top: 4px;
 }
 
