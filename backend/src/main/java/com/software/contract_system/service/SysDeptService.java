@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * 组织架构服务接口
- * 支持省-市-县三级组织树管理
+ * 支持省-市-县三级法人架构，组织树为四级层级结构管理
  */
 public interface SysDeptService {
     

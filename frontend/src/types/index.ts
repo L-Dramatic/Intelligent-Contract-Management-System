@@ -4,14 +4,21 @@ export interface UserInfo {
   username: string
   realName?: string
   email?: string
-  phone?: string
+  mobile?: string  // 后端字段名
+  phone?: string   // 兼容旧字段
   role: string
+  primaryRole?: string
+  zlevel?: string
   // 后端字段为 deptId；前端原来用 departmentId，这里都兼容
   deptId?: number
   departmentId?: number
   departmentName?: string
+  dept?: { id: number; deptName: string }
   permissions?: string[]
-  createTime?: string
+  isActive?: number  // 1:正常 0:禁用
+  createdAt?: string
+  updatedAt?: string
+  createTime?: string  // 兼容旧字段
 }
 
 export interface LoginForm {

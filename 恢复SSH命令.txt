@@ -1,0 +1,28 @@
+# 登录后立即执行以下命令（一行一行执行）：
+
+# 1. 开放SSH端口22
+sudo ufw allow 22/tcp
+
+# 2. 检查防火墙状态
+sudo ufw status
+
+# 3. 确认22端口已开放（应该看到 22/tcp ALLOW 这一行）
+
+# 4. 如果需要，也开放应用端口
+sudo ufw allow 8080/tcp
+sudo ufw allow 5173/tcp
+sudo ufw allow 8765/tcp
+
+# 5. 重新加载防火墙
+sudo ufw reload
+
+# 6. 再次确认状态
+sudo ufw status
+
+# 7. 检查SSH服务是否运行
+sudo systemctl status ssh
+
+# 如果SSH服务未运行，启动它：
+sudo systemctl start ssh
+sudo systemctl enable ssh
+

@@ -78,4 +78,44 @@ public interface ScenarioMatchService {
      * 根据场景ID和节点顺序获取节点
      */
     WfScenarioNode getNodeByOrder(String scenarioId, int nodeOrder);
+    
+    /**
+     * 更新场景配置
+     */
+    boolean updateScenario(WfScenarioConfig config);
+    
+    /**
+     * 切换场景启用状态
+     */
+    boolean toggleScenarioActive(Long id);
+    
+    /**
+     * 创建新的审批场景
+     */
+    WfScenarioConfig createScenario(WfScenarioConfig config);
+    
+    /**
+     * 删除场景
+     */
+    boolean deleteScenario(Long id);
+    
+    /**
+     * 为场景添加审批节点
+     */
+    WfScenarioNode addNode(WfScenarioNode node);
+    
+    /**
+     * 更新审批节点
+     */
+    boolean updateNode(WfScenarioNode node);
+    
+    /**
+     * 删除审批节点
+     */
+    boolean deleteNode(Long nodeId);
+    
+    /**
+     * 批量保存场景的所有节点（替换原有节点）
+     */
+    boolean saveScenarioNodes(String scenarioId, List<WfScenarioNode> nodes);
 }

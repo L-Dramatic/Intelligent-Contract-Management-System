@@ -107,6 +107,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         Page<SysUser> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         
+        // 只查询启用的用户
+        wrapper.eq(SysUser::getIsActive, 1);
+        
         // 模糊查询用户名
         if (StringUtils.hasText(username)) {
             wrapper.like(SysUser::getUsername, username);

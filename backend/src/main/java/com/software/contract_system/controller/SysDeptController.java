@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * 组织架构管理控制器
- * 支持省-市-县三级组织树的增删改查
+ * 支持省-市-县三级法人架构，组织树为四级层级结构的增删改查
  */
 @RestController
 @RequestMapping("/dept")

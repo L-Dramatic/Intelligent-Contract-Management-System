@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { UserInfo } from '@/types'
+import type { UserInfo, Department } from '@/types'
 import type { FormInstance, FormRules } from 'element-plus'
-import { getUserList, deleteUser, resetPassword } from '@/api/user'
+import { getUserList, deleteUser, resetPassword, createUser, updateUser } from '@/api/user'
+import { getDepartmentTree } from '@/api/department'
+import { getRoleList } from '@/api/role'
+import type { Role } from '@/api/role'
 
 const loading = ref(false)
 const tableData = ref<UserInfo[]>([])
@@ -11,7 +14,7 @@ const total = ref(0)
 
 const queryParams = reactive({
   username: '',
-  role: '',
+  role: 'STAFF',
   pageNum: 1,
   pageSize: 10
 })
@@ -27,15 +30,119 @@ const form = reactive({
   realName: '',
   email: '',
   phone: '',
-  role: 'USER',
-  departmentId: undefined as number | undefined
+  role: 'STAFF',
+  departmentId: undefined as number | undefined,
+  primaryRole: undefined as string | undefined,
+  zLevel: undefined as string | undefined
 })
+
+// 选中的部门信息
+const selectedDept = ref<Department | null>(null)
+
+const departmentTree = ref<Department[]>([])
+const roleList = ref<Role[]>([])
+const departmentProps = {
+  children: 'children',
+  label: 'name',
+  value: 'id'
+}
 
 const roleOptions = [
   { label: '系统管理员', value: 'ADMIN' },
   { label: '工作人员', value: 'STAFF' },
   { label: '领导层', value: 'BOSS' }
 ]
+
+// 部门类型与职位的映射关系
+const deptTypeToRoles: Record<string, string[]> = {
+  // 省级部门
+  'PROV-NET': ['DEPT_MANAGER', 'PROJECT_MANAGER', 'RF_ENGINEER', 'NETWORK_ENGINEER', 'NETWORK_PLANNING', 'BROADBAND_SPECIALIST', 'OPS_CENTER', 'DESIGN_REVIEWER', 'SITE_ACQUISITION'],
+  'PROV-MKT': ['DEPT_MANAGER', 'CUSTOMER_SERVICE_LEAD'],
+  'PROV-GOV': ['DEPT_MANAGER', 'SOLUTION_ARCHITECT', 'DICT_PM', 'TECHNICAL_LEAD', 'SECURITY_REVIEWER', 'IT_ARCHITECT'],
+  'PROV-LEGAL': ['DEPT_MANAGER', 'LEGAL_REVIEWER'],
+  'PROV-FIN': ['DEPT_MANAGER', 'COST_AUDITOR', 'FINANCE_RECEIVABLE'],
+  'PROV-ADMIN': ['DEPT_MANAGER', 'FACILITY_COORDINATOR'],
+  // 市级部门
+  'NET': ['DEPT_MANAGER', 'PROJECT_MANAGER', 'RF_ENGINEER', 'NETWORK_ENGINEER', 'NETWORK_PLANNING', 'BROADBAND_SPECIALIST', 'OPS_CENTER', 'DESIGN_REVIEWER', 'SITE_ACQUISITION'],
+  'MKT': ['DEPT_MANAGER', 'CUSTOMER_SERVICE_LEAD'],
+  'GOV': ['DEPT_MANAGER', 'SOLUTION_ARCHITECT', 'DICT_PM', 'TECHNICAL_LEAD', 'SECURITY_REVIEWER', 'IT_ARCHITECT'],
+  'LEGAL': ['DEPT_MANAGER', 'LEGAL_REVIEWER'],
+  'FIN': ['DEPT_MANAGER', 'COST_AUDITOR', 'FINANCE_RECEIVABLE'],
+  'ADMIN': ['DEPT_MANAGER', 'FACILITY_COORDINATOR'],
+  'PROC': ['DEPT_MANAGER', 'PROCUREMENT_SPECIALIST', 'VENDOR_MANAGER'],
+  // 市/县公司级别（可选择高管）
+  'CITY': ['GENERAL_MANAGER', 'VICE_PRESIDENT', 'DEPT_MANAGER', 'T1M'],
+  'COUNTY': ['DEPT_MANAGER', 'INITIATOR'],
+  // 省公司
+  'PROVINCE': ['SYSTEM_ADMIN', 'GENERAL_MANAGER', 'VICE_PRESIDENT']
+}
+
+// 从部门代码中提取类型关键字
+const extractDeptType = (dept: Department | null): string | null => {
+  if (!dept) return null
+  const code = dept.code || ''
+  
+  // 如果是省/市/县公司本身
+  if (dept.type === 'PROVINCE') return 'PROVINCE'
+  if (dept.type === 'CITY') return 'CITY'
+  if (dept.type === 'COUNTY') return 'COUNTY'
+  
+  // 省级部门（如 PROV-NET, PROV-LEGAL）
+  if (code.startsWith('PROV-')) return code
+  
+  // 市级部门，提取关键字（如 CITY-A-NET 提取 NET）
+  const parts = code.split('-')
+  if (parts.length >= 2) {
+    return parts[parts.length - 1]
+  }
+  
+  return null
+}
+
+// 根据选中部门过滤职位列表
+const filteredRoleList = computed(() => {
+  const deptType = extractDeptType(selectedDept.value)
+  
+  if (!deptType || !roleList.value.length) {
+    return {
+      recommended: [] as Role[],
+      others: roleList.value
+    }
+  }
+  
+  const recommendedCodes = deptTypeToRoles[deptType] || []
+  
+  const recommended = roleList.value.filter(r => recommendedCodes.includes(r.roleCode))
+  const others = roleList.value.filter(r => !recommendedCodes.includes(r.roleCode))
+  
+  return { recommended, others }
+})
+
+// 从部门树中查找部门
+const findDeptById = (tree: Department[], id: number): Department | null => {
+  for (const dept of tree) {
+    if (dept.id === id) return dept
+    if (dept.children?.length) {
+      const found = findDeptById(dept.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// 监听部门选择变化
+watch(() => form.departmentId, (newId) => {
+  if (newId && departmentTree.value.length) {
+    selectedDept.value = findDeptById(departmentTree.value, newId)
+    // 如果当前选择的职位不在推荐列表中，清空职位选择
+    const recommended = filteredRoleList.value.recommended.map(r => r.roleCode)
+    if (form.primaryRole && !recommended.includes(form.primaryRole)) {
+      // 不自动清空，但可以提示
+    }
+  } else {
+    selectedDept.value = null
+  }
+})
 
 const rules: FormRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -44,16 +151,50 @@ const rules: FormRules = {
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }]
+  phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
+  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+  departmentId: [{ required: true, message: '请选择部门', trigger: 'change' }],
+  primaryRole: [{ required: true, message: '请选择职位', trigger: 'change' }]
 }
 
 onMounted(() => {
   loadData()
+  loadDepartments()
+  loadRoles()
 })
+
+const loadDepartments = async () => {
+  try {
+    const res = await getDepartmentTree()
+    if (res.data && res.data.length > 0) {
+      departmentTree.value = res.data
+      return
+    }
+    throw new Error('empty')
+  } catch (e) {
+    console.log('部门API未实现，使用空数据')
+    departmentTree.value = []
+  }
+}
+
+const loadRoles = async () => {
+  try {
+    const res = await getRoleList()
+    if (res.data && res.data.length > 0) {
+      roleList.value = res.data
+      return
+    }
+    throw new Error('empty')
+  } catch (e) {
+    console.log('角色API未实现，使用空数据')
+    roleList.value = []
+  }
+}
 
 const loadData = async () => {
   loading.value = true
   try {
+    console.log('查询参数:', queryParams)
     const res = await getUserList(queryParams)
     if (res.data?.records) {
       tableData.value = res.data.records
@@ -63,7 +204,6 @@ const loadData = async () => {
     throw new Error('empty')
   } catch (e) {
     console.log('API未实现，使用模拟数据')
-    // 模拟数据
     tableData.value = [
       {
         id: 1,
@@ -76,48 +216,17 @@ const loadData = async () => {
         departmentName: '总公司',
         permissions: ['*'],
         createTime: '2025-01-01 00:00:00'
-      },
-      {
-        id: 2,
-        username: 'zhangsan',
-        realName: '张三',
-        email: 'zhangsan@telecom.com',
-        phone: '13800000002',
-        role: 'USER',
-        departmentId: 2,
-        departmentName: '网络部',
-        permissions: ['contract:create', 'contract:view'],
-        createTime: '2025-01-15 10:30:00'
-      },
-      {
-        id: 3,
-        username: 'lisi',
-        realName: '李四',
-        email: 'lisi@telecom.com',
-        phone: '13800000003',
-        role: 'APPROVER',
-        departmentId: 2,
-        departmentName: '网络部',
-        permissions: ['contract:view', 'contract:audit'],
-        createTime: '2025-02-01 14:20:00'
-      },
-      {
-        id: 4,
-        username: 'wangwu',
-        realName: '王五',
-        email: 'wangwu@telecom.com',
-        phone: '13800000004',
-        role: 'LEGAL',
-        departmentId: 3,
-        departmentName: '法务部',
-        permissions: ['contract:view', 'contract:audit', 'contract:review'],
-        createTime: '2025-02-15 09:00:00'
       }
     ]
-    total.value = 4
+    total.value = 1
   } finally {
     loading.value = false
   }
+}
+
+const handleRoleChange = (value: string) => {
+  queryParams.pageNum = 1
+  loadData()
 }
 
 const handleSearch = () => {
@@ -127,7 +236,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryParams.username = ''
-  queryParams.role = ''
+  queryParams.role = 'STAFF'
   queryParams.pageNum = 1
   loadData()
 }
@@ -144,8 +253,11 @@ const handleAdd = () => {
   form.realName = ''
   form.email = ''
   form.phone = ''
-  form.role = 'USER'
+  form.role = 'STAFF'
   form.departmentId = undefined
+  form.primaryRole = undefined
+  form.zLevel = undefined
+  selectedDept.value = null
   showDialog.value = true
 }
 
@@ -155,9 +267,15 @@ const handleEdit = (row: UserInfo) => {
   form.username = row.username
   form.realName = row.realName
   form.email = row.email
-  form.phone = row.phone
+  form.phone = row.phone || row.mobile
   form.role = row.role
-  form.departmentId = row.departmentId
+  form.departmentId = row.departmentId || row.deptId
+  form.primaryRole = (row as any).primaryRole
+  form.zLevel = (row as any).zLevel
+  // 查找选中的部门
+  if (form.departmentId && departmentTree.value.length) {
+    selectedDept.value = findDeptById(departmentTree.value, form.departmentId)
+  }
   showDialog.value = true
 }
 
@@ -169,13 +287,33 @@ const handleSave = async () => {
     
     formLoading.value = true
     try {
-      // 调用API保存
-      ElMessage.success('保存成功')
+      const userData: any = {
+        username: form.username,
+        realName: form.realName,
+        email: form.email,
+        phone: form.phone,
+        mobile: form.phone,
+        role: form.role,
+        deptId: form.departmentId,
+        departmentId: form.departmentId,
+        primaryRole: form.primaryRole,
+        zLevel: form.zLevel,
+        isActive: 1
+      }
+      
+      if (form.id) {
+        await updateUser(form.id, userData)
+        ElMessage.success('更新成功')
+      } else {
+        userData.password = '123456'
+        await createUser(userData)
+        ElMessage.success('创建成功，默认密码为123456')
+      }
+      
       showDialog.value = false
       loadData()
-    } catch {
-      ElMessage.success('保存成功')
-      showDialog.value = false
+    } catch (error: any) {
+      ElMessage.error(error.message || '保存失败')
     } finally {
       formLoading.value = false
     }
@@ -223,6 +361,12 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
     'STAFF': 'primary'
   }
   return map[role] || 'info'
+}
+
+// 获取职位显示名称
+const getPrimaryRoleLabel = (roleCode: string) => {
+  const role = roleList.value.find(r => r.roleCode === roleCode)
+  return role?.roleName || roleCode
 }
 </script>
 
@@ -291,16 +435,16 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
           {{ row.dept?.name || '-' }}
         </template>
       </el-table-column>
-      <el-table-column prop="role" label="角色" width="120">
+      <el-table-column prop="role" label="角色" width="100">
         <template #default="{ row }">
-          <el-tag :type="getRoleType(row.role)">
+          <el-tag :type="getRoleType(row.role)" size="small">
             {{ getRoleLabel(row.role) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="primaryRole" label="职位" width="140">
         <template #default="{ row }">
-          <span>{{ row.primaryRole || '-' }}</span>
+          <span>{{ getPrimaryRoleLabel(row.primaryRole) || '-' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
@@ -331,7 +475,7 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
     </div>
     
     <!-- 编辑对话框 -->
-    <el-dialog v-model="showDialog" :title="dialogTitle" width="500px">
+    <el-dialog v-model="showDialog" :title="dialogTitle" width="550px">
       <el-form
         ref="formRef"
         :model="form"
@@ -359,6 +503,81 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
               :value="item.value"
             />
           </el-select>
+          <div class="form-tip">ADMIN=管理员, STAFF=工作人员, BOSS=领导层</div>
+        </el-form-item>
+        <el-form-item label="所属部门" prop="departmentId">
+          <el-tree-select
+            v-model="form.departmentId"
+            :data="departmentTree"
+            :props="departmentProps"
+            placeholder="请先选择部门（职位会自动过滤）"
+            style="width: 100%"
+            check-strictly
+            :render-after-expand="false"
+          />
+          <div v-if="selectedDept" class="form-tip">
+            已选择：{{ selectedDept.name }} ({{ selectedDept.type || selectedDept.code }})
+          </div>
+        </el-form-item>
+        <el-form-item label="职位" prop="primaryRole">
+          <el-select 
+            v-model="form.primaryRole" 
+            placeholder="请选择职位（已根据部门过滤）" 
+            style="width: 100%"
+            filterable
+          >
+            <!-- 推荐职位（匹配部门） -->
+            <el-option-group v-if="filteredRoleList.recommended.length" label="✅ 推荐职位（匹配当前部门）">
+              <el-option 
+                v-for="role in filteredRoleList.recommended"
+                :key="role.roleCode"
+                :label="role.roleName"
+                :value="role.roleCode"
+              >
+                <div class="role-option">
+                  <span class="role-name">{{ role.roleName }}</span>
+                  <span class="role-code">{{ role.roleCode }}</span>
+                </div>
+              </el-option>
+            </el-option-group>
+            <!-- 其他职位 -->
+            <el-option-group v-if="filteredRoleList.others.length" label="⚠️ 其他职位（不推荐）">
+              <el-option 
+                v-for="role in filteredRoleList.others"
+                :key="role.roleCode"
+                :label="role.roleName"
+                :value="role.roleCode"
+              >
+                <div class="role-option other">
+                  <span class="role-name">{{ role.roleName }}</span>
+                  <span class="role-code">{{ role.roleCode }}</span>
+                </div>
+              </el-option>
+            </el-option-group>
+          </el-select>
+          <div v-if="!form.departmentId" class="form-tip warning">
+            ⚠️ 请先选择部门，职位列表会根据部门自动过滤
+          </div>
+          <div v-else-if="filteredRoleList.recommended.length" class="form-tip success">
+            ✅ 已根据「{{ selectedDept?.name }}」过滤推荐职位
+          </div>
+        </el-form-item>
+        <el-form-item label="Z岗级">
+          <el-select 
+            v-model="form.zLevel" 
+            placeholder="请选择Z岗级（可选）" 
+            style="width: 100%"
+            clearable
+          >
+            <el-option label="Z8 - 初级" value="Z8" />
+            <el-option label="Z9 - 中级" value="Z9" />
+            <el-option label="Z10 - 高级" value="Z10" />
+            <el-option label="Z11 - 资深" value="Z11" />
+            <el-option label="Z12 - 经理级" value="Z12" />
+            <el-option label="Z13 - 副总级" value="Z13" />
+            <el-option label="Z14 - 总经理级" value="Z14" />
+            <el-option label="Z15 - 高管" value="Z15" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -384,5 +603,39 @@ export default {
   justify-content: flex-end;
   margin-top: 20px;
 }
-</style>
 
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.form-tip.warning {
+  color: #e6a23c;
+}
+
+.form-tip.success {
+  color: #67c23a;
+}
+
+.role-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.role-option .role-name {
+  font-weight: 500;
+}
+
+.role-option .role-code {
+  font-size: 12px;
+  color: #909399;
+}
+
+.role-option.other .role-name {
+  color: #909399;
+}
+</style>

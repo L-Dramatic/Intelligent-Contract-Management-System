@@ -36,10 +36,19 @@ export function getUserList(params: { pageNum: number; pageSize: number; usernam
   })
 }
 
-// 更新用户信息
+// 更新用户信息（管理员）
 export function updateUser(id: number, data: Partial<UserInfo>) {
   return request({
     url: `/user/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+// 更新当前用户个人信息
+export function updateProfile(data: { realName?: string; email?: string; mobile?: string }) {
+  return request({
+    url: '/user/profile',
     method: 'put',
     data
   })
@@ -67,6 +76,15 @@ export function resetPassword(userId: number) {
   return request({
     url: `/user/${userId}/reset-password`,
     method: 'post'
+  })
+}
+
+// 创建用户（管理员）
+export function createUser(data: Partial<UserInfo>) {
+  return request<UserInfo>({
+    url: '/user',
+    method: 'post',
+    data
   })
 }
 

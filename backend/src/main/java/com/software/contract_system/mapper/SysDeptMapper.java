@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 组织架构表数据库访问接口
- * 支持省-市-县三级组织树查询
+ * 支持省-市-县三级法人架构，组织树为四级层级结构查询
  */
 @Mapper
 public interface SysDeptMapper extends BaseMapper<SysDept> {

@@ -5,14 +5,15 @@ import com.software.contract_system.entity.Contract;
 import com.software.contract_system.entity.WfInstance;
 import com.software.contract_system.entity.WfScenarioConfig;
 import com.software.contract_system.entity.WfTask;
+import com.software.contract_system.entity.WfScenarioNode;
 import com.software.contract_system.mapper.ContractMapper;
 import com.software.contract_system.service.WorkflowScenarioService;
 import com.software.contract_system.service.ScenarioMatchService;
 import com.software.contract_system.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -179,6 +180,38 @@ public class WorkflowScenarioController {
     }
     
     /**
+     * 更新审批场景配置（管理员）
+     */
+    @PutMapping("/scenarios/{id}")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "更新场景配置", description = "管理员更新审批场景的基本配置")
+    public Result<String> updateScenario(@PathVariable Long id, @RequestBody WfScenarioConfig config) {
+        try {
+            config.setId(id);
+            config.setUpdatedAt(java.time.LocalDateTime.now());
+            boolean success = scenarioMatchService.updateScenario(config);
+            return success ? Result.success("更新成功") : Result.error("更新失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 切换场景启用状态（管理员）
+     */
+    @PutMapping("/scenarios/{id}/toggle-active")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "切换启用状态", description = "启用或禁用审批场景")
+    public Result<String> toggleScenarioActive(@PathVariable Long id) {
+        try {
+            boolean success = scenarioMatchService.toggleScenarioActive(id);
+            return success ? Result.success("操作成功") : Result.error("操作失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
      * 获取场景详情（包含节点列表）
      */
     @GetMapping("/scenarios/{scenarioId}")
@@ -189,6 +222,99 @@ public class WorkflowScenarioController {
             return Result.error("场景不存在");
         }
         return Result.success(scenario);
+    }
+    
+    /**
+     * 创建新的审批场景（管理员）
+     */
+    @PostMapping("/scenarios")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "创建场景", description = "管理员创建新的审批场景")
+    public Result<WfScenarioConfig> createScenario(@RequestBody WfScenarioConfig config) {
+        try {
+            WfScenarioConfig created = scenarioMatchService.createScenario(config);
+            return Result.success(created);
+        } catch (Exception e) {
+            return Result.error("创建失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 删除审批场景（管理员）
+     */
+    @DeleteMapping("/scenarios/{id}")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "删除场景", description = "管理员删除审批场景（同时删除关联节点）")
+    public Result<String> deleteScenario(@PathVariable Long id) {
+        try {
+            boolean success = scenarioMatchService.deleteScenario(id);
+            return success ? Result.success("删除成功") : Result.error("删除失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 为场景添加审批节点（管理员）
+     */
+    @PostMapping("/scenarios/{scenarioId}/nodes")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "添加节点", description = "为审批场景添加新的审批节点")
+    public Result<WfScenarioNode> addNode(@PathVariable String scenarioId, @RequestBody WfScenarioNode node) {
+        try {
+            node.setScenarioId(scenarioId);
+            WfScenarioNode created = scenarioMatchService.addNode(node);
+            return Result.success(created);
+        } catch (Exception e) {
+            return Result.error("添加失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 更新审批节点（管理员）
+     */
+    @PutMapping("/scenarios/{scenarioId}/nodes/{nodeId}")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "更新节点", description = "更新审批节点配置")
+    public Result<String> updateNode(@PathVariable String scenarioId, @PathVariable Long nodeId, @RequestBody WfScenarioNode node) {
+        try {
+            node.setId(nodeId);
+            node.setScenarioId(scenarioId);
+            boolean success = scenarioMatchService.updateNode(node);
+            return success ? Result.success("更新成功") : Result.error("更新失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 删除审批节点（管理员）
+     */
+    @DeleteMapping("/scenarios/{scenarioId}/nodes/{nodeId}")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "删除节点", description = "删除审批节点")
+    public Result<String> deleteNode(@PathVariable String scenarioId, @PathVariable Long nodeId) {
+        try {
+            boolean success = scenarioMatchService.deleteNode(nodeId);
+            return success ? Result.success("删除成功") : Result.error("删除失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 批量保存场景的所有节点（管理员）
+     */
+    @PutMapping("/scenarios/{scenarioId}/nodes")
+    @PreAuthorize("hasAuthority('workflow:manage')")
+    @Operation(summary = "批量保存节点", description = "替换场景的所有审批节点")
+    public Result<String> saveScenarioNodes(@PathVariable String scenarioId, @RequestBody List<WfScenarioNode> nodes) {
+        try {
+            boolean success = scenarioMatchService.saveScenarioNodes(scenarioId, nodes);
+            return success ? Result.success("保存成功") : Result.error("保存失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
     
     /**

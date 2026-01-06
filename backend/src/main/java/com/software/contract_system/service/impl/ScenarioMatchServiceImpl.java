@@ -81,7 +81,8 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
     
     @Override
     public List<WfScenarioConfig> getAllScenarios() {
-        return scenarioConfigMapper.selectAllActive();
+        // 返回所有场景（包括禁用的），用于管理页面
+        return scenarioConfigMapper.selectAll();
     }
     
     @Override
@@ -107,6 +108,93 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
             }
         }
         return null;
+    }
+    
+    @Override
+    public boolean updateScenario(WfScenarioConfig config) {
+        return scenarioConfigMapper.updateById(config) > 0;
+    }
+    
+    @Override
+    public boolean toggleScenarioActive(Long id) {
+        WfScenarioConfig config = scenarioConfigMapper.selectById(id);
+        if (config == null) {
+            return false;
+        }
+        // 切换状态
+        config.setIsActive(config.getIsActive() == 1 ? 0 : 1);
+        config.setUpdatedAt(java.time.LocalDateTime.now());
+        return scenarioConfigMapper.updateById(config) > 0;
+    }
+    
+    @Override
+    public WfScenarioConfig createScenario(WfScenarioConfig config) {
+        // 生成场景ID
+        String scenarioId = generateScenarioId(config.getSubTypeCode());
+        config.setScenarioId(scenarioId);
+        config.setIsActive(1);
+        config.setCreatedAt(java.time.LocalDateTime.now());
+        config.setUpdatedAt(java.time.LocalDateTime.now());
+        scenarioConfigMapper.insert(config);
+        return config;
+    }
+    
+    @Override
+    public boolean deleteScenario(Long id) {
+        WfScenarioConfig config = scenarioConfigMapper.selectById(id);
+        if (config == null) {
+            return false;
+        }
+        // 删除场景的所有节点
+        scenarioNodeMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WfScenarioNode>()
+                .eq(WfScenarioNode::getScenarioId, config.getScenarioId()));
+        // 删除场景
+        return scenarioConfigMapper.deleteById(id) > 0;
+    }
+    
+    @Override
+    public WfScenarioNode addNode(WfScenarioNode node) {
+        node.setCreatedAt(java.time.LocalDateTime.now());
+        scenarioNodeMapper.insert(node);
+        return node;
+    }
+    
+    @Override
+    public boolean updateNode(WfScenarioNode node) {
+        return scenarioNodeMapper.updateById(node) > 0;
+    }
+    
+    @Override
+    public boolean deleteNode(Long nodeId) {
+        return scenarioNodeMapper.deleteById(nodeId) > 0;
+    }
+    
+    @Override
+    public boolean saveScenarioNodes(String scenarioId, List<WfScenarioNode> nodes) {
+        // 先删除原有节点
+        scenarioNodeMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WfScenarioNode>()
+                .eq(WfScenarioNode::getScenarioId, scenarioId));
+        
+        // 插入新节点
+        for (int i = 0; i < nodes.size(); i++) {
+            WfScenarioNode node = nodes.get(i);
+            node.setScenarioId(scenarioId);
+            node.setNodeOrder(i + 1);
+            node.setCreatedAt(java.time.LocalDateTime.now());
+            scenarioNodeMapper.insert(node);
+        }
+        return true;
+    }
+    
+    /**
+     * 生成场景ID
+     */
+    private String generateScenarioId(String subTypeCode) {
+        // 查询该类型已有的场景数量
+        long count = scenarioConfigMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WfScenarioConfig>()
+                        .likeRight(WfScenarioConfig::getScenarioId, subTypeCode + "-"));
+        return subTypeCode + "-" + String.format("%03d", count + 1);
     }
     
     /**

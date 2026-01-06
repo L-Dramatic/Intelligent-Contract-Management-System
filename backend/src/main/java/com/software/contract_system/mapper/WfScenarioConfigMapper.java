@@ -24,12 +24,18 @@ public interface WfScenarioConfigMapper extends BaseMapper<WfScenarioConfig> {
     /**
      * 根据合同子类型和金额匹配审批场景
      * 这是核心匹配逻辑！
+     * 
+     * 匹配规则：
+     * 1. 子类型完全匹配
+     * 2. 金额在 [amount_min, amount_max) 范围内
+     * 3. 按 amount_min 降序排列，确保匹配最精确的场景
      */
     @Select("SELECT * FROM wf_scenario_config " +
             "WHERE sub_type_code = #{subTypeCode} " +
             "AND is_active = 1 " +
             "AND amount_min <= #{amount} " +
             "AND (amount_max IS NULL OR amount_max > #{amount}) " +
+            "ORDER BY amount_min DESC " +
             "LIMIT 1")
     WfScenarioConfig matchScenario(@Param("subTypeCode") String subTypeCode, @Param("amount") BigDecimal amount);
     
@@ -53,4 +59,10 @@ public interface WfScenarioConfigMapper extends BaseMapper<WfScenarioConfig> {
      */
     @Select("SELECT * FROM wf_scenario_config WHERE is_active = 1 ORDER BY sub_type_code, amount_min")
     List<WfScenarioConfig> selectAllActive();
+    
+    /**
+     * 查询所有场景（包括禁用的，用于管理页面）
+     */
+    @Select("SELECT * FROM wf_scenario_config ORDER BY sub_type_code, amount_min")
+    List<WfScenarioConfig> selectAll();
 }
