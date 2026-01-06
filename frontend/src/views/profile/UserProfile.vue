@@ -426,17 +426,21 @@ const loadUserInfo = async () => {
     form.realName = userInfo.realName || ''
     form.email = userInfo.email || ''
     form.mobile = userInfo.mobile || ''
-    form.departmentName = userInfo.dept?.deptName || ''
+    // 优先使用 departmentName，如果没有再尝试从 dept 对象获取
+    form.departmentName = userInfo.departmentName || userInfo.dept?.name || userInfo.dept?.deptName || ''
     
     // 保存原始值
     originalForm.realName = form.realName
     originalForm.email = form.email
     originalForm.mobile = form.mobile
     
-    // 同步更新 store
+    // 同步更新 store（保留已有的 departmentName 和 primaryRole，避免被覆盖）
     userStore.setUserInfo({
       ...userStore.userInfo!,
-      ...userInfo
+      ...userInfo,
+      // 确保 departmentName 和 primaryRole 不被覆盖为空
+      departmentName: userInfo.departmentName || userStore.userInfo?.departmentName || form.departmentName,
+      primaryRole: userInfo.primaryRole || userStore.userInfo?.primaryRole
     })
   } catch (error) {
     console.error('加载用户信息失败', error)

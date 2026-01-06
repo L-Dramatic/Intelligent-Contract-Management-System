@@ -89,9 +89,6 @@ const roleOptions = [
   // 通用角色（适用于所有部门）
   { label: '合同发起人', value: 'INITIATOR', deptType: null, category: '通用' },
   { label: '部门经理', value: 'DEPT_MANAGER', deptType: null, category: '通用' },
-  { label: '副总经理', value: 'VICE_PRESIDENT', deptType: null, category: '管理层' },
-  { label: '总经理', value: 'GENERAL_MANAGER', deptType: null, category: '管理层' },
-  { label: '三重一大会议', value: 'T1M', deptType: null, category: '管理层' },
   
   // 网络部角色
   { label: '项目经理', value: 'PROJECT_MANAGER', deptType: 'NET', category: '网络部' },
@@ -544,6 +541,10 @@ const getRoleName = (roleCode: string) => {
 const getRoleDeptName = (roleCode: string) => {
   const role = roleOptions.find(r => r.value === roleCode)
   if (!role) return ''
+  
+  // 部门经理是通用角色，会根据发起人部门自动匹配对应的市级部门经理
+  if (roleCode === 'DEPT_MANAGER') return '对应部门'
+  
   if (role.deptType === null) return role.category === '管理层' ? '管理层' : ''
   const deptNames: Record<string, string> = {
     'NET': '网络部',

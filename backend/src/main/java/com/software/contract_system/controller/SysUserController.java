@@ -5,6 +5,7 @@ import com.software.contract_system.common.Result;
 import com.software.contract_system.dto.LoginDTO;
 import com.software.contract_system.dto.RegisterDTO;
 import com.software.contract_system.entity.SysUser;
+import com.software.contract_system.entity.SysDept;
 import com.software.contract_system.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -58,7 +59,11 @@ public class SysUserController {
         }
         // 填充部门信息
         if (user.getDeptId() != null) {
-            user.setDept(deptMapper.selectById(user.getDeptId()));
+            SysDept dept = deptMapper.selectById(user.getDeptId());
+            user.setDept(dept);
+            if (dept != null) {
+                user.setDepartmentName(dept.getName());
+            }
         }
         // 清空密码
         user.setPassword(null);

@@ -293,19 +293,12 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
     /**
      * 根据角色和部门查找用户
      * 
-     * 匹配策略：
-     * 1. 高管角色（副总、总经理、三重一大）：在市公司层级查找
-     * 2. 部门经理：在市级职能部门查找
-     * 3. 技术审批角色：先精确匹配部门，失败则扩大到市级同类部门
+     * 匹配策略（简化版，移除高管角色）：
+     * 1. 部门经理：在市级职能部门查找
+     * 2. 技术审批角色：先精确匹配部门，失败则扩大到市级同类部门
      */
     private List<SysUser> findUsersByRoleAndDept(String roleCode, Long deptId, String nodeLevel) {
         List<SysUser> result;
-        
-        // 高管角色特殊处理（副总、总经理、三重一大）
-        if (isExecutiveRole(roleCode)) {
-            result = findExecutiveUsers(roleCode, deptId);
-            if (!result.isEmpty()) return result;
-        }
         
         // 部门经理角色
         if (SysRole.ROLE_DEPT_MANAGER.equals(roleCode)) {
@@ -344,23 +337,6 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
         return users.stream()
                 .sorted(Comparator.comparingInt(u -> getPendingTaskCount(u.getId())))
                 .collect(Collectors.toList());
-    }
-    
-    /**
-     * 查找高管用户（副总、总经理、三重一大）
-     */
-    private List<SysUser> findExecutiveUsers(String roleCode, Long deptId) {
-        SysDept cityCompany = deptService.getCityCompany(deptId);
-        if (cityCompany == null) {
-            return List.of();
-        }
-        
-        List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getPrimaryRole, roleCode)
-                .eq(SysUser::getDeptId, cityCompany.getId())
-                .eq(SysUser::getIsActive, 1));
-        
-        return sortUsersByPendingTasks(users);
     }
     
     /**
@@ -433,15 +409,6 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
         }
         
         return List.of();
-    }
-    
-    /**
-     * 判断是否是高管角色（需要在市公司层级查找）
-     */
-    private boolean isExecutiveRole(String roleCode) {
-        return SysRole.ROLE_VICE_PRESIDENT.equals(roleCode)
-                || SysRole.ROLE_GENERAL_MANAGER.equals(roleCode)
-                || SysRole.ROLE_T1M.equals(roleCode);
     }
     
     /**

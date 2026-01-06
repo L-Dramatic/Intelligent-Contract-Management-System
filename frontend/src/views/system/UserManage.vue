@@ -113,16 +113,16 @@ const deptTypeToRoles: Record<string, string[]> = {
   'FIN': ['DEPT_MANAGER', 'COST_AUDITOR', 'FINANCE_RECEIVABLE'],
   'ADMIN': ['DEPT_MANAGER', 'FACILITY_COORDINATOR'],
   'PROC': ['DEPT_MANAGER', 'PROCUREMENT_SPECIALIST', 'VENDOR_MANAGER'],
-  // 市/县公司级别（可选择高管）
-  'CITY': ['GENERAL_MANAGER', 'VICE_PRESIDENT', 'DEPT_MANAGER', 'T1M'],
+  // 市公司级别（统一使用部门经理）
+  'CITY': ['DEPT_MANAGER'],
   // 县级部门职位（县级员工显示实际职位，但在审批流程中自动识别为发起人）
   'COUNTY': ['DEPT_MANAGER'],  // 县级分公司经理
   'COUNTY-NET': ['DEPT_MANAGER', 'NETWORK_ENGINEER', 'PROJECT_MANAGER'],  // 县级网络部
   'COUNTY-MKT': ['DEPT_MANAGER', 'CUSTOMER_SERVICE_LEAD'],  // 县级市场部
   'COUNTY-GOV': ['DEPT_MANAGER', 'DICT_PM'],  // 县级政企部
   'COUNTY-ADMIN': ['DEPT_MANAGER', 'FACILITY_COORDINATOR'],  // 县级综合部
-  // 省公司
-  'PROVINCE': ['SYSTEM_ADMIN', 'GENERAL_MANAGER', 'VICE_PRESIDENT']
+  // 省公司（统一使用部门经理）
+  'PROVINCE': ['SYSTEM_ADMIN', 'DEPT_MANAGER']
 }
 
 // 从部门代码中提取类型关键字

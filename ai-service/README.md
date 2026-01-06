@@ -65,6 +65,42 @@ cd app
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+## 离线服务器（无外网）启用RAG检索（推荐做法）
+
+RAG需要加载 `sentence-transformers` 的 embedding 模型。默认会尝试从 HuggingFace 下载，
+如果服务器无外网，会导致服务启动卡住/端口不监听。
+
+### 1) 在有网机器下载模型并打包
+
+```bash
+python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', local_dir='paraphrase-multilingual-MiniLM-L12-v2', local_dir_use_symlinks=False)"
+```
+
+将目录 `paraphrase-multilingual-MiniLM-L12-v2/` 打包上传到服务器，例如放到：
+`/opt/contract-system/ai-service/models/paraphrase-multilingual-MiniLM-L12-v2`
+
+### 2) 服务器设置环境变量并启动
+
+```bash
+export EMBEDDING_MODEL_PATH=/opt/contract-system/ai-service/models/paraphrase-multilingual-MiniLM-L12-v2
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+export HF_HUB_DISABLE_TELEMETRY=1
+
+cd /opt/contract-system/ai-service
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8765
+```
+
+### 3) 使用同一模型重建/导入知识库（强烈建议）
+
+模型变更后，需要用相同的 embedding 模型重新入库，确保检索效果一致：
+
+```bash
+cd /opt/contract-system/ai-service
+export EMBEDDING_MODEL_PATH=/opt/contract-system/ai-service/models/paraphrase-multilingual-MiniLM-L12-v2
+python3 scripts/process_documents.py
+```
+
 ### 5. 测试
 
 - 用浏览器打开 `test_chat.html` 进行WebSocket聊天测试
