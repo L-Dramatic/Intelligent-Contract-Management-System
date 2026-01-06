@@ -300,12 +300,12 @@ const goBack = () => {
             
             <el-divider />
             
-            <div class="extra-actions">
+            <!-- <div class="extra-actions">
               <el-button text type="primary" @click="showTransferDialog = true">
                 <el-icon><Switch /></el-icon>
                 转签
               </el-button>
-            </div>
+            </div> -->
           </el-card>
         </el-col>
       </el-row>
