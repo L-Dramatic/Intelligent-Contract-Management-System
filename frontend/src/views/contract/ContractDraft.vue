@@ -443,11 +443,13 @@ const doSaveContract = async (isDraft = true) => {
       if (contractId.value) {
         await updateContract(contractId.value, data)
         ElMessage.success('合同保存成功')
+        // 强制刷新跳转到合同详情
+        window.location.href = `/contract/detail/${contractId.value}`
       } else {
         const res = await createContract(data)
         ElMessage.success(isDraft ? '合同已保存为草稿' : '合同保存成功')
-        // 跳转到合同详情或列表
-        router.push('/contract/my')
+        // 强制刷新跳转到合同详情
+        window.location.href = `/contract/detail/${res.data.id}`
       }
     }
   } catch (error) {
