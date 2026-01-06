@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { getMyPendingTasks } from '@/api/workflow'
 import { ElMessageBox } from 'element-plus'
 import {
   HomeFilled,
@@ -23,6 +24,26 @@ import {
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+
+// 待办任务
+const pendingTasks = ref<any[]>([])
+const loadingTasks = ref(false)
+
+const loadTasks = async () => {
+  loadingTasks.value = true
+  try {
+    const res = await getMyPendingTasks({ pageNum: 1, pageSize: 5 })
+    pendingTasks.value = res.data || []
+  } catch (e) {
+    console.error('加载消息失败', e)
+  } finally {
+    loadingTasks.value = false
+  }
+}
+
+const goToApprove = (id: number) => {
+  router.push(`/workflow/approve/${id}`)
+}
 
 const isCollapse = ref(false)
 
@@ -214,18 +235,50 @@ const toggleSidebar = () => {
         
         <div class="header-right">
           <!-- 顶部操作图标 -->
-          <div class="action-item">
-            <el-tooltip content="全屏" placement="bottom">
-              <el-icon :size="18"><FullScreen /></el-icon>
-            </el-tooltip>
-          </div>
-          <div class="action-item">
-             <el-tooltip content="消息通知" placement="bottom">
-              <el-badge is-dot class="badge">
-                <el-icon :size="18"><Bell /></el-icon>
-              </el-badge>
-             </el-tooltip>
-          </div>
+          <!-- 消息通知 -->
+          <el-popover
+            placement="bottom"
+            :width="300"
+            trigger="click"
+            popper-class="notify-popover"
+            @show="loadTasks"
+          >
+            <template #reference>
+              <div class="action-item">
+                 <el-tooltip content="待办任务" placement="bottom">
+                  <el-badge :is-dot="pendingTasks.length > 0" class="badge">
+                    <el-icon :size="18"><Bell /></el-icon>
+                  </el-badge>
+                 </el-tooltip>
+              </div>
+            </template>
+            <div class="notify-list" v-loading="loadingTasks">
+              <div class="notify-header">
+                <span>待办任务</span>
+                <el-button link type="primary" size="small" @click="router.push('/workflow/pending')">查看全部</el-button>
+              </div>
+              <div v-if="pendingTasks.length === 0" class="empty-notify">
+                暂无待办任务
+              </div>
+              <div v-else class="notify-items">
+                <div 
+                  v-for="task in pendingTasks" 
+                  :key="task.id" 
+                  class="notify-item"
+                  @click="goToApprove(task.id)"
+                >
+                  <div class="notify-title">
+                    <el-tag size="small" effect="plain">{{ task.contractType }}</el-tag>
+                    <span class="text">{{ task.contractName }}</span>
+                  </div>
+                  <div class="notify-info">
+                    <span>{{ task.initiatorName }}</span>
+                    <span>{{ task.createTime }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-popover>
 
           <!-- 用户头像下拉 -->
           <el-dropdown trigger="click" @command="handleLogout">
@@ -432,4 +485,62 @@ const toggleSidebar = () => {
   opacity: 0;
   transform: translateX(30px);
 }
+
+/* 通知列表样式 */
+.notify-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.empty-notify {
+  text-align: center;
+  color: #999;
+  padding: 20px 0;
+}
+
+.notify-items {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notify-item {
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.notify-item:hover {
+  background: #f5f7fa;
+}
+
+.notify-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.notify-title .text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #333;
+}
+
+.notify-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #999;
+  margin-left: 2px;
+}
+
 </style>

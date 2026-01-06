@@ -118,16 +118,20 @@ const handleSave = async () => {
     saving.value = true
     try {
       if (isNew.value) {
-        await createContract({ ...form, status: 'DRAFT' })
+        const res = await createContract({ ...form, status: 'DRAFT' })
         ElMessage.success('合同创建成功')
+        window.location.href = `/contract/detail/${res.data.id}`
       } else {
         await updateContract(contractId.value!, form)
         ElMessage.success('合同保存成功')
+        window.location.href = `/contract/detail/${contractId.value}`
       }
-      router.push('/contract/my')
     } catch {
-      ElMessage.success('保存成功')
-      router.push('/contract/my')
+      // Error is handled by request interceptor usually, but if caught here:
+      // Keep error message logic if any, but don't redirect on error blindly unless success is implied?
+      // The original code redirected on catch block too?
+      // "ElMessage.success('保存成功') router.push..." in catch block? That looks like a bug in original code!
+      // I will remove the success message in catch block.
     } finally {
       saving.value = false
     }
