@@ -6,6 +6,7 @@ AI合同助手服务 - 主程序
 """
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from typing import Dict
@@ -15,8 +16,8 @@ import os
 from pathlib import Path
 import json
 
-# 导入LLM服务
-from dashscope import Generation
+# 导入OpenAI客户端（用于DeepSeek API，兼容OpenAI格式）
+from openai import OpenAI
 
 # 导入提示词服务
 from app.services.prompt_manager import PromptManager
@@ -38,12 +39,22 @@ config = configparser.ConfigParser()
 config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
 config.read(config_path, encoding='utf-8')
 
-# 获取API Key
+# 获取API Key（优先从配置文件读取，否则使用默认DeepSeek Key）
 try:
-    API_KEY = config.get('LLM', 'tongyi_api_key')
+    API_KEY = config.get('LLM', 'deepseek_api_key')
 except:
-    print("[警告] 无法读取config.ini，使用默认API Key")
-    API_KEY = "sk-ab17defa37784b0c8f041677dae4dae0"
+    print("[警告] 无法读取config.ini中的deepseek_api_key，使用内置API Key")
+    API_KEY = "sk-b31240a7c523478384a53d2f087dc757"
+
+# 初始化DeepSeek客户端
+deepseek_client = OpenAI(
+    api_key=API_KEY,
+    base_url="https://api.deepseek.com"
+)
+
+# DeepSeek模型名称
+DEEPSEEK_MODEL = "deepseek-chat"
+
 
 # ============================================================
 # 应用初始化
@@ -134,7 +145,9 @@ def call_ai(user_message: str, user_id: str = None, contract_type: str = None) -
                 n_results=3
             )
             if context:
-                print(f"[RAG] 检索到相关文档")
+                print(f"[RAG] 检索到相关文档，上下文长度: {len(context)} 字符")
+            else:
+                print(f"[RAG] 未检索到相关文档")
         
         # 获取对话历史
         history = conversation_history.get(user_id, []) if user_id else []
@@ -151,39 +164,36 @@ def call_ai(user_message: str, user_id: str = None, contract_type: str = None) -
             conversation_history=recent_history
         )
         
-        # 合并系统提示词和用户提示词
-        full_prompt = f"{system_prompt}\n\n{user_prompt}"
-        
-        # 调用通义千问（使用prompt方式）
-        response = Generation.call(
-            model='qwen-turbo',
-            api_key=API_KEY,
-            prompt=full_prompt,
+        # 调用DeepSeek API（OpenAI兼容格式）
+        response = deepseek_client.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             max_tokens=1500,
             temperature=0.7
         )
         
-        if response.status_code == 200:
-            ai_reply = response.output.text
+        ai_reply = response.choices[0].message.content
+        
+        # 保存对话历史
+        if user_id:
+            if user_id not in conversation_history:
+                conversation_history[user_id] = []
+            conversation_history[user_id].append(user_message)
+            conversation_history[user_id].append(ai_reply)
             
-            # 保存对话历史
-            if user_id:
-                if user_id not in conversation_history:
-                    conversation_history[user_id] = []
-                conversation_history[user_id].append(user_message)
-                conversation_history[user_id].append(ai_reply)
-                
-                # 限制历史长度
-                if len(conversation_history[user_id]) > 20:
-                    conversation_history[user_id] = conversation_history[user_id][-20:]
-            
-            return ai_reply
-        else:
-            return f"AI服务暂时不可用，请稍后重试。(错误: {response.message})"
+            # 限制历史长度
+            if len(conversation_history[user_id]) > 20:
+                conversation_history[user_id] = conversation_history[user_id][-20:]
+        
+        return ai_reply
             
     except Exception as e:
         print(f"[AI调用错误] {e}")
         return f"抱歉，处理您的请求时出现错误: {str(e)}"
+
 
 # ============================================================
 # API端点
@@ -277,36 +287,59 @@ async def websocket_chat(websocket: WebSocket, user_id: str):
 async def chat(request: dict):
     """
     通用对话接口（用于后端AIChatService调用）
+    现在支持RAG增强！
     
     请求体：
     {
         "prompt": "用户的问题或指令",
-        "max_tokens": 2000
+        "max_tokens": 2000,
+        "contract_type": "可选的合同类型"
     }
     """
     prompt = request.get("prompt", "")
     max_tokens = request.get("max_tokens", 2000)
+    contract_type = request.get("contract_type")
     
     if not prompt:
         return {"error": "prompt is required"}
     
     try:
-        # 调用通义千问
-        response = Generation.call(
-            model='qwen-turbo',
-            api_key=API_KEY,
-            prompt=prompt,
+        # 获取RAG上下文
+        context = ""
+        if RAG_ENABLED and rag_service:
+            context = rag_service.get_context_for_generation(
+                query=prompt,
+                contract_type=contract_type,
+                n_results=3
+            )
+            if context:
+                print(f"[RAG] /api/chat 检索到相关文档，上下文长度: {len(context)} 字符")
+            else:
+                print(f"[RAG] /api/chat 未检索到相关文档")
+        
+        # 构建带上下文的提示词
+        system_prompt = prompt_manager.get_system_prompt("default")
+        if context:
+            enhanced_prompt = f"【参考资料】\n{context}\n\n【用户问题】\n{prompt}"
+        else:
+            enhanced_prompt = prompt
+        
+        # 调用DeepSeek API
+        response = deepseek_client.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": enhanced_prompt}
+            ],
             max_tokens=max_tokens,
             temperature=0.7
         )
-        
-        if response.status_code == 200:
-            return response.output.text
-        else:
-            return f"AI服务调用失败: {response.message}"
+        result = response.choices[0].message.content
+        print(f"[AI Chat] 成功生成回复，长度: {len(result)} 字符")
+        return PlainTextResponse(content=result)
     except Exception as e:
         print(f"[AI Chat Error] {e}")
-        return f"AI服务异常: {str(e)}"
+        return PlainTextResponse(content=f"AI服务异常: {str(e)}")
 
 
 @app.post("/api/generate")
@@ -342,35 +375,36 @@ async def generate_clause(request: dict):
         user_requirement=requirement
     )
     
-    # 合并系统提示词
-    full_prompt = f"{prompt_manager.get_system_prompt('clause_generation')}\n\n{prompt}"
-    
-    # 调用AI
-    response = Generation.call(
-        model='qwen-turbo',
-        api_key=API_KEY,
-        prompt=full_prompt,
-        max_tokens=2000,
-        temperature=0.7
-    )
-    
-    if response.status_code == 200:
+    # 调用DeepSeek API
+    try:
+        response = deepseek_client.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": prompt_manager.get_system_prompt('clause_generation')},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=2000,
+            temperature=0.7
+        )
         return {
             "success": True,
-            "clause": response.output.text,
+            "clause": response.choices[0].message.content,
             "rag_used": bool(context)
         }
-    else:
+    except Exception as e:
         return {
             "success": False,
-            "error": response.message
+            "error": str(e)
         }
 
 
 @app.post("/api/check")
 async def check_compliance(request: dict):
     """
-    合规性检查API
+    合规性检查API - 优化版
+    
+    直接调用 DeepSeek 进行风险审查，不使用 RAG 以提升速度
+    返回结构化的风险报告
     
     请求体：
     {
@@ -381,44 +415,73 @@ async def check_compliance(request: dict):
     clause_content = request.get("clause_content", "")
     contract_type = request.get("contract_type", "")
     
-    # 获取参考上下文
-    context = ""
-    if RAG_ENABLED and rag_service:
-        context = rag_service.get_context_for_generation(
-            query=clause_content[:200],
-            contract_type=contract_type,
-            n_results=3
+    # 构建优化的风险审查提示词（直接调用，不用 RAG）
+    system_prompt = """你是一位资深的电信行业合同法务专家，专门负责合同风险审查。
+请对提供的合同内容进行全面的风险分析，并提供详细的审查报告。
+
+你的回复必须包含以下部分，使用中文：
+
+## 🔴 高风险项
+列出可能导致重大损失或法律纠纷的问题，每项包含：
+- 问题描述
+- 涉及条款
+- 修改建议
+
+## 🟡 中风险项
+列出需要注意的潜在问题，每项包含：
+- 问题描述
+- 涉及条款
+- 修改建议
+
+## 🟢 低风险项/建议优化
+列出可以改进的小问题或优化建议
+
+## ✅ 优质条款
+列出合同中做得好的条款（如有）
+
+## 📊 综合评估
+- 风险等级：HIGH / MEDIUM / LOW
+- 合规评分：0-100分
+- 总体建议：是否可以签署，需要修改的核心问题
+
+请确保分析全面、建议具体可操作，字数不低于800字。"""
+    
+    user_prompt = f"""请对以下{contract_type or '电信行业'}合同内容进行风险审查：
+
+---合同内容开始---
+{clause_content[:8000]}
+---合同内容结束---
+
+请按照格式要求提供详细的风险审查报告。"""
+    
+    # 调用DeepSeek API - 优化参数
+    try:
+        print(f"[AI Check] 开始风险审查，内容长度: {len(clause_content)} 字符")
+        
+        response = deepseek_client.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=2500,  # 增加到2500以获得更详细的报告
+            temperature=0.3   # 降低温度使输出更稳定
         )
-    
-    prompt = prompt_manager.build_prompt(
-        "check_compliance",
-        context=context,
-        clause_content=clause_content,
-        contract_type=prompt_manager.get_contract_type_name(contract_type)
-    )
-    
-    # 合并系统提示词
-    full_prompt = f"{prompt_manager.get_system_prompt('compliance_check')}\n\n{prompt}"
-    
-    # 调用AI
-    response = Generation.call(
-        model='qwen-turbo',
-        api_key=API_KEY,
-        prompt=full_prompt,
-        max_tokens=1500,
-        temperature=0.5
-    )
-    
-    if response.status_code == 200:
+        
+        result = response.choices[0].message.content
+        print(f"[AI Check] 风险审查完成，输出长度: {len(result)} 字符")
+        
         return {
             "success": True,
-            "analysis": response.output.text,
-            "rag_used": bool(context)
+            "analysis": result,
+            "rag_used": False,  # 优化版不使用RAG以提升速度
+            "model": DEEPSEEK_MODEL
         }
-    else:
+    except Exception as e:
+        print(f"[AI Check Error] {e}")
         return {
             "success": False,
-            "error": response.message
+            "error": str(e)
         }
 
 
@@ -525,11 +588,16 @@ async def search_knowledge(query: str, limit: int = 5):
     # 格式化结果
     formatted = []
     for r in results:
+        # 将L2距离转换为相似度 (0-1范围)
+        # L2距离范围通常是 0 到 无穷大，使用 1/(1+distance) 归一化
+        distance = r.get("distance", 0) or 0
+        relevance = 1 / (1 + distance)  # 距离0时相似度1，距离越大相似度越低
+        print(f"[RAG Debug] distance={distance:.4f}, relevance={relevance:.4f}")
         formatted.append({
             "content": r["content"][:500] + "..." if len(r["content"]) > 500 else r["content"],
             "source": r["metadata"].get("source", "未知"),
             "type": r["metadata"].get("doc_type", "未知"),
-            "relevance": round(1 - r["distance"], 3) if r["distance"] else 0
+            "relevance": round(relevance, 3)
         })
     
     return {"results": formatted, "query": query, "count": len(formatted)}
@@ -588,7 +656,7 @@ async def rebuild_knowledge_index():
 if __name__ == "__main__":
     # 统一使用8765端口，与后端配置保持一致
     uvicorn.run(
-        "main:app",
+        "app.main:app",
         host="0.0.0.0",
         port=8765,
         reload=True

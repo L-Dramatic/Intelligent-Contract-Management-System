@@ -6,7 +6,7 @@ import router from '@/router'
 // 创建axios实例
 const request = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -46,13 +46,13 @@ request.interceptors.response.use(
   (error) => {
     // 非关键接口静默处理
     const silentUrls = [
-      '/user/list', 
-      '/dept/tree', 
+      '/user/list',
+      '/dept/tree',
       '/workflow/scenario/scenarios',
       '/history' // 审批历史加载失败不弹窗
     ]
     const isSilent = silentUrls.some(url => error.config?.url?.includes(url))
-    
+
     if (error.response) {
       const status = error.response.status
       if (status === 401) {

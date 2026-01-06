@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Contract, AiReviewResult, ApprovalTask } from '@/types'
-import { getContractDetail, submitContract, aiReviewContract } from '@/api/contract'
+import { getContractDetail, submitContract, aiReviewContract, getReviewHistory, type ContractReviewDTO } from '@/api/contract'
 import { getInstanceHistory } from '@/api/workflow'
 import { getChangeHistory, type ContractChangeVO } from '@/api/contractChange'
 
@@ -29,7 +29,13 @@ const contractTypeMap: Record<string, string> = {
   'MAINTENANCE_SERVICE': '运维服务合同'
 }
 
-const statusMap: Record<string, { text: string; type: string }> = {
+// 数字状态映射（后端返回数字而非字符串）
+const statusMap: Record<number | string, { text: string; type: string }> = {
+  0: { text: '草稿', type: 'info' },
+  1: { text: '审批中', type: 'warning' },
+  2: { text: '已生效', type: 'success' },
+  3: { text: '已驳回', type: 'danger' },
+  // 兼容字符串格式
   'DRAFT': { text: '草稿', type: 'info' },
   'PENDING': { text: '审批中', type: 'warning' },
   'APPROVED': { text: '已生效', type: 'success' },
@@ -38,6 +44,7 @@ const statusMap: Record<string, { text: string; type: string }> = {
 
 onMounted(() => {
   loadContract()
+  loadReviewHistory()
 })
 
 const loadContract = async () => {
@@ -81,6 +88,29 @@ const loadChangeHistory = async () => {
   }
 }
 
+// 加载AI审查历史
+const loadReviewHistory = async () => {
+  try {
+    const res = await getReviewHistory(contractId.value)
+    const reviews = res.data || []
+    
+    // 取最新的已完成审查结果
+    const completedReview = reviews.find(r => r.status === 'COMPLETED')
+    if (completedReview) {
+      reviewResult.value = {
+        riskLevel: completedReview.riskLevel,
+        score: completedReview.score,
+        highRiskItems: completedReview.reviewContent?.highRisks || [],
+        mediumRiskItems: completedReview.reviewContent?.mediumRisks || [],
+        lowRiskItems: completedReview.reviewContent?.lowRisks || [],
+        goodClauses: [] // 后端未返回此字段
+      }
+    }
+  } catch {
+    // 审查历史加载失败不影响主页面
+  }
+}
+
 const handleSubmit = async () => {
   try {
     await ElMessageBox.confirm('确定要提交该合同进行审批吗？', '提交审批', {
@@ -106,37 +136,24 @@ const handleAiReview = async () => {
   reviewing.value = true
   try {
     const res = await aiReviewContract(contractId.value)
-    reviewResult.value = res.data
-    activeTab.value = 'review'
-    ElMessage.success('AI审查完成')
-  } catch {
-    // 模拟审查结果
-    reviewResult.value = {
-      riskLevel: 'LOW',
-      score: 85,
-      highRiskItems: [],
-      mediumRiskItems: [
-        {
-          issue: '未明确约定电磁辐射检测周期',
-          suggestion: '建议增加条款：甲方应每年委托有资质的检测机构进行电磁辐射检测，并向乙方提供检测报告',
-          clause: '第四条'
-        }
-      ],
-      lowRiskItems: [
-        {
-          issue: '违约金条款较为简单',
-          suggestion: '可考虑细化不同违约情形的违约金计算方式',
-          clause: '第六条'
-        }
-      ],
-      goodClauses: [
-        '明确了24小时维护权限',
-        '包含应急通信保障条款',
-        '租赁期限合理（10年）'
-      ]
+    if (res.data) {
+      reviewResult.value = {
+        riskLevel: res.data.riskLevel || 'LOW',
+        score: res.data.score || 80,
+        highRiskItems: res.data.highRiskItems || [],
+        mediumRiskItems: res.data.mediumRiskItems || [],
+        lowRiskItems: res.data.lowRiskItems || [],
+        goodClauses: res.data.goodClauses || [],
+        rawAnalysis: res.data.rawAnalysis || '' // DeepSeek 原始分析
+      }
+      activeTab.value = 'review'
+      ElMessage.success('AI审查完成')
+    } else {
+      ElMessage.error('AI审查返回数据为空')
     }
-    activeTab.value = 'review'
-    ElMessage.success('AI审查完成')
+  } catch (error: any) {
+    console.error('AI审查失败', error)
+    ElMessage.error(error?.response?.data?.message || error?.message || 'AI服务调用失败，请稍后重试')
   } finally {
     reviewing.value = false
   }
@@ -195,7 +212,7 @@ const getRiskLevelInfo = (level: string) => {
       </div>
       <div class="header-actions">
         <el-button 
-          v-if="contract?.status === 'DRAFT'" 
+          v-if="contract?.status === 0" 
           type="warning"
           :loading="reviewing"
           @click="handleAiReview"
@@ -204,14 +221,14 @@ const getRiskLevelInfo = (level: string) => {
           AI条款审查
         </el-button>
         <el-button 
-          v-if="contract?.status === 'DRAFT'" 
+          v-if="contract?.status === 0" 
           @click="goEdit"
         >
           <el-icon><Edit /></el-icon>
           编辑
         </el-button>
         <el-button 
-          v-if="contract?.status === 'DRAFT'" 
+          v-if="contract?.status === 0" 
           type="primary"
           :loading="submitting"
           @click="handleSubmit"
@@ -220,7 +237,7 @@ const getRiskLevelInfo = (level: string) => {
           提交审批
         </el-button>
         <el-button 
-          v-if="contract?.status === 'APPROVED'" 
+          v-if="contract?.status === 2" 
           type="warning"
           @click="goToChange"
         >
@@ -395,7 +412,7 @@ const getRiskLevelInfo = (level: string) => {
       </el-tab-pane>
       
       <!-- 审批流程 -->
-      <el-tab-pane label="审批流程" name="workflow" :disabled="contract?.status === 'DRAFT'">
+      <el-tab-pane label="审批流程" name="workflow" :disabled="contract?.status === 0">
         <div class="workflow-timeline">
           <el-timeline>
             <el-timeline-item
@@ -427,7 +444,7 @@ const getRiskLevelInfo = (level: string) => {
       </el-tab-pane>
       
       <!-- 变更历史 -->
-      <el-tab-pane label="变更历史" name="changes" :disabled="contract?.status === 'DRAFT'">
+      <el-tab-pane label="变更历史" name="changes" :disabled="contract?.status === 0">
         <div class="change-history">
           <el-empty v-if="changeHistory.length === 0" description="暂无变更记录" />
           <el-timeline v-else>

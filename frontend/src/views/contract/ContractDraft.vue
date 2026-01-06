@@ -298,8 +298,94 @@ const scrollToBottom = async () => {
   }
 }
 
+// =============================================
+// Preflight Check - 提交前完整性检查
+// =============================================
+interface PreflightError {
+  field: string
+  message: string
+}
+
+const preflightErrors = ref<PreflightError[]>([])
+const preflightDialogVisible = ref(false)
+
+// 运行 Preflight 检查
+const runPreflightCheck = (): boolean => {
+  const errors: PreflightError[] = []
+  
+  // 1. 检查必填字段
+  if (!contractForm.name || contractForm.name.trim() === '') {
+    errors.push({ field: '合同名称', message: '合同名称不能为空' })
+  }
+  
+  if (!contractForm.partyB || contractForm.partyB.trim() === '') {
+    errors.push({ field: '乙方名称', message: '乙方名称不能为空' })
+  }
+  
+  if (!contractForm.amount || contractForm.amount <= 0) {
+    errors.push({ field: '合同金额', message: '合同金额必须大于0' })
+  }
+  
+  if (!contractForm.content || contractForm.content.trim() === '') {
+    errors.push({ field: '合同内容', message: '合同内容不能为空' })
+  }
+  
+  // 2. 检查未填写的模板变量 {{xxx}}
+  const templateVarPattern = /\{\{([^}]+)\}\}/g
+  const content = contractForm.content || ''
+  const matches = content.match(templateVarPattern)
+  if (matches && matches.length > 0) {
+    const uniqueVars = [...new Set(matches)]
+    uniqueVars.forEach(v => {
+      errors.push({ field: '模板变量', message: `未填写: ${v}` })
+    })
+  }
+  
+  // 3. 检查关键条款是否存在（基于内容长度和关键词）
+  const minContentLength = 200
+  if (content.length < minContentLength) {
+    errors.push({ field: '合同内容', message: `内容过短（至少${minContentLength}字），可能缺少关键条款` })
+  }
+  
+  // 4. 检查关键条款关键词（可选警告）
+  const requiredKeywords = ['甲方', '乙方', '金额', '期限']
+  const missingKeywords = requiredKeywords.filter(kw => !content.includes(kw))
+  if (missingKeywords.length > 0) {
+    errors.push({ field: '关键条款', message: `可能缺少: ${missingKeywords.join('、')}` })
+  }
+  
+  preflightErrors.value = errors
+  
+  if (errors.length > 0) {
+    preflightDialogVisible.value = true
+    return false
+  }
+  
+  return true
+}
+
+// 强制提交（忽略警告）
+const forceSubmit = async () => {
+  preflightDialogVisible.value = false
+  await doSaveContract(false) // 非草稿模式
+}
+
+
 // 保存合同（变更模式或普通模式）
 const saveContract = async (isDraft = true) => {
+  // 非草稿模式时执行 Preflight 检查
+  if (!isDraft) {
+    const passed = runPreflightCheck()
+    if (!passed) {
+      return // 检查失败，弹窗已显示
+    }
+  }
+  
+  await doSaveContract(isDraft)
+}
+
+// 实际保存逻辑
+const doSaveContract = async (isDraft = true) => {
   if (!contractForm.name) {
     ElMessage.warning('请输入合同名称')
     return
@@ -701,6 +787,38 @@ onUnmounted(() => {
       </div>
     </div>
   </div>
+  
+  <!-- Preflight Check 错误弹窗 -->
+  <el-dialog
+    v-model="preflightDialogVisible"
+    title="📋 合同完整性检查"
+    width="500px"
+    :close-on-click-modal="false"
+  >
+    <div class="preflight-content">
+      <el-alert
+        title="提交前检查发现以下问题"
+        type="warning"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 16px;"
+      />
+      
+      <el-table :data="preflightErrors" style="width: 100%">
+        <el-table-column prop="field" label="字段" width="120">
+          <template #default="{ row }">
+            <el-tag type="danger" size="small">{{ row.field }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="message" label="问题描述" />
+      </el-table>
+    </div>
+    
+    <template #footer>
+      <el-button @click="preflightDialogVisible = false">返回修改</el-button>
+      <el-button type="warning" @click="forceSubmit">忽略警告，强制提交</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts">

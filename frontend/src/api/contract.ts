@@ -139,3 +139,59 @@ export function getMyContracts(params: ContractQuery) {
   })
 }
 
+// 获取合同审查历史
+export interface ContractReviewDTO {
+  id: number
+  contractId: number
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  score: number
+  reviewContent: {
+    highRisks: Array<{ issue: string; suggestion: string; clause?: string }>
+    mediumRisks: Array<{ issue: string; suggestion: string; clause?: string }>
+    lowRisks: Array<{ issue: string; suggestion: string; clause?: string }>
+    rawContent?: string
+  }
+  reviewType: string
+  ragUsed: boolean
+  status: string
+  createdAt: string
+  completedAt?: string
+}
+
+export function getReviewHistory(contractId: number) {
+  return request<ContractReviewDTO[]>({
+    url: `/api/contract-review/history/${contractId}`,
+    method: 'get'
+  })
+}
+
+// 合同预检（Preflight Check）- 使用后端现有的 workflow 接口
+export interface PreflightCheckItem {
+  ruleCode: string
+  ruleName: string
+  category: string
+  mandateLevel: string
+  message: string
+  detail?: string
+  suggestion?: string
+  passed: boolean
+}
+
+export interface PreflightCheckResult {
+  passed: boolean
+  requiresConfirmation: boolean
+  blockingErrors: PreflightCheckItem[]
+  warnings: PreflightCheckItem[]
+  notices: PreflightCheckItem[]
+  passedItems: PreflightCheckItem[]
+}
+
+export function preflightCheck(contractId: number, attachments: string[] = []) {
+  return request<PreflightCheckResult>({
+    url: `/workflow/pre-flight-check/${contractId}`,
+    method: 'post',
+    data: attachments
+  })
+}
+
+
