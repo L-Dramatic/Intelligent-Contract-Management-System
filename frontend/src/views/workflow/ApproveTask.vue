@@ -5,6 +5,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApprovalTask, Contract } from '@/types'
 import { getTaskDetail, approveTask, rejectTask, transferTask } from '@/api/workflow'
 import { getContractDetail } from '@/api/contract'
+import { getChangeDetail } from '@/api/contractChange'
+import type { ContractChangeVO } from '@/api/contractChange'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -24,6 +26,16 @@ const opinion = ref('')
 const showTransferDialog = ref(false)
 const transferUserId = ref<number | undefined>()
 const transferReason = ref('')
+
+// 变更相关
+const isChange = ref(false)
+const changeInfo = ref<ContractChangeVO | null>(null)
+
+const formatValue = (val: any) => {
+  if (val === null || val === undefined) return '-'
+  if (typeof val === 'boolean') return val ? '是' : '否'
+  return String(val)
+}
 
 const contractTypeMap: Record<string, string> = {
   'STATION_LEASE': '基站租赁合同',
@@ -67,6 +79,18 @@ const loadData = async () => {
     task.value = taskRes.data
     
     if (task.value && task.value.contractId) {
+      // 检查是否为变更审批
+      if (task.value.isChange && task.value.changeId) {
+        isChange.value = true
+        loading.value = true
+        try {
+          const changeRes = await getChangeDetail(task.value.changeId)
+          changeInfo.value = changeRes.data
+        } catch (e) {
+          console.error('获取变更详情失败', e)
+        }
+      }
+
       const contractRes = await getContractDetail(task.value.contractId)
       contract.value = contractRes.data
     }
@@ -178,6 +202,53 @@ const goBack = () => {
       <el-row :gutter="20">
         <!-- 左侧：合同信息 -->
         <el-col :span="16">
+          <!-- 变更详情卡片 -->
+          <el-card v-if="isChange && changeInfo" class="info-card change-card" style="margin-bottom: 20px; border-color: #e6a23c;">
+            <template #header>
+              <div class="card-header">
+                <span class="card-title">📝 变更申请详情</span>
+                <el-tag type="warning" effect="dark">变更审批</el-tag>
+              </div>
+            </template>
+            
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="变更与版本">{{ changeInfo.title }} ({{ changeInfo.changeVersion }})</el-descriptions-item>
+              <el-descriptions-item label="变更类型">{{ changeInfo.changeTypeName }}</el-descriptions-item>
+              <el-descriptions-item label="变更原因">{{ changeInfo.reasonTypeName }}</el-descriptions-item>
+              <el-descriptions-item label="是否重大">
+                 <el-tag :type="changeInfo.isMajorChange ? 'danger' : 'info'">{{ changeInfo.isMajorChange ? '是' : '否' }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="变更说明" :span="2">{{ changeInfo.description }}</el-descriptions-item>
+              <el-descriptions-item label="乙方沟通情况" :span="2" v-if="changeInfo.partyBCommunication">
+                {{ changeInfo.partyBCommunication }}
+              </el-descriptions-item>
+            </el-descriptions>
+
+            <div v-if="changeInfo.diffItems && changeInfo.diffItems.length > 0" style="margin-top: 20px;">
+              <h4 style="margin-bottom: 10px; font-size: 14px; font-weight: 600;">变更内容对比</h4>
+              <el-table :data="changeInfo.diffItems" border stripe style="width: 100%">
+                <el-table-column prop="fieldLabel" label="变更项" width="150" />
+                <el-table-column prop="beforeValue" label="变更前">
+                  <template #default="{ row }">
+                    <span class="before-value" style="color: #909399">{{ formatValue(row.beforeValue) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="afterValue" label="变更后">
+                  <template #default="{ row }">
+                    <span class="after-value" style="color: #409EFF; font-weight: bold">{{ formatValue(row.afterValue) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="changeDesc" label="变化" width="150">
+                  <template #default="{ row }">
+                    <el-tag size="small" :type="row.changeDesc?.includes('+') ? 'danger' : 'success'">
+                      {{ row.changeDesc }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </el-card>
+
           <el-card class="info-card">
             <template #header>
               <div class="card-header">
