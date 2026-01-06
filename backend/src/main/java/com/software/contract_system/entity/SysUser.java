@@ -58,4 +58,8 @@ public class SysUser {
     /** 所属部门（非数据库字段，用于关联查询） */
     @TableField(exist = false)
     private SysDept dept;
+    
+    /** 部门名称（非数据库字段，方便前端显示） */
+    @TableField(exist = false)
+    private String departmentName;
 }

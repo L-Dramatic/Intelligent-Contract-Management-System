@@ -38,6 +38,48 @@ const form = reactive({
 // 选中的部门信息
 const selectedDept = ref<Department | null>(null)
 
+// 根据部门自动计算人员级别
+const autoRole = computed(() => {
+  if (!selectedDept.value) return ''
+  const dept = selectedDept.value
+  const level = dept.level
+  const type = dept.type
+  const code = dept.code || ''
+  
+  // 根据部门级别确定 role（优先按 level 判断）
+  // level 4 = 县级职能部门
+  if (level === 4) return 'COUNTY'
+  // level 3 且 type 是 COUNTY = 县级分公司本身
+  if (level === 3 && type === 'COUNTY') return 'COUNTY'
+  // level 3 且是市级职能部门
+  if (level === 3 && type === 'DEPT') return 'CITY'
+  // level 2 且 type 是 CITY = 市级分公司
+  if (level === 2 && type === 'CITY') return 'CITY'
+  // level 2 且是省级职能部门
+  if (level === 2 && type === 'DEPT') return 'PROVINCE'
+  // level 1 或 type 是 PROVINCE = 省公司
+  if (level === 1 || type === 'PROVINCE') return 'PROVINCE'
+  
+  // 根据部门代码判断
+  if (code.startsWith('COUNTY-')) return 'COUNTY'
+  if (code.startsWith('CITY-')) return 'CITY'
+  if (code.startsWith('PROV-')) return 'PROVINCE'
+  
+  return 'CITY'  // 默认市级
+})
+
+// 人员级别的显示名称
+const autoRoleLabel = computed(() => {
+  const roleMap: Record<string, string> = {
+    'PROVINCE': '省级员工',
+    'CITY': '市级员工',
+    'COUNTY': '县级员工',
+    'ADMIN': '系统管理员',
+    'BOSS': '领导层'
+  }
+  return autoRole.value ? roleMap[autoRole.value] || autoRole.value : '请先选择部门'
+})
+
 const departmentTree = ref<Department[]>([])
 const roleList = ref<Role[]>([])
 const departmentProps = {
@@ -152,13 +194,16 @@ const findDeptById = (tree: Department[], id: number): Department | null => {
 watch(() => form.departmentId, (newId) => {
   if (newId && departmentTree.value.length) {
     selectedDept.value = findDeptById(departmentTree.value, newId)
+    // 自动根据部门设置 role
+    form.role = autoRole.value
     // 如果当前选择的职位不在推荐列表中，清空职位选择
     const recommended = filteredRoleList.value.recommended.map(r => r.roleCode)
     if (form.primaryRole && !recommended.includes(form.primaryRole)) {
-      // 不自动清空，但可以提示
+      form.primaryRole = undefined  // 清空不匹配的职位
     }
   } else {
     selectedDept.value = null
+    form.role = ''
   }
 })
 
@@ -271,7 +316,7 @@ const handleAdd = () => {
   form.realName = ''
   form.email = ''
   form.phone = ''
-  form.role = 'CITY'  // 默认市级员工
+  form.role = ''  // 根据部门自动确定
   form.departmentId = undefined
   form.primaryRole = undefined
   selectedDept.value = null
@@ -443,7 +488,8 @@ const getPrimaryRoleLabel = (roleCode: string) => {
       style="width: 100%"
       border
     >
-      <el-table-column prop="username" label="用户名" width="120" />
+      <el-table-column prop="id" label="ID" width="70" />
+      <el-table-column prop="username" label="用户名" min-width="150" show-overflow-tooltip />
       <el-table-column prop="realName" label="真实姓名" width="120" />
       <el-table-column prop="email" label="邮箱" width="200" />
       <el-table-column prop="mobile" label="手机号" width="140" />
@@ -511,16 +557,15 @@ const getPrimaryRoleLabel = (roleCode: string) => {
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="form.phone" placeholder="请输入手机号" />
         </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role" placeholder="请选择角色" style="width: 100%">
-            <el-option 
-              v-for="item in roleOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-          <div class="form-tip">ADMIN=管理员, STAFF=工作人员, BOSS=领导层</div>
+        <el-form-item label="人员级别">
+          <el-input :value="autoRoleLabel" disabled placeholder="根据部门自动确定">
+            <template #suffix>
+              <el-tooltip content="人员级别根据所选部门自动确定" placement="top">
+                <el-icon><InfoFilled /></el-icon>
+              </el-tooltip>
+            </template>
+          </el-input>
+          <div class="form-tip">自动根据部门级别确定：省级部门→省级员工，市级部门→市级员工，县级部门→县级员工</div>
         </el-form-item>
         <el-form-item label="所属部门" prop="departmentId">
           <el-tree-select
@@ -579,9 +624,9 @@ const getPrimaryRoleLabel = (roleCode: string) => {
 </template>
 
 <script lang="ts">
-import { Plus, Search, Refresh } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, InfoFilled } from '@element-plus/icons-vue'
 export default {
-  components: { Plus, Search, Refresh }
+  components: { Plus, Search, Refresh, InfoFilled }
 }
 </script>
 

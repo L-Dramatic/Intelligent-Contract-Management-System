@@ -6,6 +6,16 @@
         <div class="welcome-text">
           <h3 class="greeting">你好，{{ displayName }}</h3>
           <p class="welcome-subtitle">欢迎使用智慧合同管理系统</p>
+          <div class="user-info-line" v-if="isBusinessUser">
+            <el-tag type="info" effect="plain" size="small">
+              <el-icon><OfficeBuilding /></el-icon>
+              {{ userStore.userInfo?.departmentName || '未分配部门' }}
+            </el-tag>
+            <el-tag type="success" effect="plain" size="small">
+              <el-icon><User /></el-icon>
+              {{ primaryRoleName }}
+            </el-tag>
+          </div>
         </div>
         <el-button type="primary" @click="goToProfile">
           <el-icon><User /></el-icon>
@@ -279,6 +289,22 @@ const isCountyUser = computed(() => {
   return userStore.role === 'COUNTY'
 })
 
+// 职位名称映射
+const primaryRoleName = computed(() => {
+  const roleMap: Record<string, string> = {
+    'DEPT_MANAGER': '部门经理',
+    'NETWORK_ENGINEER': '网络工程师',
+    'LEGAL_REVIEWER': '法务审查员',
+    'FINANCE_AUDITOR': '财务审核员',
+    'DICT_PM': '政企项目经理',
+    'CUSTOMER_SERVICE_LEAD': '客服主管',
+    'FACILITY_COORDINATOR': '设施协调员',
+    'INITIATOR': '合同发起人'
+  }
+  const primaryRole = userStore.userInfo?.primaryRole
+  return primaryRole ? (roleMap[primaryRole] || primaryRole) : '未分配职位'
+})
+
 // 跳转到个人主页
 const goToProfile = () => {
   router.push('/profile')
@@ -492,6 +518,21 @@ onMounted(() => {
   font-size: 24px;
   font-weight: 600;
   color: #fff;
+}
+
+.user-info-line {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  
+  .el-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+  }
 }
 
 .welcome-subtitle {

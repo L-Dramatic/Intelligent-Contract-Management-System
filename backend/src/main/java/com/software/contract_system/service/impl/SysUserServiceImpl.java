@@ -33,9 +33,23 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     // 这里为了方便，我们先暂时返回 Object，实际是返回 Map
     @Override
     public Object login(LoginDTO loginDTO) {
-        // 1. 查用户
-        SysUser user = this.getOne(new LambdaQueryWrapper<SysUser>()
-                .eq(SysUser::getUsername, loginDTO.getUsername()));
+        // 1. 查用户（支持用户名或ID登录）
+        String loginInput = loginDTO.getUsername();
+        SysUser user = null;
+        
+        // 尝试解析为ID
+        try {
+            Long userId = Long.parseLong(loginInput);
+            user = this.getById(userId);
+        } catch (NumberFormatException e) {
+            // 不是数字，按用户名查询
+        }
+        
+        // 如果ID查询失败，按用户名查询
+        if (user == null) {
+            user = this.getOne(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getUsername, loginInput));
+        }
 
         if (user == null) {
             throw new RuntimeException("用户不存在");
@@ -70,6 +84,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         // 4. 生成 Token (传入权限列表)
         String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole(), permissionCodes);
+
+        // 5. 填充部门信息
+        if (user.getDeptId() != null) {
+            SysDept dept = deptMapper.selectById(user.getDeptId());
+            user.setDept(dept);
+            if (dept != null) {
+                user.setDepartmentName(dept.getName());
+            }
+        }
+        
+        // 清空密码
+        user.setPassword(null);
 
         Map<String, Object> data = new HashMap<>();
         data.put("token", token);

@@ -61,7 +61,7 @@
           <el-form-item prop="username">
             <el-input 
               v-model="loginForm.username" 
-              placeholder="请输入账号" 
+              placeholder="请输入用户ID或用户名" 
               :prefix-icon="User"
             />
           </el-form-item>

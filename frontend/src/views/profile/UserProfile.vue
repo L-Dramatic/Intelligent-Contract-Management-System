@@ -104,12 +104,18 @@
                 </el-col>
               </el-row>
 
+              <!-- 系统分配信息（只读） -->
+              <el-divider content-position="left">
+                <el-icon><Setting /></el-icon>
+                <span style="margin-left: 6px;">系统分配信息（由管理员设定）</span>
+              </el-divider>
+              
               <el-row :gutter="24">
                 <el-col :xs="24" :sm="12">
-                  <el-form-item label="所属角色">
-                    <el-input :value="roleName" disabled prefix-icon="Avatar">
+                  <el-form-item label="所属部门">
+                    <el-input :value="form.departmentName || '未分配'" disabled prefix-icon="OfficeBuilding">
                       <template #suffix>
-                        <el-tooltip content="角色由管理员分配" placement="top">
+                        <el-tooltip content="部门由管理员分配，如需修改请联系管理员" placement="top">
                           <el-icon class="info-icon"><InfoFilled /></el-icon>
                         </el-tooltip>
                       </template>
@@ -117,10 +123,24 @@
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12">
-                  <el-form-item label="所属部门">
-                    <el-input :value="form.departmentName || '未分配'" disabled prefix-icon="OfficeBuilding">
+                  <el-form-item label="岗位职责">
+                    <el-input :value="primaryRoleName" disabled prefix-icon="Briefcase">
                       <template #suffix>
-                        <el-tooltip content="部门由管理员管理" placement="top">
+                        <el-tooltip content="职位由管理员分配，如需修改请联系管理员" placement="top">
+                          <el-icon class="info-icon"><InfoFilled /></el-icon>
+                        </el-tooltip>
+                      </template>
+                    </el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              
+              <el-row :gutter="24">
+                <el-col :xs="24" :sm="12">
+                  <el-form-item label="人员级别">
+                    <el-input :value="roleName" disabled prefix-icon="Avatar">
+                      <template #suffix>
+                        <el-tooltip content="级别由管理员分配" placement="top">
                           <el-icon class="info-icon"><InfoFilled /></el-icon>
                         </el-tooltip>
                       </template>
@@ -261,7 +281,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { 
   User, UserFilled, Message, Phone, Lock, Key, 
   Check, RefreshLeft, ArrowRight, InfoFilled, 
-  Document, Avatar, OfficeBuilding 
+  Document, Avatar, OfficeBuilding, Setting, Briefcase 
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getUserInfo, updateProfile, changePassword } from '@/api/user'
@@ -307,6 +327,22 @@ const roleNameMap: Record<string, string> = {
 
 const roleName = computed(() => {
   return roleNameMap[userStore.role] || userStore.role || '未知角色'
+})
+
+// 职位名称映射
+const primaryRoleName = computed(() => {
+  const roleMap: Record<string, string> = {
+    'DEPT_MANAGER': '部门经理',
+    'NETWORK_ENGINEER': '网络工程师',
+    'LEGAL_REVIEWER': '法务审查员',
+    'FINANCE_AUDITOR': '财务审核员',
+    'DICT_PM': '政企项目经理',
+    'CUSTOMER_SERVICE_LEAD': '客服主管',
+    'FACILITY_COORDINATOR': '设施协调员',
+    'INITIATOR': '合同发起人'
+  }
+  const primaryRole = userStore.userInfo?.primaryRole
+  return primaryRole ? (roleMap[primaryRole] || primaryRole) : '未分配职位'
 })
 
 const roleTagType = computed(() => {
