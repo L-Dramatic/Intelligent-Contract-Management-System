@@ -184,6 +184,15 @@ const goToChange = () => {
   router.push(`/contract/change/create/${contractId.value}`)
 }
 
+const getScoreDesc = (level: string) => {
+  const map: Record<string, string> = {
+    'LOW': '该合同整体风险较低，建议关注优化建议。',
+    'MEDIUM': '该合同存在一定风险，建议重点关注中高风险项。',
+    'HIGH': '该合同风险较高，建议暂缓签署并进行全面修改。'
+  }
+  return map[level] || map['LOW']
+}
+
 const getRiskLevelInfo = (level: string) => {
   const map: Record<string, { text: string; type: string; color: string }> = {
     'LOW': { text: '低风险', type: 'success', color: '#52c41a' },
@@ -212,7 +221,7 @@ const getRiskLevelInfo = (level: string) => {
       </div>
       <div class="header-actions">
         <el-button 
-          v-if="contract?.status === 0" 
+          v-if="[0, 1].includes(contract?.status ?? -1)" 
           type="warning"
           :loading="reviewing"
           @click="handleAiReview"
@@ -341,7 +350,7 @@ const getRiskLevelInfo = (level: string) => {
                   {{ getRiskLevelInfo(reviewResult.riskLevel).text }}
                 </el-tag>
                 <p class="score-desc">
-                  该合同整体风险较低，建议关注中风险项的修改建议。
+                  {{ getScoreDesc(reviewResult.riskLevel) }}
                 </p>
               </div>
             </div>
@@ -399,15 +408,47 @@ const getRiskLevelInfo = (level: string) => {
                     <el-badge :value="reviewResult.goodClauses.length" type="success" />
                   </div>
                 </template>
-                <div class="good-list">
-                  <div v-for="(item, index) in reviewResult.goodClauses" :key="index" class="good-item">
-                    <el-icon color="#52c41a"><Check /></el-icon>
-                    <span>{{ item }}</span>
+                <div class="risk-list">
+                  <div v-for="(item, index) in reviewResult.goodClauses" :key="index" class="risk-item">
+                    <div class="risk-issue">{{ item }}</div>
                   </div>
                 </div>
               </el-card>
             </el-col>
           </el-row>
+          
+          <!-- 低风险项（新增） -->
+          <el-row style="margin-top: 20px" v-if="reviewResult.lowRiskItems && reviewResult.lowRiskItems.length > 0">
+            <el-col :span="24">
+              <el-card class="risk-card low" style="height: auto">
+                <template #header>
+                  <div class="risk-header">
+                    <span>低风险项 / 建议优化</span>
+                    <el-badge :value="reviewResult.lowRiskItems.length" type="info" />
+                  </div>
+                </template>
+                <div class="risk-list" style="max-height: none">
+                  <div v-for="(item, index) in reviewResult.lowRiskItems" :key="index" class="risk-item">
+                    <div class="risk-issue">{{ item.issue }}</div>
+                    <div class="risk-suggestion">{{ item.suggestion }}</div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+
+          <!-- 完整审查报告（大框展示） -->
+          <el-card class="full-report-card" style="margin-top: 20px" v-if="reviewResult.rawAnalysis">
+            <template #header>
+              <div class="risk-header">
+                <span class="card-title">🔍 AI深度审查报告全文</span>
+                <el-tag type="info">DeepSeek V3 分析</el-tag>
+              </div>
+            </template>
+            <div class="full-report-content">
+              {{ reviewResult.rawAnalysis }}
+            </div>
+          </el-card>
         </div>
       </el-tab-pane>
       
@@ -617,6 +658,20 @@ export default {
 .risk-suggestion {
   font-size: 13px;
   color: #909399;
+}
+
+.full-report-content {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #303133;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  min-height: 300px;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .good-list {

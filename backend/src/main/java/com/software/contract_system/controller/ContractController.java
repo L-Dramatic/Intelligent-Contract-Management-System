@@ -130,8 +130,15 @@ public class ContractController {
 
                 // 解析 AI 返回的分析结果，构建前端需要的格式
                 java.util.Map<String, Object> result = new java.util.HashMap<>();
-                result.put("riskLevel", extractRiskLevel(analysis));
-                result.put("score", extractScore(analysis));
+                int score = extractScore(analysis);
+                String riskLevel = "LOW";
+                if (score < 60)
+                    riskLevel = "HIGH";
+                else if (score < 80)
+                    riskLevel = "MEDIUM";
+
+                result.put("riskLevel", riskLevel);
+                result.put("score", score);
                 result.put("highRiskItems", extractRiskItems(analysis, "高风险"));
                 result.put("mediumRiskItems", extractRiskItems(analysis, "中风险"));
                 result.put("lowRiskItems", extractRiskItems(analysis, "低风险"));
@@ -149,15 +156,6 @@ public class ContractController {
         }
     }
 
-    // 提取风险等级
-    private String extractRiskLevel(String analysis) {
-        if (analysis.contains("HIGH") || analysis.contains("高风险"))
-            return "HIGH";
-        if (analysis.contains("MEDIUM") || analysis.contains("🟡"))
-            return "MEDIUM";
-        return "LOW";
-    }
-
     // 提取合规评分
     private int extractScore(String analysis) {
         // 尝试从文本中提取分数
@@ -173,9 +171,9 @@ public class ContractController {
         }
         // 默认根据风险等级估算
         if (analysis.contains("HIGH"))
-            return 60;
+            return 55;
         if (analysis.contains("MEDIUM"))
-            return 75;
+            return 70;
         return 85;
     }
 
@@ -187,18 +185,36 @@ public class ContractController {
         boolean inSection = false;
 
         for (String line : lines) {
+            String trimmedLine = line.trim();
             if (line.contains(level)) {
                 inSection = true;
                 continue;
             }
-            if (inSection && (line.startsWith("##") || line.startsWith("🔴") || line.startsWith("🟡")
-                    || line.startsWith("🟢") || line.startsWith("✅") || line.startsWith("📊"))) {
+            if (inSection && (trimmedLine.startsWith("##") || trimmedLine.startsWith("🔴")
+                    || trimmedLine.startsWith("🟡")
+                    || trimmedLine.startsWith("🟢") || trimmedLine.startsWith("✅") || trimmedLine.startsWith("📊"))) {
                 inSection = false;
             }
-            if (inSection && line.startsWith("-") && line.length() > 3) {
+            // 匹配 - 或 * 或 1. 开头的行
+            if (inSection
+                    && (trimmedLine.startsWith("-") || trimmedLine.startsWith("*") || trimmedLine.matches("^\\d+\\..*"))
+                    && trimmedLine.length() > 3) {
+                // 去除列表符号和Markdown加粗
+                String content = trimmedLine.replaceAll("^[-*\\d+\\.]+\\s*", "").replace("**", "").trim();
+
+                // 尝试分离问题描述和建议（简单处理）
                 java.util.Map<String, String> item = new java.util.HashMap<>();
-                item.put("issue", line.substring(1).trim());
-                item.put("suggestion", "请参阅详细分析");
+                if (content.contains("：") || content.contains(":")) {
+                    int splitIndex = content.indexOf("：");
+                    if (splitIndex == -1)
+                        splitIndex = content.indexOf(":");
+
+                    item.put("issue", content.substring(0, splitIndex).trim());
+                    item.put("suggestion", content.substring(splitIndex + 1).trim());
+                } else {
+                    item.put("issue", content);
+                    item.put("suggestion", "请参阅详细分析");
+                }
                 items.add(item);
             }
         }
@@ -212,15 +228,23 @@ public class ContractController {
         boolean inSection = false;
 
         for (String line : lines) {
+            String trimmedLine = line.trim();
             if (line.contains("优质条款") || line.contains("✅")) {
                 inSection = true;
                 continue;
             }
-            if (inSection && (line.startsWith("##") || line.startsWith("📊"))) {
+            if (inSection
+                    && (trimmedLine.startsWith("##") || trimmedLine.startsWith("🔴") || trimmedLine.startsWith("🟡")
+                            || trimmedLine.startsWith("🟢") || trimmedLine.startsWith("📊"))) {
                 inSection = false;
             }
-            if (inSection && line.startsWith("-") && line.length() > 3) {
-                clauses.add(line.substring(1).trim());
+            // 匹配 - 或 * 或 1. 开头的行
+            if (inSection
+                    && (trimmedLine.startsWith("-") || trimmedLine.startsWith("*") || trimmedLine.matches("^\\d+\\..*"))
+                    && trimmedLine.length() > 3) {
+                // 去除列表符号和Markdown加粗
+                String content = trimmedLine.replaceAll("^[-*\\d+\\.]+\\s*", "").replace("**", "").trim();
+                clauses.add(content);
             }
         }
         return clauses;
