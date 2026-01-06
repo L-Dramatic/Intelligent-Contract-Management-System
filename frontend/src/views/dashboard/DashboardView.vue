@@ -144,21 +144,30 @@
             </div>
           </template>
           <div class="quick-actions">
-            <div class="action-btn" @click="$router.push('/contract/create')">
+            <!-- 县级人员：发起合同 -->
+            <div v-if="isCountyUser" class="action-btn" @click="$router.push('/contract/create')">
               <div class="icon-box blue"><el-icon><DocumentAdd /></el-icon></div>
               <span>发起合同</span>
             </div>
-            <div class="action-btn" @click="$router.push('/workflow/pending')">
+            <!-- 县级人员：我的合同 -->
+            <div v-if="isCountyUser" class="action-btn" @click="$router.push('/contract/my')">
+              <div class="icon-box green"><el-icon><Folder /></el-icon></div>
+              <span>我的合同</span>
+            </div>
+            <!-- 市级及以上：待我审批 -->
+            <div v-if="!isCountyUser" class="action-btn" @click="$router.push('/workflow/pending')">
               <div class="icon-box orange"><el-icon><Stamp /></el-icon></div>
               <span>待我审批</span>
             </div>
-            <div class="action-btn" @click="$router.push('/contract/list')">
-              <div class="icon-box green"><el-icon><Search /></el-icon></div>
-              <span>合同查询</span>
+            <!-- 市级及以上：已办任务 -->
+            <div v-if="!isCountyUser" class="action-btn" @click="$router.push('/workflow/completed')">
+              <div class="icon-box green"><el-icon><Finished /></el-icon></div>
+              <span>已办任务</span>
             </div>
-        <div class="action-btn" @click="goToAIQA">
-          <div class="icon-box purple"><el-icon><ChatDotRound /></el-icon></div>
-          <span>AI问答</span>
+            <!-- 所有人：AI问答 -->
+            <div class="action-btn" @click="goToAIQA">
+              <div class="icon-box purple"><el-icon><ChatDotRound /></el-icon></div>
+              <span>AI问答</span>
             </div>
           </div>
         </el-card>
@@ -235,7 +244,8 @@ import {
   Connection,
   DataLine,
   CircleCheck,
-  Warning
+  Warning,
+  Folder
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getMyPendingTasks, getMyCompletedTasks } from '@/api/workflow'
@@ -263,6 +273,10 @@ const isAdmin = computed(() => {
 const isBusinessUser = computed(() => {
   const role = userStore.role
   return ['COUNTY', 'CITY', 'PROVINCE', 'BOSS'].includes(role)
+})
+
+const isCountyUser = computed(() => {
+  return userStore.role === 'COUNTY'
 })
 
 // 跳转到个人主页
