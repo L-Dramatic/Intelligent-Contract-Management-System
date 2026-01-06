@@ -197,10 +197,6 @@
                 </el-tag>
               </div>
               <div class="info-row">
-                <span class="info-label">职级</span>
-                <span class="info-value">{{ userStore.userInfo?.zlevel || '-' }}</span>
-              </div>
-              <div class="info-row">
                 <span class="info-label">最后更新</span>
                 <span class="info-value">{{ formatDate(userStore.userInfo?.updatedAt) }}</span>
               </div>
@@ -303,8 +299,10 @@ const passwordForm = reactive({
 // 角色名称映射
 const roleNameMap: Record<string, string> = {
   'ADMIN': '系统管理员',
-  'STAFF': '业务人员',
-  'BOSS': '领导层'
+  'BOSS': '领导层',
+  'PROVINCE': '省级员工',
+  'CITY': '市级员工',
+  'COUNTY': '县级员工'
 }
 
 const roleName = computed(() => {
@@ -314,8 +312,10 @@ const roleName = computed(() => {
 const roleTagType = computed(() => {
   const typeMap: Record<string, string> = {
     'ADMIN': 'danger',
-    'STAFF': '',
-    'BOSS': 'warning'
+    'BOSS': 'warning',
+    'PROVINCE': 'success',
+    'CITY': 'primary',
+    'COUNTY': 'info'
   }
   return typeMap[userStore.role] || 'info'
 })

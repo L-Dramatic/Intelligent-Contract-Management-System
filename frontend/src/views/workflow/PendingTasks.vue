@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import type { ApprovalTask } from '@/types'
 import { getMyPendingTasks } from '@/api/workflow'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
+
+// 权限检查：县级用户无审批权限
+const hasPermission = ref(true)
 
 const loading = ref(false)
 const tableData = ref<ApprovalTask[]>([])
@@ -34,6 +40,12 @@ const contractTypeMap: Record<string, string> = {
 }
 
 onMounted(() => {
+  // 县级用户无审批权限
+  if (userStore.isCountyUser) {
+    hasPermission.value = false
+    ElMessage.warning('县级员工暂无审批权限，合同需提交至上级市公司审批')
+    return
+  }
   loadData()
 })
 
@@ -72,11 +84,23 @@ const goToContractDetail = (id: number) => {
   <div class="page-container">
     <div class="page-header">
       <h2 class="page-title">待办任务</h2>
-      <el-tag type="warning" size="large">{{ total }} 条待处理</el-tag>
+      <el-tag v-if="hasPermission" type="warning" size="large">{{ total }} 条待处理</el-tag>
     </div>
     
+    <!-- 无权限提示 -->
+    <el-result 
+      v-if="!hasPermission" 
+      icon="warning" 
+      title="暂无审批权限"
+      sub-title="县级员工仅负责起草合同，审批工作由上级市公司完成"
+    >
+      <template #extra>
+        <el-button type="primary" @click="$router.push('/contract/my')">返回我的合同</el-button>
+      </template>
+    </el-result>
+    
     <!-- 任务卡片列表 -->
-    <div v-loading="loading" class="task-list">
+    <div v-if="hasPermission" v-loading="loading" class="task-list">
       <div 
         v-for="task in tableData"
         :key="task.id"

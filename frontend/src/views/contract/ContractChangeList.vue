@@ -71,7 +71,7 @@
             </el-table-column>
             <el-table-column prop="partyB" label="乙方" min-width="150" show-overflow-tooltip />
             <el-table-column prop="version" label="版本" width="100" />
-            <el-table-column label="操作" width="150" fixed="right">
+            <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" size="small" @click="goToCreateChange(row)">
                   发起变更
@@ -100,70 +100,70 @@
         <el-card>
           <!-- 筛选 -->
           <el-form :inline="true" :model="changeFilter" class="filter-form">
-            <el-form-item label="变更状态">
+        <el-form-item label="变更状态">
               <el-select v-model="changeFilter.status" placeholder="全部状态" clearable style="width: 150px" @change="loadChanges">
-                <el-option
-                  v-for="item in CHANGE_STATUS_OPTIONS"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
+            <el-option
+              v-for="item in CHANGE_STATUS_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
               <el-button type="primary" @click="loadChanges">
-                <el-icon><Search /></el-icon> 查询
-              </el-button>
+            <el-icon><Search /></el-icon> 查询
+          </el-button>
               <el-button @click="resetChangeFilter">重置</el-button>
-            </el-form-item>
-          </el-form>
+        </el-form-item>
+      </el-form>
 
           <!-- 变更列表 -->
           <el-table :data="changeTableData" v-loading="loadingChanges" border stripe>
-            <el-table-column prop="changeNo" label="变更单号" width="160" />
-            <el-table-column prop="title" label="变更标题" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="contractNo" label="原合同编号" width="160" />
-            <el-table-column prop="changeTypeName" label="变更类型" width="120">
-              <template #default="{ row }">
-                <el-tag size="small">{{ row.changeTypeName }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="金额变化" width="150">
-              <template #default="{ row }">
-                <span v-if="row.amountDiff" :class="row.amountDiff > 0 ? 'amount-increase' : 'amount-decrease'">
-                  {{ row.amountDiff > 0 ? '+' : '' }}{{ formatAmount(row.amountDiff) }}
-                </span>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="isMajorChange" label="重大变更" width="100" align="center">
-              <template #default="{ row }">
-                <el-tag v-if="row.isMajorChange" type="danger" size="small">是</el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="statusName" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)" size="small">
-                  {{ row.statusName }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createdAt" label="发起时间" width="170">
-              <template #default="{ row }">
-                {{ formatDate(row.createdAt) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="200" fixed="right">
-              <template #default="{ row }">
+        <el-table-column prop="changeNo" label="变更单号" width="160" />
+        <el-table-column prop="title" label="变更标题" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="contractNo" label="原合同编号" width="160" />
+        <el-table-column prop="changeTypeName" label="变更类型" width="120">
+          <template #default="{ row }">
+            <el-tag size="small">{{ row.changeTypeName }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="金额变化" width="150">
+          <template #default="{ row }">
+            <span v-if="row.amountDiff" :class="row.amountDiff > 0 ? 'amount-increase' : 'amount-decrease'">
+              {{ row.amountDiff > 0 ? '+' : '' }}{{ formatAmount(row.amountDiff) }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="isMajorChange" label="重大变更" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.isMajorChange" type="danger" size="small">是</el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="statusName" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)" size="small">
+              {{ row.statusName }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="发起时间" width="170">
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
                 <el-button type="primary" link size="small" @click="viewChangeDetail(row)">
-                  查看
-                </el-button>
-                <el-button
-                  v-if="row.status === 0"
-                  type="success"
-                  link
-                  size="small"
+              查看
+            </el-button>
+            <el-button
+              v-if="row.status === 0"
+              type="success"
+              link
+              size="small"
                   @click="editChange(row)"
                 >
                   编辑
@@ -174,35 +174,35 @@
                   link
                   size="small"
                   @click="submitChange(row)"
-                >
-                  提交
-                </el-button>
-                <el-button
-                  v-if="row.status === 0 || row.status === 1"
-                  type="danger"
-                  link
-                  size="small"
+            >
+              提交
+            </el-button>
+            <el-button
+              v-if="row.status === 0 || row.status === 1"
+              type="danger"
+              link
+              size="small"
                   @click="cancelChange(row)"
-                >
-                  撤销
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            >
+              撤销
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-          <!-- 分页 -->
+      <!-- 分页 -->
           <div class="pagination-wrapper" v-if="changePagination.total > 0">
-            <el-pagination
+        <el-pagination
               v-model:current-page="changePagination.pageNum"
               v-model:page-size="changePagination.pageSize"
-              :page-sizes="[10, 20, 50]"
+          :page-sizes="[10, 20, 50]"
               :total="changePagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
+          layout="total, sizes, prev, pager, next, jumper"
               @size-change="loadChanges"
               @current-change="loadChanges"
-            />
-          </div>
-        </el-card>
+        />
+      </div>
+    </el-card>
       </el-tab-pane>
     </el-tabs>
 
@@ -354,11 +354,54 @@ const loadChangeableContracts = async () => {
       name: contractFilter.name
     }
     const res = await getMyContracts(params)
-    changeableContracts.value = res.data?.records || []
-    contractPagination.total = res.data?.total || 0
+    // 兼容不同的返回格式
+    let contracts: Contract[] = []
+    if (res.data?.records) {
+      contracts = res.data.records
+      contractPagination.total = res.data.total || 0
+    } else if (res.data?.list) {
+      contracts = res.data.list
+      contractPagination.total = res.data.total || 0
+    } else if (Array.isArray(res.data)) {
+      contracts = res.data
+      contractPagination.total = res.data.length
+    } else {
+      contracts = []
+      contractPagination.total = 0
+    }
+    
+    // 加载变更记录，为每个合同标记是否有进行中的变更
+    try {
+      const changesRes = await myChanges({ pageNum: 1, pageSize: 999 })
+      // 兼容多种返回格式
+      let changes: ContractChangeVO[] = []
+      if (changesRes.data?.records) {
+        changes = changesRes.data.records
+      } else if (changesRes.data?.list) {
+        changes = changesRes.data.list
+      } else if (Array.isArray(changesRes.data)) {
+        changes = changesRes.data
+      }
+      
+      // 获取有进行中变更的合同ID（草稿0和审批中1）
+      const pendingContractIds = new Set<number>()
+      for (const change of changes) {
+        if (change.status === 0 || change.status === 1) {
+          pendingContractIds.add(change.contractId)
+        }
+      }
+      
+      // 过滤掉有进行中变更的合同
+      contracts = contracts.filter(contract => !pendingContractIds.has(contract.id))
+    } catch (e) {
+      console.error('加载变更状态失败:', e)
+    }
+    
+    changeableContracts.value = contracts
   } catch (error) {
-    const err = error as { message?: string }
-    ElMessage.error(err.message || '加载合同列表失败')
+    console.error('加载合同列表失败:', error)
+    changeableContracts.value = []
+    contractPagination.total = 0
   } finally {
     loadingContracts.value = false
   }
@@ -570,8 +613,12 @@ const formatValue = (value: unknown) => {
   return String(value)
 }
 
-onMounted(() => {
-  loadChangeableContracts()
+onMounted(async () => {
+  try {
+    await loadChangeableContracts()
+  } catch (error) {
+    console.error('初始化合同变更列表失败:', error)
+  }
 })
 </script>
 
@@ -595,7 +642,7 @@ onMounted(() => {
       }
     }
   }
-
+  
   .card-header {
     display: flex;
     justify-content: space-between;
@@ -610,21 +657,21 @@ onMounted(() => {
   .filter-form {
     margin-bottom: 20px;
   }
-
-  .pagination-wrapper {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-  }
   
-  .amount-increase {
-    color: #f56c6c;
-    font-weight: 500;
-  }
-  
-  .amount-decrease {
-    color: #67c23a;
-    font-weight: 500;
+    .pagination-wrapper {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    
+    .amount-increase {
+      color: #f56c6c;
+      font-weight: 500;
+    }
+    
+    .amount-decrease {
+      color: #67c23a;
+      font-weight: 500;
   }
   
   .change-detail {

@@ -14,7 +14,7 @@ const total = ref(0)
 
 const queryParams = reactive({
   username: '',
-  role: 'STAFF',
+  role: '',  // 默认不筛选角色
   pageNum: 1,
   pageSize: 10
 })
@@ -30,10 +30,9 @@ const form = reactive({
   realName: '',
   email: '',
   phone: '',
-  role: 'STAFF',
+  role: 'CITY',  // 默认市级员工
   departmentId: undefined as number | undefined,
-  primaryRole: undefined as string | undefined,
-  zLevel: undefined as string | undefined
+  primaryRole: undefined as string | undefined
 })
 
 // 选中的部门信息
@@ -49,8 +48,10 @@ const departmentProps = {
 
 const roleOptions = [
   { label: '系统管理员', value: 'ADMIN' },
-  { label: '工作人员', value: 'STAFF' },
-  { label: '领导层', value: 'BOSS' }
+  { label: '领导层', value: 'BOSS' },
+  { label: '省级员工', value: 'PROVINCE' },
+  { label: '市级员工', value: 'CITY' },
+  { label: '县级员工', value: 'COUNTY' }
 ]
 
 // 部门类型与职位的映射关系
@@ -72,7 +73,12 @@ const deptTypeToRoles: Record<string, string[]> = {
   'PROC': ['DEPT_MANAGER', 'PROCUREMENT_SPECIALIST', 'VENDOR_MANAGER'],
   // 市/县公司级别（可选择高管）
   'CITY': ['GENERAL_MANAGER', 'VICE_PRESIDENT', 'DEPT_MANAGER', 'T1M'],
-  'COUNTY': ['DEPT_MANAGER', 'INITIATOR'],
+  // 县级部门职位（县级员工显示实际职位，但在审批流程中自动识别为发起人）
+  'COUNTY': ['DEPT_MANAGER'],  // 县级分公司经理
+  'COUNTY-NET': ['DEPT_MANAGER', 'NETWORK_ENGINEER', 'PROJECT_MANAGER'],  // 县级网络部
+  'COUNTY-MKT': ['DEPT_MANAGER', 'CUSTOMER_SERVICE_LEAD'],  // 县级市场部
+  'COUNTY-GOV': ['DEPT_MANAGER', 'DICT_PM'],  // 县级政企部
+  'COUNTY-ADMIN': ['DEPT_MANAGER', 'FACILITY_COORDINATOR'],  // 县级综合部
   // 省公司
   'PROVINCE': ['SYSTEM_ADMIN', 'GENERAL_MANAGER', 'VICE_PRESIDENT']
 }
@@ -90,6 +96,15 @@ const extractDeptType = (dept: Department | null): string | null => {
   // 省级部门（如 PROV-NET, PROV-LEGAL）
   if (code.startsWith('PROV-')) return code
   
+  // 县级部门（如 COUNTY-C-NET 提取 COUNTY-NET）
+  if (code.startsWith('COUNTY-')) {
+    const parts = code.split('-')
+    if (parts.length >= 3) {
+      return `COUNTY-${parts[2]}`  // COUNTY-C-NET -> COUNTY-NET
+    }
+    return 'COUNTY'
+  }
+  
   // 市级部门，提取关键字（如 CITY-A-NET 提取 NET）
   const parts = code.split('-')
   if (parts.length >= 2) {
@@ -99,23 +114,26 @@ const extractDeptType = (dept: Department | null): string | null => {
   return null
 }
 
-// 根据选中部门过滤职位列表
+// 根据选中部门过滤职位列表（只显示该部门实际存在的职位）
 const filteredRoleList = computed(() => {
   const deptType = extractDeptType(selectedDept.value)
   
   if (!deptType || !roleList.value.length) {
     return {
       recommended: [] as Role[],
-      others: roleList.value
+      others: [] as Role[]  // 不显示其他职位
     }
   }
   
-  const recommendedCodes = deptTypeToRoles[deptType] || []
+  const allowedCodes = deptTypeToRoles[deptType] || []
   
-  const recommended = roleList.value.filter(r => recommendedCodes.includes(r.roleCode))
-  const others = roleList.value.filter(r => !recommendedCodes.includes(r.roleCode))
+  // 只返回该部门允许的职位，不显示其他职位
+  const recommended = roleList.value.filter(r => allowedCodes.includes(r.roleCode))
   
-  return { recommended, others }
+  return { 
+    recommended, 
+    others: [] as Role[]  // 不显示其他职位，只显示该部门实际存在的职位
+  }
 })
 
 // 从部门树中查找部门
@@ -236,7 +254,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryParams.username = ''
-  queryParams.role = 'STAFF'
+  queryParams.role = ''
   queryParams.pageNum = 1
   loadData()
 }
@@ -253,10 +271,9 @@ const handleAdd = () => {
   form.realName = ''
   form.email = ''
   form.phone = ''
-  form.role = 'STAFF'
+  form.role = 'CITY'  // 默认市级员工
   form.departmentId = undefined
   form.primaryRole = undefined
-  form.zLevel = undefined
   selectedDept.value = null
   showDialog.value = true
 }
@@ -271,7 +288,6 @@ const handleEdit = (row: UserInfo) => {
   form.role = row.role
   form.departmentId = row.departmentId || row.deptId
   form.primaryRole = (row as any).primaryRole
-  form.zLevel = (row as any).zLevel
   // 查找选中的部门
   if (form.departmentId && departmentTree.value.length) {
     selectedDept.value = findDeptById(departmentTree.value, form.departmentId)
@@ -297,7 +313,6 @@ const handleSave = async () => {
         deptId: form.departmentId,
         departmentId: form.departmentId,
         primaryRole: form.primaryRole,
-        zLevel: form.zLevel,
         isActive: 1
       }
       
@@ -358,7 +373,9 @@ const getRoleType = (role: string): 'primary' | 'success' | 'warning' | 'danger'
   const map: Record<string, 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
     'ADMIN': 'danger',
     'BOSS': 'warning',
-    'STAFF': 'primary'
+    'PROVINCE': 'success',
+    'CITY': 'primary',
+    'COUNTY': 'info'
   }
   return map[role] || 'info'
 }
@@ -522,62 +539,33 @@ const getPrimaryRoleLabel = (roleCode: string) => {
         <el-form-item label="职位" prop="primaryRole">
           <el-select 
             v-model="form.primaryRole" 
-            placeholder="请选择职位（已根据部门过滤）" 
+            placeholder="请先选择部门" 
             style="width: 100%"
             filterable
+            :disabled="!form.departmentId"
           >
-            <!-- 推荐职位（匹配部门） -->
-            <el-option-group v-if="filteredRoleList.recommended.length" label="✅ 推荐职位（匹配当前部门）">
-              <el-option 
-                v-for="role in filteredRoleList.recommended"
-                :key="role.roleCode"
-                :label="role.roleName"
-                :value="role.roleCode"
-              >
-                <div class="role-option">
-                  <span class="role-name">{{ role.roleName }}</span>
-                  <span class="role-code">{{ role.roleCode }}</span>
-                </div>
-              </el-option>
-            </el-option-group>
-            <!-- 其他职位 -->
-            <el-option-group v-if="filteredRoleList.others.length" label="⚠️ 其他职位（不推荐）">
-              <el-option 
-                v-for="role in filteredRoleList.others"
-                :key="role.roleCode"
-                :label="role.roleName"
-                :value="role.roleCode"
-              >
-                <div class="role-option other">
-                  <span class="role-name">{{ role.roleName }}</span>
-                  <span class="role-code">{{ role.roleCode }}</span>
-                </div>
-              </el-option>
-            </el-option-group>
+            <!-- 只显示该部门实际存在的职位 -->
+            <el-option 
+              v-for="role in filteredRoleList.recommended"
+              :key="role.roleCode"
+              :label="role.roleName"
+              :value="role.roleCode"
+            >
+              <div class="role-option">
+                <span class="role-name">{{ role.roleName }}</span>
+                <span class="role-code">{{ role.roleCode }}</span>
+              </div>
+            </el-option>
           </el-select>
           <div v-if="!form.departmentId" class="form-tip warning">
             ⚠️ 请先选择部门，职位列表会根据部门自动过滤
           </div>
-          <div v-else-if="filteredRoleList.recommended.length" class="form-tip success">
-            ✅ 已根据「{{ selectedDept?.name }}」过滤推荐职位
+          <div v-else-if="filteredRoleList.recommended.length === 0" class="form-tip warning">
+            ⚠️ 该部门暂无可用职位，请检查部门配置
           </div>
-        </el-form-item>
-        <el-form-item label="Z岗级">
-          <el-select 
-            v-model="form.zLevel" 
-            placeholder="请选择Z岗级（可选）" 
-            style="width: 100%"
-            clearable
-          >
-            <el-option label="Z8 - 初级" value="Z8" />
-            <el-option label="Z9 - 中级" value="Z9" />
-            <el-option label="Z10 - 高级" value="Z10" />
-            <el-option label="Z11 - 资深" value="Z11" />
-            <el-option label="Z12 - 经理级" value="Z12" />
-            <el-option label="Z13 - 副总级" value="Z13" />
-            <el-option label="Z14 - 总经理级" value="Z14" />
-            <el-option label="Z15 - 高管" value="Z15" />
-          </el-select>
+          <div v-else class="form-tip success">
+            ✅ 已根据「{{ selectedDept?.name }}」显示可用职位（{{ filteredRoleList.recommended.length }}个）
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>

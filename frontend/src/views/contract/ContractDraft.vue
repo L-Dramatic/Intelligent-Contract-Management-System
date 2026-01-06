@@ -414,13 +414,21 @@ const doSaveContract = async (isDraft = true) => {
       
       // 如果是编辑已有变更，需要更新（这里先创建新变更，实际应该调用更新API）
       const res = await createChange(changeData)
-      savedChangeId.value = res.data.id
+      // 兼容不同的返回格式
+      const newChangeId = typeof res.data === 'object' ? res.data.id : res.data
+      savedChangeId.value = newChangeId
       
       if (!isDraft) {
         // 保存并提交
-        await submitChangeAPI(res.data.id)
+        if (!newChangeId) {
+          ElMessage.error('变更创建失败：未获取到变更ID')
+          return
+        }
+        await submitChangeAPI(newChangeId)
         ElMessage.success('变更申请已提交审批')
-        router.push('/contract/change/list')
+        setTimeout(() => {
+          router.push('/contract/change/list')
+        }, 500)
       } else {
         ElMessage.success('变更草稿保存成功')
       }
@@ -443,13 +451,20 @@ const doSaveContract = async (isDraft = true) => {
       if (contractId.value) {
         await updateContract(contractId.value, data)
         ElMessage.success('合同保存成功')
-        // 强制刷新跳转到合同详情
-        window.location.href = `/contract/detail/${contractId.value}`
+        // 跳转到合同详情
+        router.push(`/contract/detail/${contractId.value}`)
       } else {
         const res = await createContract(data)
+        // 后端直接返回合同ID（数字），不是对象
+        const newContractId = typeof res.data === 'object' ? res.data.id : res.data
+        console.log('创建合同返回:', res.data, '-> ID:', newContractId)
+        if (!newContractId || isNaN(Number(newContractId))) {
+          ElMessage.error('创建失败：未获取到合同ID')
+          return
+        }
         ElMessage.success(isDraft ? '合同已保存为草稿' : '合同保存成功')
-        // 强制刷新跳转到合同详情
-        window.location.href = `/contract/detail/${res.data.id}`
+        // 跳转到合同详情
+        router.push(`/contract/detail/${newContractId}`)
       }
     }
   } catch (error) {

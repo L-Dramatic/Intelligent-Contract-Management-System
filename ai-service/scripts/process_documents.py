@@ -116,7 +116,18 @@ def process_documents():
     print("=" * 60)
     
     print(f"\n[1] 初始化ChromaDB客户端，路径: {CHROMA_DB_PATH}")
-    client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
+    # 兼容旧版本 chromadb (0.3.x)
+    try:
+        # 新版本 API (0.4.0+)
+        client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
+    except AttributeError:
+        # 旧版本 API (0.3.x)
+        from chromadb.config import Settings
+        client = chromadb.Client(Settings(
+            chroma_db_impl="duckdb+parquet",
+            persist_directory=CHROMA_DB_PATH,
+            anonymized_telemetry=False
+        ))
     
     print(f"[2] 加载Embedding模型: {EMBEDDING_MODEL_NAME}")
     try:
@@ -127,8 +138,16 @@ def process_documents():
         print("    请确保网络连接正常，或手动下载模型。")
         sys.exit(1)
     
-    print(f"[3] 获取或创建集合: {COLLECTION_NAME}")
-    collection = client.get_or_create_collection(
+    print(f"[3] 清空并重建集合: {COLLECTION_NAME}")
+    # 先删除旧集合（如果存在），避免重复数据
+    try:
+        client.delete_collection(name=COLLECTION_NAME)
+        print("    已删除旧集合")
+    except Exception:
+        print("    旧集合不存在，跳过删除")
+    
+    # 创建新集合
+    collection = client.create_collection(
         name=COLLECTION_NAME,
         embedding_function=embedding_function
     )
@@ -140,7 +159,7 @@ def process_documents():
     metadatas_to_add = []
     ids_to_add = []
     
-    doc_id_counter = collection.count()
+    doc_id_counter = 0  # 从0开始，因为是全新的集合
     processed_files = 0
     
     for root, _, files in os.walk(knowledge_base_dir):
@@ -204,6 +223,12 @@ def process_documents():
             ids=ids_to_add
         )
         print(f"    添加成功！当前集合总数: {collection.count()}")
+        
+        # chromadb 0.3.x 需要手动持久化
+        if hasattr(client, 'persist'):
+            print("\n[6] 持久化数据到磁盘...")
+            client.persist()
+            print("    持久化完成！")
     else:
         print("\n[5] 没有新文档块需要添加")
     

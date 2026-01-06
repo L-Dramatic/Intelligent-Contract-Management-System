@@ -6,7 +6,6 @@ export interface Role {
   roleName: string
   roleCategory: string
   deptTypeRequired?: string
-  zLevelMin?: string
   description?: string
   createdAt: string
 }

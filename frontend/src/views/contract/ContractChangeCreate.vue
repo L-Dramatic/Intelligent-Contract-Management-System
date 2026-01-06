@@ -125,12 +125,12 @@
 
         <el-form-item label="新合同正文">
           <div style="width: 100%">
-            <el-input
-              v-model="form.newContent"
-              type="textarea"
-              :rows="8"
+          <el-input
+            v-model="form.newContent"
+            type="textarea"
+            :rows="8"
               placeholder="留空表示不变更合同正文。建议使用AI编辑器进行编辑。"
-            />
+          />
             <div style="margin-top: 10px">
               <el-button 
                 type="primary" 
@@ -371,9 +371,11 @@ const saveDraft = async () => {
   saving.value = true
   try {
     const res = await createChange(form)
-    createdChangeId.value = res.data.id
+    // 兼容不同的返回格式
+    createdChangeId.value = typeof res.data === 'object' ? res.data.id : res.data
     ElMessage.success('草稿保存成功')
   } catch (error) {
+    console.error('保存草稿失败:', error)
     const err = error as { message?: string }
     ElMessage.error(err.message || '保存失败')
   } finally {
@@ -412,7 +414,8 @@ const doSubmit = async () => {
     let changeId = createdChangeId.value
     if (!changeId) {
       const res = await createChange(form)
-      changeId = res.data.id
+      // 兼容不同的返回格式
+      changeId = typeof res.data === 'object' ? res.data.id : res.data
     }
     
     if (!changeId) {
@@ -422,10 +425,14 @@ const doSubmit = async () => {
     
     await submitChange(changeId)
     ElMessage.success('变更申请已提交审批')
-    router.push('/contract/change/list')
+    // 使用 setTimeout 确保消息显示后再跳转
+    setTimeout(() => {
+      router.push('/contract/change/list')
+    }, 500)
   } catch (error) {
+    console.error('提交变更失败:', error)
     const err = error as { message?: string }
-    ElMessage.error(err.message || '提交失败')
+    ElMessage.error(err.message || '提交失败，请稍后重试')
   } finally {
     submitting.value = false
   }

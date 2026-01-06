@@ -8,7 +8,6 @@ export interface UserInfo {
   phone?: string   // 兼容旧字段
   role: string
   primaryRole?: string
-  zlevel?: string
   // 后端字段为 deptId；前端原来用 departmentId，这里都兼容
   deptId?: number
   departmentId?: number

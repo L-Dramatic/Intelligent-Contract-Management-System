@@ -83,29 +83,34 @@ const menuList = computed(() => {
     })
   }
 
-  // ============ STAFF/BOSS 工作人员界面 ============
-  if (role === 'STAFF' || role === 'BOSS') {
+  // ============ 县级/市级/省级/领导层 业务界面 ============
+  if (['COUNTY', 'CITY', 'PROVINCE', 'BOSS'].includes(role)) {
     // 合同管理子菜单
-    const contractChildren = [
-      { path: '/contract/create', title: '创建合同' },
-      { path: '/contract/my', title: '我的合同' }
-    ]
+    const contractChildren = []
     
-    // 只有BOSS（经理/领导）或有contract:list:all权限的用户才能看到合同列表
-    // 同时检查用户名是否包含 mgr/manager/director 等关键词（经理级别）
+    // 只有县级员工可以起草合同
+    if (role === 'COUNTY') {
+      contractChildren.push({ path: '/contract/create', title: '创建合同' })
+    }
+    
+    contractChildren.push({ path: '/contract/my', title: '我的合同' })
+    
+    // 市级及以上或经理可以查看合同列表
     const username = userStore.username?.toLowerCase() || ''
-    const canViewAllContracts = role === 'BOSS' || 
+    const canViewAllContracts = ['CITY', 'PROVINCE', 'BOSS'].includes(role) || 
                                 userStore.hasPermission('contract:list:all') ||
                                 username.includes('mgr') || 
                                 username.includes('manager') ||
-                                username.includes('director') ||
-                                username.includes('admin')
+                                username.includes('director')
     
     if (canViewAllContracts) {
       contractChildren.push({ path: '/contract/list', title: '合同列表' })
     }
     
     contractChildren.push({ path: '/contract/change/list', title: '变更管理' })
+    
+    // 审批进度（原"我发起的"）- 所有人都可以看
+    contractChildren.push({ path: '/workflow/initiated', title: '审批进度' })
     
     // 合同管理
     menus.push({
@@ -114,17 +119,19 @@ const menuList = computed(() => {
       icon: 'Document',
       children: contractChildren
     })
-    // 审批中心
-    menus.push({
-      path: '/workflow',
-      title: '审批中心',
-      icon: 'Checked',
-      children: [
-        { path: '/workflow/pending', title: '待办任务' },
-        { path: '/workflow/completed', title: '已办任务' },
-        { path: '/workflow/initiated', title: '我发起的' }
-      ]
-    })
+    
+    // 审批中心 - 只有市级及以上才显示
+    if (['CITY', 'PROVINCE', 'BOSS'].includes(role)) {
+      menus.push({
+        path: '/workflow',
+        title: '审批中心',
+        icon: 'Checked',
+        children: [
+          { path: '/workflow/pending', title: '待办任务' },
+          { path: '/workflow/completed', title: '已办任务' }
+        ]
+      })
+    }
   }
 
   // ============ BOSS 领导层附加 ============

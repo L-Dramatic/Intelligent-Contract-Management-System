@@ -138,30 +138,30 @@
 
     <!-- 快捷导航（业务人员专用） -->
     <el-card shadow="never" class="box-card" style="background-color: #fff; margin-top: 20px; margin-bottom: 20px;">
-      <template #header>
-        <div class="card-header">
-          <span>快捷导航</span>
-        </div>
-      </template>
-      <div class="quick-actions">
-        <div class="action-btn" @click="$router.push('/contract/create')">
-          <div class="icon-box blue"><el-icon><DocumentAdd /></el-icon></div>
-          <span>发起合同</span>
-        </div>
-        <div class="action-btn" @click="$router.push('/workflow/pending')">
-          <div class="icon-box orange"><el-icon><Stamp /></el-icon></div>
-          <span>待我审批</span>
-        </div>
-        <div class="action-btn" @click="$router.push('/contract/list')">
-          <div class="icon-box green"><el-icon><Search /></el-icon></div>
-          <span>合同查询</span>
-        </div>
+          <template #header>
+            <div class="card-header">
+              <span>快捷导航</span>
+            </div>
+          </template>
+          <div class="quick-actions">
+            <div class="action-btn" @click="$router.push('/contract/create')">
+              <div class="icon-box blue"><el-icon><DocumentAdd /></el-icon></div>
+              <span>发起合同</span>
+            </div>
+            <div class="action-btn" @click="$router.push('/workflow/pending')">
+              <div class="icon-box orange"><el-icon><Stamp /></el-icon></div>
+              <span>待我审批</span>
+            </div>
+            <div class="action-btn" @click="$router.push('/contract/list')">
+              <div class="icon-box green"><el-icon><Search /></el-icon></div>
+              <span>合同查询</span>
+            </div>
         <div class="action-btn" @click="goToAIQA">
           <div class="icon-box purple"><el-icon><ChatDotRound /></el-icon></div>
           <span>AI问答</span>
-        </div>
-      </div>
-    </el-card>
+            </div>
+          </div>
+        </el-card>
 
     <!-- 中间区域：任务列表 + 系统公告 -->
     <el-row :gutter="20" class="mt-20" v-if="isBusinessUser">
@@ -175,14 +175,14 @@
             </div>
           </template>
           <div class="notice-list">
-            <div class="notice-item">
-              <span class="dot"></span>
-              <span class="text">系统将于本周五晚进行维护升级</span>
-            </div>
-            <div class="notice-item">
-              <span class="dot"></span>
-              <span class="text">关于启用新版合同模板的通知</span>
-            </div>
+             <div class="notice-item">
+               <span class="dot"></span>
+               <span class="text">系统将于本周五晚进行维护升级</span>
+             </div>
+             <div class="notice-item">
+               <span class="dot"></span>
+               <span class="text">关于启用新版合同模板的通知</span>
+             </div>
           </div>
         </el-card>
       </el-col>
@@ -259,10 +259,10 @@ const isAdmin = computed(() => {
   return userStore.role === 'ADMIN'
 })
 
-// 检查是否为业务人员（STAFF/BOSS）
+// 检查是否为业务人员（县级/市级/省级/领导层）
 const isBusinessUser = computed(() => {
   const role = userStore.role
-  return role === 'STAFF' || role === 'BOSS'
+  return ['COUNTY', 'CITY', 'PROVINCE', 'BOSS'].includes(role)
 })
 
 // 跳转到个人主页

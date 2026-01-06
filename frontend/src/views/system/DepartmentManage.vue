@@ -491,46 +491,46 @@ const initChart = () => {
       </el-tab-pane>
       
       <el-tab-pane label="列表视图" name="list">
-        <el-card v-loading="loading">
-          <el-tree
-            :data="treeData"
-            :props="defaultProps"
-            node-key="id"
-            default-expand-all
-            :expand-on-click-node="false"
-          >
-            <template #default="{ node, data }">
-              <div class="tree-node">
-                <div class="node-content">
-                  <el-icon><OfficeBuilding /></el-icon>
-                  <span class="node-name">{{ node.label }}</span>
-                  <el-tag :type="getLevelTag(data.level).type" size="small">
-                    {{ getLevelTag(data.level).text }}
-                  </el-tag>
-                </div>
-                <div class="node-actions">
-                  <el-button type="primary" link size="small" @click.stop="handleAdd(data)">
-                    添加子部门
-                  </el-button>
-                  <el-button type="primary" link size="small" @click.stop="handleEdit(data)">
-                    编辑
-                  </el-button>
-                  <el-button 
-                    type="danger" 
-                    link 
-                    size="small" 
-                    :disabled="data.level === 1"
-                    @click.stop="handleDelete(data)"
-                  >
-                    删除
-                  </el-button>
-                </div>
-              </div>
-            </template>
-          </el-tree>
-          
-          <el-empty v-if="treeData.length === 0 && !loading" description="暂无组织架构数据" />
-        </el-card>
+    <el-card v-loading="loading">
+      <el-tree
+        :data="treeData"
+        :props="defaultProps"
+        node-key="id"
+        default-expand-all
+        :expand-on-click-node="false"
+      >
+        <template #default="{ node, data }">
+          <div class="tree-node">
+            <div class="node-content">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span class="node-name">{{ node.label }}</span>
+              <el-tag :type="getLevelTag(data.level).type" size="small">
+                {{ getLevelTag(data.level).text }}
+              </el-tag>
+            </div>
+            <div class="node-actions">
+              <el-button type="primary" link size="small" @click.stop="handleAdd(data)">
+                添加子部门
+              </el-button>
+              <el-button type="primary" link size="small" @click.stop="handleEdit(data)">
+                编辑
+              </el-button>
+              <el-button 
+                type="danger" 
+                link 
+                size="small" 
+                :disabled="data.level === 1"
+                @click.stop="handleDelete(data)"
+              >
+                删除
+              </el-button>
+            </div>
+          </div>
+        </template>
+      </el-tree>
+      
+      <el-empty v-if="treeData.length === 0 && !loading" description="暂无组织架构数据" />
+    </el-card>
       </el-tab-pane>
     </el-tabs>
     

@@ -5,9 +5,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { ApprovalTask, Contract } from '@/types'
 import { getTaskDetail, approveTask, rejectTask, transferTask } from '@/api/workflow'
 import { getContractDetail } from '@/api/contract'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
+
+// 权限检查
+const hasPermission = ref(true)
 
 const taskId = computed(() => Number(route.params.id))
 const loading = ref(false)
@@ -45,6 +50,13 @@ const transferableUsers = ref([
 ])
 
 onMounted(() => {
+  // 县级用户无审批权限
+  if (userStore.isCountyUser) {
+    hasPermission.value = false
+    ElMessage.error('县级员工暂无审批权限')
+    router.push('/workflow/pending')
+    return
+  }
   loadData()
 })
 

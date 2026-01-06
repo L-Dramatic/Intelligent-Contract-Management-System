@@ -9,6 +9,7 @@ import com.software.contract_system.entity.ContractChange;
 import com.software.contract_system.service.ContractReviewRuleEngine;
 import com.software.contract_system.service.ContractReviewService;
 import com.software.contract_system.service.ScenarioMatchService;
+import com.software.contract_system.service.SysDeptService;
 import com.software.contract_system.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     
     // 【新版引擎】场景匹配服务
     @Autowired private ScenarioMatchService scenarioMatchService;
+    
+    // 组织架构服务
+    @Autowired private SysDeptService sysDeptService;
 
     // 兜底场景ID
     private static final String FALLBACK_SCENARIO_ID = "FALLBACK-DEFAULT";
@@ -368,12 +372,25 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     /**
      * 兜底查找审批人（当精确匹配失败时）
+     * 限定在发起人所属的市公司范围内查找
      */
     private SysUser findFallbackApprover(Long deptId) {
-        // 尝试找该部门下的任意部门经理
+        if (deptId == null) {
+            return null;
+        }
+        
+        // 获取发起人所属的市公司
+        SysDept cityCompany = sysDeptService.getCityCompany(deptId);
+        if (cityCompany == null) {
+            return null;
+        }
+        
+        // 在市公司范围内查找任意部门经理
         List<SysUser> managers = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getPrimaryRole, SysRole.ROLE_DEPT_MANAGER)
                 .eq(SysUser::getIsActive, 1)
+                .inSql(SysUser::getDeptId, 
+                    "SELECT id FROM sys_dept WHERE parent_id = " + cityCompany.getId())
                 .last("LIMIT 1"));
         
         return managers.isEmpty() ? null : managers.get(0);

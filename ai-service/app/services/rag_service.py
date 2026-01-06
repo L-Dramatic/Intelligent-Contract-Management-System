@@ -47,13 +47,19 @@ class RAGService:
             model_name=self.embedding_model_name
         )
         
-        # 获取集合（使用get_or_create_collection确保使用相同的embedding function）
-        # 注意：必须使用get_or_create_collection而不是get_collection，
-        # 因为chromadb 0.3.23需要embedding function来正确匹配已存在的集合
-        self.collection = self.client.get_or_create_collection(
-            name=collection_name,
-            embedding_function=self.embedding_function
-        )
+        # 获取已存在的集合
+        # 注意：chromadb 0.3.x 使用 get_collection，0.4.x 可以使用 get_or_create_collection
+        try:
+            self.collection = self.client.get_collection(
+                name=collection_name,
+                embedding_function=self.embedding_function
+            )
+        except Exception as e:
+            print(f"[RAG] 获取集合失败: {e}，尝试创建新集合")
+            self.collection = self.client.get_or_create_collection(
+                name=collection_name,
+                embedding_function=self.embedding_function
+            )
     
     def search(self, query: str, n_results: int = 5, filter_dict: Optional[Dict] = None) -> List[Dict]:
         """

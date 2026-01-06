@@ -195,17 +195,38 @@ INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `prim
 ON DUPLICATE KEY UPDATE `real_name` = VALUES(`real_name`), `primary_role` = VALUES(`primary_role`);
 
 -- A市采购部人员
-INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `z_level`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
-(145, 'a_proc_mgr', '123456', 'A市采购部经理', 'MANAGER', 'DEPT_MANAGER', 'Z12', 107, 101, 1),
-(146, 'a_proc', '123456', 'A市采购专员', 'USER', 'PROCUREMENT_SPECIALIST', 'Z9', 107, 145, 1),
-(147, 'a_vendor', '123456', 'A市供应商管理', 'USER', 'VENDOR_MANAGER', 'Z10', 107, 145, 1)
+INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
+(145, 'a_proc_mgr', '123456', 'A市采购部经理', 'MANAGER', 'DEPT_MANAGER', 107, 101, 1),
+(146, 'a_proc', '123456', 'A市采购专员', 'USER', 'PROCUREMENT_SPECIALIST', 107, 145, 1),
+(147, 'a_vendor', '123456', 'A市供应商管理', 'USER', 'VENDOR_MANAGER', 107, 145, 1)
 ON DUPLICATE KEY UPDATE `real_name` = VALUES(`real_name`), `primary_role` = VALUES(`primary_role`);
 
--- C县分公司人员（发起人）
-INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `z_level`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
-(150, 'c_mgr', '123456', 'C县分公司经理', 'MANAGER', 'DEPT_MANAGER', 'Z12', 150, 100, 1),
-(151, 'c_net_user', '123456', 'C县网络部员工', 'USER', 'INITIATOR', 'Z8', 153, 150, 1),
-(152, 'c_gov_user', '123456', 'C县政企部员工', 'USER', 'INITIATOR', 'Z8', 154, 150, 1)
+-- A市市场部人员（补充）
+INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
+(155, 'a_mkt_mgr', '123456', 'A市市场部经理', 'MANAGER', 'DEPT_MANAGER', 102, 101, 1),
+(156, 'a_cs_lead', '123456', 'A市客服主管', 'USER', 'CUSTOMER_SERVICE_LEAD', 102, 155, 1)
+ON DUPLICATE KEY UPDATE `real_name` = VALUES(`real_name`), `primary_role` = VALUES(`primary_role`);
+
+-- A市综合部人员（补充）
+INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
+(158, 'a_admin_mgr', '123456', 'A市综合部经理', 'MANAGER', 'DEPT_MANAGER', 106, 101, 1),
+(159, 'a_facility', '123456', 'A市设施协调员', 'USER', 'FACILITY_COORDINATOR', 106, 158, 1)
+ON DUPLICATE KEY UPDATE `real_name` = VALUES(`real_name`), `primary_role` = VALUES(`primary_role`);
+
+-- 省级职能部门人员（补充，用于省级审批测试）
+INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
+(20, 'p_net_mgr', '123456', '省网络部经理', 'MANAGER', 'DEPT_MANAGER', 10, 1, 1),
+(21, 'p_legal_mgr', '123456', '省法务部经理', 'MANAGER', 'DEPT_MANAGER', 13, 1, 1),
+(22, 'p_legal', '123456', '省法务审查员', 'LEGAL', 'LEGAL_REVIEWER', 13, 21, 1),
+(23, 'p_fin_mgr', '123456', '省财务部经理', 'MANAGER', 'DEPT_MANAGER', 14, 1, 1),
+(24, 'p_gov_mgr', '123456', '省政企部经理', 'MANAGER', 'DEPT_MANAGER', 12, 1, 1)
+ON DUPLICATE KEY UPDATE `real_name` = VALUES(`real_name`), `primary_role` = VALUES(`primary_role`);
+
+-- C县分公司人员（县级员工保留实际职位，在审批流程起点统一作为发起人）
+INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role`, `primary_role`, `dept_id`, `direct_leader_id`, `is_active`) VALUES 
+(150, 'c_mgr', '123456', 'C县分公司经理', 'MANAGER', 'DEPT_MANAGER', 150, 100, 1),
+(151, 'c_net_user', '123456', 'C县网络部员工', 'USER', 'NETWORK_ENGINEER', 153, 150, 1),
+(152, 'c_gov_user', '123456', 'C县政企部员工', 'USER', 'DICT_PM', 154, 150, 1)
 ON DUPLICATE KEY UPDATE `real_name` = VALUES(`real_name`), `primary_role` = VALUES(`primary_role`);
 
 -- =======================================================
@@ -246,10 +267,25 @@ INSERT INTO `sys_user_role` (`user_id`, `role_code`, `effective_dept_id`, `is_pr
 (146, 'PROCUREMENT_SPECIALIST', 107, 1),
 (147, 'VENDOR_MANAGER', 107, 1),
 
--- C县发起人
+-- A市市场部（补充）
+(155, 'DEPT_MANAGER', 102, 1),
+(156, 'CUSTOMER_SERVICE_LEAD', 102, 1),
+
+-- A市综合部（补充）
+(158, 'DEPT_MANAGER', 106, 1),
+(159, 'FACILITY_COORDINATOR', 106, 1),
+
+-- 省级职能部门（补充）
+(20, 'DEPT_MANAGER', 10, 1),
+(21, 'DEPT_MANAGER', 13, 1),
+(22, 'LEGAL_REVIEWER', 13, 1),
+(23, 'DEPT_MANAGER', 14, 1),
+(24, 'DEPT_MANAGER', 12, 1),
+
+-- C县人员（使用实际职位角色）
 (150, 'DEPT_MANAGER', 150, 1),
-(151, 'INITIATOR', 153, 1),
-(152, 'INITIATOR', 154, 1)
+(151, 'NETWORK_ENGINEER', 153, 1),
+(152, 'DICT_PM', 154, 1)
 
 ON DUPLICATE KEY UPDATE `is_primary` = VALUES(`is_primary`);
 

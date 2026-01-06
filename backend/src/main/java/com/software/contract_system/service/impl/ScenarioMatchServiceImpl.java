@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Comparator;
 
 /**
  * 审批场景匹配服务实现类
@@ -32,6 +34,9 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
     
     @Autowired
     private SysDeptMapper deptMapper;
+    
+    @Autowired
+    private WfTaskMapper taskMapper;
     
     @Override
     public WfScenarioConfig matchScenario(String subTypeCode, BigDecimal amount) {
@@ -322,6 +327,26 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
     }
     
     /**
+     * 获取用户的待办任务数量
+     */
+    private int getPendingTaskCount(Long userId) {
+        if (userId == null) return 0;
+        long count = taskMapper.selectCount(new LambdaQueryWrapper<WfTask>()
+                .eq(WfTask::getAssigneeId, userId)
+                .eq(WfTask::getStatus, WfTask.STATUS_PENDING));
+        return (int) count;
+    }
+    
+    /**
+     * 按待办任务数量对用户列表排序（任务少的优先）
+     */
+    private List<SysUser> sortUsersByPendingTasks(List<SysUser> users) {
+        return users.stream()
+                .sorted(Comparator.comparingInt(u -> getPendingTaskCount(u.getId())))
+                .collect(Collectors.toList());
+    }
+    
+    /**
      * 查找高管用户（副总、总经理、三重一大）
      */
     private List<SysUser> findExecutiveUsers(String roleCode, Long deptId) {
@@ -330,11 +355,12 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
             return List.of();
         }
         
-        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+        List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getPrimaryRole, roleCode)
                 .eq(SysUser::getDeptId, cityCompany.getId())
-                .eq(SysUser::getIsActive, 1)
-                .orderByDesc(SysUser::getZLevel));
+                .eq(SysUser::getIsActive, 1));
+        
+        return sortUsersByPendingTasks(users);
     }
     
     /**
@@ -345,10 +371,9 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
         List<SysUser> managers = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getPrimaryRole, SysRole.ROLE_DEPT_MANAGER)
                 .eq(SysUser::getDeptId, deptId)
-                .eq(SysUser::getIsActive, 1)
-                .orderByDesc(SysUser::getZLevel));
+                .eq(SysUser::getIsActive, 1));
         
-        if (!managers.isEmpty()) return managers;
+        if (!managers.isEmpty()) return sortUsersByPendingTasks(managers);
         
         // 如果是市级审批，扩大到市公司范围
         if (WfScenarioNode.LEVEL_CITY.equals(nodeLevel)) {
@@ -360,10 +385,11 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
                     managers = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                             .eq(SysUser::getPrimaryRole, SysRole.ROLE_DEPT_MANAGER)
                             .eq(SysUser::getDeptId, dept.getId())
-                            .eq(SysUser::getIsActive, 1)
-                            .orderByDesc(SysUser::getZLevel)
-                            .last("LIMIT 1"));
-                    if (!managers.isEmpty()) return managers;
+                            .eq(SysUser::getIsActive, 1));
+                    if (!managers.isEmpty()) {
+                        List<SysUser> sorted = sortUsersByPendingTasks(managers);
+                        return List.of(sorted.get(0)); // 返回任务最少的
+                    }
                 }
             }
         }
@@ -375,11 +401,12 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
      * 在指定部门查找角色用户
      */
     private List<SysUser> findUsersByRoleInDept(String roleCode, Long deptId) {
-        return userMapper.selectList(new LambdaQueryWrapper<SysUser>()
+        List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getPrimaryRole, roleCode)
                 .eq(SysUser::getDeptId, deptId)
-                .eq(SysUser::getIsActive, 1)
-                .orderByDesc(SysUser::getZLevel));
+                .eq(SysUser::getIsActive, 1));
+        
+        return sortUsersByPendingTasks(users);
     }
     
     /**
@@ -399,9 +426,10 @@ public class ScenarioMatchServiceImpl implements ScenarioMatchService {
             List<SysUser> users = userMapper.selectList(new LambdaQueryWrapper<SysUser>()
                     .eq(SysUser::getPrimaryRole, roleCode)
                     .eq(SysUser::getDeptId, dept.getId())
-                    .eq(SysUser::getIsActive, 1)
-                    .orderByDesc(SysUser::getZLevel));
-            if (!users.isEmpty()) return users;
+                    .eq(SysUser::getIsActive, 1));
+            if (!users.isEmpty()) {
+                return sortUsersByPendingTasks(users);
+            }
         }
         
         return List.of();

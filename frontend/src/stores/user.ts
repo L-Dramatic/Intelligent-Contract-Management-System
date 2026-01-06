@@ -12,6 +12,21 @@ export const useUserStore = defineStore('user', () => {
   const username = computed(() => userInfo.value?.username || '')
   const role = computed(() => userInfo.value?.role || '')
   const permissions = computed(() => userInfo.value?.permissions || [])
+  
+  // 判断是否为县级用户（直接根据 role 判断）
+  const isCountyUser = computed(() => role.value === 'COUNTY')
+  
+  // 判断是否为市级用户
+  const isCityUser = computed(() => role.value === 'CITY')
+  
+  // 判断是否为省级用户
+  const isProvinceUser = computed(() => role.value === 'PROVINCE')
+  
+  // 判断是否有审批权限（市级及以上才有审批权限）
+  const canApprove = computed(() => ['CITY', 'PROVINCE', 'BOSS'].includes(role.value))
+  
+  // 判断是否可以起草合同（只有县级可以起草）
+  const canDraft = computed(() => role.value === 'COUNTY')
 
   // 方法
   function setToken(newToken: string) {
@@ -60,6 +75,11 @@ export const useUserStore = defineStore('user', () => {
     username,
     role,
     permissions,
+    isCountyUser,
+    isCityUser,
+    isProvinceUser,
+    canApprove,
+    canDraft,
     setToken,
     setUserInfo,
     logout,

@@ -30,9 +30,6 @@ public class SysRole {
     /** 要求的部门类型关键字（如 NET-网络部, LEGAL-法务部, FIN-财务部） */
     private String deptTypeRequired;
     
-    /** 最低Z岗级要求（如 Z10, Z11） */
-    private String zLevelMin;
-    
     /** 角色说明 */
     private String description;
     

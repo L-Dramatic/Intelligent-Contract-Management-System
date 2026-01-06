@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * 用户实体类
  * 对应数据库表 sys_user
- * 支持中国移动省级公司组织架构和Z岗级体系
+ * 支持中国移动省级公司组织架构
  */
 @Data
 @TableName("sys_user")
@@ -33,9 +33,6 @@ public class SysUser {
     
     /** 主要角色编码（关联sys_role.role_code，如 PROJECT_MANAGER, LEGAL_REVIEWER） */
     private String primaryRole;
-    
-    /** Z岗级（Z8, Z9, Z10, Z11, Z12, Z13, Z14, Z15） */
-    private String zLevel;
     
     /** 所属部门ID */
     private Long deptId;

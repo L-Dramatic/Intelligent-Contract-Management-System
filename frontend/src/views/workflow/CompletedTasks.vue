@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import type { ApprovalTask } from '@/types'
 import { getMyCompletedTasks } from '@/api/workflow'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
+
+// 权限检查
+const hasPermission = ref(true)
 
 const loading = ref(false)
 const tableData = ref<ApprovalTask[]>([])
@@ -33,6 +39,11 @@ const statusMap: Record<number, { text: string; type: string }> = {
 }
 
 onMounted(() => {
+  if (userStore.isCountyUser) {
+    hasPermission.value = false
+    ElMessage.warning('县级员工暂无审批权限')
+    return
+  }
   loadData()
 })
 
@@ -72,8 +83,21 @@ const goToContractDetail = (id: number) => {
       <h2 class="page-title">已办任务</h2>
     </div>
     
+    <!-- 无权限提示 -->
+    <el-result 
+      v-if="!hasPermission" 
+      icon="warning" 
+      title="暂无审批权限"
+      sub-title="县级员工仅负责起草合同，审批工作由上级市公司完成"
+    >
+      <template #extra>
+        <el-button type="primary" @click="$router.push('/contract/my')">返回我的合同</el-button>
+      </template>
+    </el-result>
+    
     <!-- 数据表格 -->
     <el-table 
+      v-if="hasPermission"
       v-loading="loading"
       :data="tableData" 
       style="width: 100%"

@@ -202,12 +202,12 @@ public class AIChatServiceImpl implements AIChatService {
         // 如果contractId不为null，更新数据库中的合同表
         // 如果contractId为null（新建合同场景），只返回内容，不更新数据库
         if (history.getContractId() != null) {
-            Contract contract = contractMapper.selectById(history.getContractId());
-            if (contract == null) {
-                throw BusinessException.notFound("合同不存在");
-            }
-            contract.setContent(restoredContent);
-            contractMapper.updateById(contract);
+        Contract contract = contractMapper.selectById(history.getContractId());
+        if (contract == null) {
+            throw BusinessException.notFound("合同不存在");
+        }
+        contract.setContent(restoredContent);
+        contractMapper.updateById(contract);
             log.info("撤销Agent操作: contractId={}, undoToken={}", history.getContractId(), undoToken);
         } else {
             // 新建合同场景：contractId为null，只返回内容，不更新数据库
@@ -351,8 +351,8 @@ public class AIChatServiceImpl implements AIChatService {
         // 保存编辑历史（用于撤销）
         // 允许contractId为null（新建合同场景），支持数据持久化
         String undoToken = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        saveEditHistory(request.getContractId(), session.getSessionId(), actionType, 
-                fieldPath, locationDesc, oldValue, newValue, currentContent, undoToken);
+            saveEditHistory(request.getContractId(), session.getSessionId(), actionType, 
+                    fieldPath, locationDesc, oldValue, newValue, currentContent, undoToken);
         
         return AIChatResponse.AgentAction.builder()
                 .actionType(actionType)

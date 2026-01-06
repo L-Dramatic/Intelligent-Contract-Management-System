@@ -124,7 +124,7 @@ public class SysUserController {
             }
             user.setCreatedAt(java.time.LocalDateTime.now());
             
-            // 保存用户（primaryRole和zLevel会直接保存到sys_user表中）
+            // 保存用户（primaryRole会直接保存到sys_user表中）
             boolean success = sysUserService.save(user);
             
             return success ? Result.success("创建成功") : Result.error("创建失败");

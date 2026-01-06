@@ -41,7 +41,13 @@ const loadData = async () => {
   try {
     const res = await getInstanceList(queryParams)
     // 后端返回数组
-    const instances = res.data || []
+    let instances = res.data || []
+    
+    // 前端本地筛选状态（后端暂不支持status参数）
+    if (queryParams.status !== undefined && queryParams.status !== null) {
+      instances = instances.filter(item => item.status === queryParams.status)
+    }
+    
     tableData.value = instances
     total.value = instances.length
   } catch (error) {
@@ -71,7 +77,7 @@ const goToContractDetail = (id: number) => {
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h2 class="page-title">我发起的</h2>
+      <h2 class="page-title">审批进度</h2>
     </div>
     
     <!-- 快速筛选 -->

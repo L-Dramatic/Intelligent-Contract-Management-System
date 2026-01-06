@@ -83,49 +83,184 @@ const contractTypeOptions = [
   { label: 'CUSTOM - 自定义类型', value: 'CUSTOM' }
 ]
 
-// 角色选项（26种职位）
+// 角色选项（按部门类型分组）
+// deptType: 对应的部门类型代码，null表示通用角色
 const roleOptions = [
-  { label: '合同发起人', value: 'INITIATOR', category: '发起' },
-  { label: '部门经理', value: 'DEPT_MANAGER', category: '管理层' },
-  { label: '副总经理', value: 'VICE_PRESIDENT', category: '管理层' },
-  { label: '总经理', value: 'GENERAL_MANAGER', category: '管理层' },
-  { label: '三重一大会议', value: 'T1M', category: '管理层' },
-  { label: '项目经理', value: 'PROJECT_MANAGER', category: '技术' },
-  { label: '射频工程师', value: 'RF_ENGINEER', category: '技术' },
-  { label: '网络工程师', value: 'NETWORK_ENGINEER', category: '技术' },
-  { label: '网络规划', value: 'NETWORK_PLANNING', category: '技术' },
-  { label: '设施协调员', value: 'FACILITY_COORDINATOR', category: '技术' },
-  { label: '家宽专家', value: 'BROADBAND_SPECIALIST', category: '技术' },
-  { label: '运营中心', value: 'OPS_CENTER', category: '技术' },
-  { label: '设计审查', value: 'DESIGN_REVIEWER', category: '技术' },
-  { label: '站点获取', value: 'SITE_ACQUISITION', category: '技术' },
-  { label: '法务审查员', value: 'LEGAL_REVIEWER', category: '法务' },
-  { label: '成本审计员', value: 'COST_AUDITOR', category: '财务' },
-  { label: '财务应收检查', value: 'FINANCE_RECEIVABLE', category: '财务' },
-  { label: 'IT技术负责人', value: 'TECHNICAL_LEAD', category: 'IT' },
-  { label: 'IT安全审查', value: 'SECURITY_REVIEWER', category: 'IT' },
-  { label: 'IT架构师', value: 'IT_ARCHITECT', category: 'IT' },
-  { label: '采购专员', value: 'PROCUREMENT_SPECIALIST', category: '采购' },
-  { label: '供应商管理', value: 'VENDOR_MANAGER', category: '采购' },
-  { label: '解决方案架构师', value: 'SOLUTION_ARCHITECT', category: 'DICT' },
-  { label: 'DICT项目经理', value: 'DICT_PM', category: 'DICT' },
-  { label: '客服主管', value: 'CUSTOMER_SERVICE_LEAD', category: '客服' }
+  // 通用角色（适用于所有部门）
+  { label: '合同发起人', value: 'INITIATOR', deptType: null, category: '通用' },
+  { label: '部门经理', value: 'DEPT_MANAGER', deptType: null, category: '通用' },
+  { label: '副总经理', value: 'VICE_PRESIDENT', deptType: null, category: '管理层' },
+  { label: '总经理', value: 'GENERAL_MANAGER', deptType: null, category: '管理层' },
+  { label: '三重一大会议', value: 'T1M', deptType: null, category: '管理层' },
+  
+  // 网络部角色
+  { label: '项目经理', value: 'PROJECT_MANAGER', deptType: 'NET', category: '网络部' },
+  { label: '射频工程师', value: 'RF_ENGINEER', deptType: 'NET', category: '网络部' },
+  { label: '网络工程师', value: 'NETWORK_ENGINEER', deptType: 'NET', category: '网络部' },
+  { label: '网络规划', value: 'NETWORK_PLANNING', deptType: 'NET', category: '网络部' },
+  { label: '家宽专家', value: 'BROADBAND_SPECIALIST', deptType: 'NET', category: '网络部' },
+  { label: '运营中心', value: 'OPS_CENTER', deptType: 'NET', category: '网络部' },
+  { label: '设计审查', value: 'DESIGN_REVIEWER', deptType: 'NET', category: '网络部' },
+  { label: '站点获取', value: 'SITE_ACQUISITION', deptType: 'NET', category: '网络部' },
+  
+  // 市场部角色
+  { label: '客服主管', value: 'CUSTOMER_SERVICE_LEAD', deptType: 'MKT', category: '市场部' },
+  
+  // 政企部角色
+  { label: 'IT技术负责人', value: 'TECHNICAL_LEAD', deptType: 'GOV', category: '政企部' },
+  { label: 'IT安全审查', value: 'SECURITY_REVIEWER', deptType: 'GOV', category: '政企部' },
+  { label: 'IT架构师', value: 'IT_ARCHITECT', deptType: 'GOV', category: '政企部' },
+  { label: '解决方案架构师', value: 'SOLUTION_ARCHITECT', deptType: 'GOV', category: '政企部' },
+  { label: 'DICT项目经理', value: 'DICT_PM', deptType: 'GOV', category: '政企部' },
+  
+  // 法务部角色
+  { label: '法务审查员', value: 'LEGAL_REVIEWER', deptType: 'LEGAL', category: '法务部' },
+  
+  // 财务部角色
+  { label: '成本审计员', value: 'COST_AUDITOR', deptType: 'FIN', category: '财务部' },
+  { label: '财务应收检查', value: 'FINANCE_RECEIVABLE', deptType: 'FIN', category: '财务部' },
+  
+  // 综合部角色
+  { label: '设施协调员', value: 'FACILITY_COORDINATOR', deptType: 'ADMIN', category: '综合部' },
+  
+  // 采购部角色
+  { label: '采购专员', value: 'PROCUREMENT_SPECIALIST', deptType: 'PROC', category: '采购部' },
+  { label: '供应商管理', value: 'VENDOR_MANAGER', deptType: 'PROC', category: '采购部' }
 ]
+
+// 各级部门配置
+// 县级只负责发起合同，不参与审批，所以不需要部门分类
+const deptTypesByLevel = {
+  PROVINCE: [
+    { code: 'NET', name: '省公司网络部' },
+    { code: 'MKT', name: '省公司市场部' },
+    { code: 'GOV', name: '省公司政企部' },
+    { code: 'LEGAL', name: '省公司法务部' },
+    { code: 'FIN', name: '省公司财务部' },
+    { code: 'ADMIN', name: '省公司综合部' }
+  ],
+  CITY: [
+    { code: 'NET', name: '网络部' },
+    { code: 'MKT', name: '市场经营部' },
+    { code: 'GOV', name: '政企客户部' },
+    { code: 'LEGAL', name: '法务部' },
+    { code: 'FIN', name: '财务部' },
+    { code: 'ADMIN', name: '综合部' },
+    { code: 'PROC', name: '采购部' }
+  ],
+  COUNTY: [] // 县级只有发起人，无需部门分类
+}
+
+// 获取指定级别可用的所有角色代码
+const getValidRolesForLevel = (level: string): string[] => {
+  // 县级只能是发起人
+  if (level === 'COUNTY') {
+    return ['INITIATOR']
+  }
+  
+  const deptTypes = deptTypesByLevel[level as keyof typeof deptTypesByLevel] || deptTypesByLevel.CITY
+  const validDeptCodes = deptTypes.map(d => d.code)
+  
+  const validRoles: string[] = []
+  
+  // 通用角色（市级/省级可用）
+  roleOptions.filter(r => r.category === '通用').forEach(r => validRoles.push(r.value))
+  
+  // 管理层角色
+  roleOptions.filter(r => r.category === '管理层').forEach(r => validRoles.push(r.value))
+  
+  // 该级别部门对应的角色
+  roleOptions.filter(r => r.deptType && validDeptCodes.includes(r.deptType)).forEach(r => validRoles.push(r.value))
+  
+  return validRoles
+}
+
+// 检查角色在指定级别是否可用
+const isRoleValidForLevel = (roleCode: string, level: string): boolean => {
+  return getValidRolesForLevel(level).includes(roleCode)
+}
+
+// 处理节点级别变更（编辑模式）
+const handleNodeLevelChange = (node: ScenarioNode) => {
+  // 县级自动设置为发起人 + 发起动作
+  if (node.nodeLevel === 'COUNTY') {
+    node.roleCode = 'INITIATOR'
+    node.actionType = 'INITIATE'
+    ElMessage.info('县级节点已自动设置为"合同发起人"')
+    return
+  }
+  
+  // 其他级别检查角色是否有效
+  if (node.roleCode && !isRoleValidForLevel(node.roleCode, node.nodeLevel)) {
+    node.roleCode = ''
+    ElMessage.warning('该角色在此级别不可用，请重新选择')
+  }
+}
+
+// 处理新节点级别变更
+const handleNewNodeLevelChange = () => {
+  const level = newNode.value.nodeLevel || 'CITY'
+  
+  // 县级自动设置为发起人 + 发起动作
+  if (level === 'COUNTY') {
+    newNode.value.roleCode = 'INITIATOR'
+    newNode.value.actionType = 'INITIATE'
+    ElMessage.info('县级节点已自动设置为"合同发起人"')
+    return
+  }
+  
+  // 其他级别检查角色是否有效
+  if (newNode.value.roleCode && !isRoleValidForLevel(newNode.value.roleCode, level)) {
+    newNode.value.roleCode = ''
+    ElMessage.warning('该角色在此级别不可用，请重新选择')
+  }
+}
+
+// 获取指定级别的角色分组
+const getRoleGroupsByLevel = (level: string) => {
+  // 县级只能是发起人，不显示其他角色
+  if (level === 'COUNTY') {
+    const initiatorRole = roleOptions.filter(r => r.value === 'INITIATOR')
+    return [{ name: '📝 县级发起', roles: initiatorRole }]
+  }
+  
+  const deptTypes = deptTypesByLevel[level as keyof typeof deptTypesByLevel] || deptTypesByLevel.CITY
+  const groups: { name: string; roles: typeof roleOptions }[] = []
+  
+  // 添加管理层角色
+  const managementRoles = roleOptions.filter(r => r.category === '管理层')
+  if (managementRoles.length > 0) {
+    groups.push({ name: '🏢 管理层', roles: managementRoles })
+  }
+  
+  // 添加通用角色（不包括INITIATOR，因为发起通常是县级）
+  const commonRoles = roleOptions.filter(r => r.category === '通用' && r.value !== 'INITIATOR')
+  if (commonRoles.length > 0) {
+    groups.push({ name: '📋 通用角色', roles: commonRoles })
+  }
+  
+  // 按部门类型添加角色
+  deptTypes.forEach(dept => {
+    const deptRoles = roleOptions.filter(r => r.deptType === dept.code)
+    if (deptRoles.length > 0) {
+      groups.push({ name: `🏛️ ${dept.name}`, roles: deptRoles })
+    }
+  })
+  
+  return groups
+}
 
 // 级别选项
 const levelOptions = [
-  { label: '县级', value: 'COUNTY' },
-  { label: '市级', value: 'CITY' },
-  { label: '省级', value: 'PROVINCE' }
+  { label: '县级（仅发起）', value: 'COUNTY', hint: '县级只能作为合同发起节点' },
+  { label: '市级', value: 'CITY', hint: '市级部门审批' },
+  { label: '省级', value: 'PROVINCE', hint: '省级部门审批' }
 ]
 
-// 动作类型选项
+// 动作类型选项（简化版：只有发起和审批）
 const actionTypeOptions = [
   { label: '发起', value: 'INITIATE' },
-  { label: '审查', value: 'REVIEW' },
-  { label: '核实', value: 'VERIFY' },
-  { label: '审批', value: 'APPROVE' },
-  { label: '最终审批', value: 'FINAL_APPROVE' }
+  { label: '审批', value: 'APPROVE' }
 ]
 
 // 角色名称映射
@@ -144,13 +279,13 @@ const levelNameMap: Record<string, string> = {
   'PROVINCE': '省级'
 }
 
-// 动作类型映射
+// 动作类型映射（兼容旧数据，统一显示为审批）
 const actionTypeMap: Record<string, string> = {
   'INITIATE': '发起',
-  'REVIEW': '审查',
-  'VERIFY': '核实',
+  'REVIEW': '审批',      // 旧数据兼容
+  'VERIFY': '审批',      // 旧数据兼容
   'APPROVE': '审批',
-  'FINAL_APPROVE': '最终审批'
+  'FINAL_APPROVE': '审批' // 旧数据兼容
 }
 
 // 加载审批场景列表
@@ -405,6 +540,23 @@ const getRoleName = (roleCode: string) => {
   return roleNameMap.value[roleCode] || roleCode
 }
 
+// 获取角色所属部门类型名称
+const getRoleDeptName = (roleCode: string) => {
+  const role = roleOptions.find(r => r.value === roleCode)
+  if (!role) return ''
+  if (role.deptType === null) return role.category === '管理层' ? '管理层' : ''
+  const deptNames: Record<string, string> = {
+    'NET': '网络部',
+    'MKT': '市场部',
+    'GOV': '政企部',
+    'LEGAL': '法务部',
+    'FIN': '财务部',
+    'ADMIN': '综合部',
+    'PROC': '采购部'
+  }
+  return deptNames[role.deptType] || ''
+}
+
 // 获取级别显示名称
 const getLevelName = (level: string) => {
   return levelNameMap[level] || level
@@ -507,15 +659,16 @@ onMounted(() => {
     </el-card>
 
     <el-alert 
-      title="提示：场景配置说明" 
+      title="系统说明：县级起草 → 市级审批 → [省级审批]" 
       type="info" 
       :closable="false"
       style="margin-top: 16px"
     >
       <template #default>
-        <p>• 可新建自定义审批场景，配置审批节点后即可投入使用</p>
-        <p>• 场景匹配优先级：精确匹配 > 兜底场景（按金额从高到低匹配）</p>
-        <p>• 支持省级、市级、县级三级审批配置</p>
+        <p>• <strong>固定起点</strong>：所有场景以"县级发起人"为起点，统一身份起草合同</p>
+        <p>• <strong>审批层级</strong>：市级部门审批 → 市级管理层审批 → [省级审批（大额）]</p>
+        <p>• <strong>场景匹配</strong>：根据合同类型+金额自动匹配审批路径</p>
+        <p>• <strong>可扩展</strong>：管理员可添加省级审批节点以支持更高级别审批</p>
       </template>
     </el-alert>
 
@@ -560,6 +713,9 @@ onMounted(() => {
             <div class="node-order">{{ node.nodeOrder }}</div>
             <div class="node-content">
               <div class="node-role">{{ getRoleName(node.roleCode) }}</div>
+              <div class="node-dept" v-if="getRoleDeptName(node.roleCode)">
+                {{ getLevelName(node.nodeLevel) }} · {{ getRoleDeptName(node.roleCode) }}
+              </div>
               <div class="node-meta">
                 <el-tag size="small" :type="getLevelType(node.nodeLevel)">{{ getLevelName(node.nodeLevel) }}</el-tag>
                 <el-tag size="small">{{ getActionName(node.actionType) }}</el-tag>
@@ -576,23 +732,9 @@ onMounted(() => {
         <!-- 编辑模式：表格展示 -->
         <el-table v-if="isEditingNodes" :data="currentNodes" border stripe>
           <el-table-column prop="nodeOrder" label="顺序" width="70" align="center" />
-          <el-table-column prop="roleCode" label="审批角色" min-width="150">
+          <el-table-column prop="nodeLevel" label="审批级别" width="140">
             <template #default="{ row }">
-              <el-select v-model="row.roleCode" placeholder="选择角色" style="width: 100%">
-                <el-option-group v-for="cat in ['管理层', '技术', '法务', '财务', 'IT', '采购', 'DICT', '客服']" :key="cat" :label="cat">
-                  <el-option 
-                    v-for="opt in roleOptions.filter(r => r.category === cat)"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  />
-                </el-option-group>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column prop="nodeLevel" label="审批级别" width="120">
-            <template #default="{ row }">
-              <el-select v-model="row.nodeLevel" style="width: 100%">
+              <el-select v-model="row.nodeLevel" style="width: 100%" @change="handleNodeLevelChange(row)">
                 <el-option 
                   v-for="opt in levelOptions"
                   :key="opt.value"
@@ -602,9 +744,41 @@ onMounted(() => {
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column prop="actionType" label="动作类型" width="120">
+          <el-table-column prop="roleCode" label="审批角色" min-width="180">
             <template #default="{ row }">
-              <el-select v-model="row.actionType" style="width: 100%">
+              <el-select 
+                v-model="row.roleCode" 
+                placeholder="选择角色" 
+                style="width: 100%" 
+                filterable
+                :disabled="row.nodeLevel === 'COUNTY'"
+              >
+                <el-option-group 
+                  v-for="group in getRoleGroupsByLevel(row.nodeLevel)" 
+                  :key="group.name" 
+                  :label="group.name"
+                >
+                  <el-option 
+                    v-for="opt in group.roles"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  >
+                    <span>{{ opt.label }}</span>
+                    <span style="float: right; color: #8492a6; font-size: 12px;">{{ opt.value }}</span>
+                  </el-option>
+                </el-option-group>
+              </el-select>
+              <div v-if="row.nodeLevel === 'COUNTY'" class="county-hint">县级固定为发起人</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="actionType" label="动作类型" width="130">
+            <template #default="{ row }">
+              <el-select 
+                v-model="row.actionType" 
+                style="width: 100%"
+                :disabled="row.nodeLevel === 'COUNTY'"
+              >
                 <el-option 
                   v-for="opt in actionTypeOptions"
                   :key="opt.value"
@@ -638,27 +812,48 @@ onMounted(() => {
     <!-- 添加节点弹窗 -->
     <el-dialog v-model="addNodeDialogVisible" title="添加审批节点" width="500px">
       <el-form :model="newNode" label-width="100px">
-        <el-form-item label="审批角色" required>
-          <el-select v-model="newNode.roleCode" placeholder="选择审批角色" style="width: 100%">
-            <el-option-group v-for="cat in ['管理层', '技术', '法务', '财务', 'IT', '采购', 'DICT', '客服']" :key="cat" :label="cat">
-              <el-option 
-                v-for="opt in roleOptions.filter(r => r.category === cat)"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-option-group>
-          </el-select>
-        </el-form-item>
         <el-form-item label="审批级别">
-          <el-radio-group v-model="newNode.nodeLevel">
+          <el-radio-group v-model="newNode.nodeLevel" @change="handleNewNodeLevelChange">
             <el-radio-button v-for="opt in levelOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </el-radio-button>
           </el-radio-group>
+          <div class="form-tip" v-if="newNode.nodeLevel === 'COUNTY'">
+            <el-tag type="info" size="small">县级节点固定为"合同发起人 + 发起"</el-tag>
+          </div>
+          <div class="form-tip" v-else>先选择级别，角色选项会根据级别自动调整</div>
+        </el-form-item>
+        <el-form-item label="审批角色" required>
+          <el-select 
+            v-model="newNode.roleCode" 
+            placeholder="选择审批角色" 
+            style="width: 100%" 
+            filterable
+            :disabled="newNode.nodeLevel === 'COUNTY'"
+          >
+            <el-option-group 
+              v-for="group in getRoleGroupsByLevel(newNode.nodeLevel || 'CITY')" 
+              :key="group.name" 
+              :label="group.name"
+            >
+              <el-option 
+                v-for="opt in group.roles"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              >
+                <span>{{ opt.label }}</span>
+                <span style="float: right; color: #8492a6; font-size: 12px;">{{ opt.value }}</span>
+              </el-option>
+            </el-option-group>
+          </el-select>
         </el-form-item>
         <el-form-item label="动作类型">
-          <el-select v-model="newNode.actionType" style="width: 100%">
+          <el-select 
+            v-model="newNode.actionType" 
+            style="width: 100%"
+            :disabled="newNode.nodeLevel === 'COUNTY'"
+          >
             <el-option 
               v-for="opt in actionTypeOptions"
               :key="opt.value"
@@ -857,6 +1052,12 @@ onMounted(() => {
   margin-top: 4px;
 }
 
+.county-hint {
+  font-size: 11px;
+  color: #67c23a;
+  margin-top: 4px;
+}
+
 /* 节点头部 */
 .nodes-header {
   display: flex;
@@ -919,8 +1120,14 @@ onMounted(() => {
 .node-role {
   font-weight: 600;
   color: #303133;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-size: 14px;
+}
+
+.node-dept {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 6px;
 }
 
 .node-meta {

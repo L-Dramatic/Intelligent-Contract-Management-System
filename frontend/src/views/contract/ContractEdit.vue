@@ -119,8 +119,16 @@ const handleSave = async () => {
     try {
       if (isNew.value) {
         const res = await createContract({ ...form, status: 'DRAFT' })
+        console.log('创建合同返回:', res)
+        // 后端直接返回合同ID（数字），不是对象
+        const newContractId = typeof res.data === 'object' ? res.data.id : res.data
+        console.log('新合同ID:', newContractId, typeof newContractId)
+        if (!newContractId || isNaN(Number(newContractId))) {
+          ElMessage.error('创建合同失败：未获取到合同ID')
+          return
+        }
         ElMessage.success('合同创建成功')
-        window.location.href = `/contract/detail/${res.data.id}`
+        router.push(`/contract/detail/${newContractId}`)
       } else {
         await updateContract(contractId.value!, form)
         ElMessage.success('合同保存成功')

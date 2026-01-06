@@ -53,11 +53,21 @@ const statusMap: Record<number | string, { text: string; type: string }> = {
 }
 
 onMounted(() => {
+  // 检查合同ID是否有效
+  if (!contractId.value || isNaN(contractId.value)) {
+    ElMessage.error('无效的合同ID，请返回重试')
+    router.push('/contract/my')
+    return
+  }
   loadContract()
   loadReviewHistory()
 })
 
 const loadContract = async () => {
+  if (!contractId.value || isNaN(contractId.value)) {
+    ElMessage.error('无效的合同ID')
+    return
+  }
   loading.value = true
   try {
     const res = await getContractDetail(contractId.value)

@@ -62,9 +62,15 @@ public class WfScenarioNode {
     public static final String LEVEL_PROVINCE = "PROVINCE"; // 省级
     
     // ========== 动作类型常量 ==========
-    public static final String ACTION_INITIATE = "INITIATE";           // 发起
-    public static final String ACTION_REVIEW = "REVIEW";               // 审查
-    public static final String ACTION_VERIFY = "VERIFY";               // 核实
-    public static final String ACTION_APPROVE = "APPROVE";             // 审批
-    public static final String ACTION_FINAL_APPROVE = "FINAL_APPROVE"; // 最终审批
+    // 简化版：只有发起和审批两种类型
+    public static final String ACTION_INITIATE = "INITIATE";  // 发起（县级发起人专用）
+    public static final String ACTION_APPROVE = "APPROVE";    // 审批（市级/省级审批节点）
+    
+    // 以下常量保留用于兼容旧数据，实际功能与APPROVE相同
+    @Deprecated
+    public static final String ACTION_REVIEW = "REVIEW";               // 已弃用，等同于APPROVE
+    @Deprecated
+    public static final String ACTION_VERIFY = "VERIFY";               // 已弃用，等同于APPROVE
+    @Deprecated
+    public static final String ACTION_FINAL_APPROVE = "FINAL_APPROVE"; // 已弃用，等同于APPROVE
 }
