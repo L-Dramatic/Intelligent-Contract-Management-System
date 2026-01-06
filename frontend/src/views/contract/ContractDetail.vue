@@ -74,7 +74,7 @@ const loadContract = async () => {
     contract.value = res.data
     
     // 如果是审批中或已完成，加载审批历史
-    if (contract.value?.status !== 'DRAFT') {
+    if (contract.value?.status !== 0) {
       loadApprovalHistory()
     }
     
@@ -201,7 +201,17 @@ const goBack = () => {
 }
 
 const goToChange = () => {
-  router.push(`/contract/change/create/${contractId.value}`)
+  if (!contract.value) return
+  
+  router.push({
+    path: '/contract/draft',
+    query: {
+      changeContractId: contractId.value.toString(), // 标记为变更模式，传入原合同ID
+      mainType: contract.value.type || 'TYPE_A', // Note: detailed contract uses contractType field
+      subType: (contract.value.attributes as any)?.subTypeCode || 'A1',
+      changeMode: 'true' // 标记为变更模式
+    }
+  })
 }
 
 const getScoreDesc = (level: string) => {
@@ -231,7 +241,7 @@ const getRiskLevelInfo = (level: string) => {
           <el-icon><ArrowLeft /></el-icon>
           返回
         </el-button>
-        <h2 class="page-title">{{ contract?.contractName }}</h2>
+        <h2 class="page-title">{{ contract?.name }}</h2>
         <el-tag v-if="contract" :type="statusMap[contract.status]?.type as any" size="large">
           {{ statusMap[contract.status]?.text }}
         </el-tag>
@@ -290,7 +300,7 @@ const getRiskLevelInfo = (level: string) => {
                 {{ contract.contractNo }}
               </el-descriptions-item>
               <el-descriptions-item label="合同类型">
-                {{ contractTypeMap[contract.contractType] }}
+                {{ contractTypeMap[contract.type] || contract.type }}
               </el-descriptions-item>
               <el-descriptions-item label="合同金额">
                 <span class="amount">¥{{ contract.amount.toLocaleString() }}</span>
@@ -305,34 +315,34 @@ const getRiskLevelInfo = (level: string) => {
                 {{ contract.creatorName }}
               </el-descriptions-item>
               <el-descriptions-item label="创建时间">
-                {{ contract.createTime }}
+                {{ contract.createdAt }}
               </el-descriptions-item>
               <el-descriptions-item label="更新时间">
-                {{ contract.updateTime }}
+                {{ contract.updatedAt }}
               </el-descriptions-item>
             </el-descriptions>
           </el-card>
           
           <!-- 扩展字段 -->
-          <el-card v-if="contract.contractType === 'STATION_LEASE'" class="info-card">
+          <el-card v-if="contract.type === 'STATION_LEASE'" class="info-card">
             <template #header>
               <span class="card-title">基站租赁信息</span>
             </template>
             <el-descriptions :column="3" border>
               <el-descriptions-item label="站址位置" :span="2">
-                {{ contract.siteLocation }}
+                {{ contract.attributes?.siteLocation }}
               </el-descriptions-item>
               <el-descriptions-item label="站址类型">
-                {{ contract.siteType }}
+                {{ contract.attributes?.siteType }}
               </el-descriptions-item>
               <el-descriptions-item label="站址面积">
-                {{ contract.siteArea }} 平方米
+                {{ contract.attributes?.siteArea }} 平方米
               </el-descriptions-item>
               <el-descriptions-item label="年租金">
-                ¥{{ contract.annualRent?.toLocaleString() }}
+                ¥{{ contract.attributes?.annualRent?.toLocaleString() }}
               </el-descriptions-item>
               <el-descriptions-item label="租赁期限">
-                {{ contract.leaseStartDate }} 至 {{ contract.leaseEndDate }}
+                {{ contract.attributes?.leaseStartDate }} 至 {{ contract.attributes?.leaseEndDate }}
               </el-descriptions-item>
             </el-descriptions>
           </el-card>

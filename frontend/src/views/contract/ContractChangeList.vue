@@ -281,18 +281,51 @@
           </el-table>
         </el-card>
 
-        <!-- 审批时间线 -->
-        <el-card v-if="currentChange.approvedAt || currentChange.effectiveAt" class="detail-section" shadow="never">
-          <template #header>时间线</template>
+        <!-- 审批进度详情 -->
+        <el-card class="detail-section" shadow="never" v-loading="loadingHistory">
+          <template #header>审批进度</template>
           <el-timeline>
-            <el-timeline-item :timestamp="formatDate(currentChange.createdAt)" placement="top">
-              发起变更申请
+            <!-- 发起节点 -->
+            <el-timeline-item :timestamp="formatDate(currentChange.createdAt)" placement="top" type="primary" icon="UserFilled">
+              <div class="timeline-content">
+                <div class="timeline-title">发起变更申请</div>
+                <div class="timeline-person">发起人：{{ currentChange.initiatorName }}</div>
+              </div>
             </el-timeline-item>
-            <el-timeline-item v-if="currentChange.approvedAt" :timestamp="formatDate(currentChange.approvedAt)" placement="top" type="success">
-              审批通过
+            
+            <!-- 审批节点 -->
+            <el-timeline-item 
+              v-for="task in approvalHistory" 
+              :key="task.id"
+              :timestamp="formatDate(task.finishTime || task.createTime)" 
+              placement="top"
+              :type="getApprovalStatusType(task.status)"
+              :hollow="task.status === 0"
+            >
+              <div class="timeline-content">
+                <div class="timeline-title">
+                  {{ task.nodeName || '审批节点' }}
+                  <el-tag size="small" :type="getApprovalStatusType(task.status)" effect="plain" style="margin-left: 8px">
+                    {{ getApprovalStatusText(task.status) }}
+                  </el-tag>
+                </div>
+                <div class="timeline-person">审批人：{{ task.assigneeName || '未知' }}</div>
+                <div v-if="task.comment" class="timeline-comment">意见：{{ task.comment }}</div>
+              </div>
             </el-timeline-item>
-            <el-timeline-item v-if="currentChange.effectiveAt" :timestamp="formatDate(currentChange.effectiveAt)" placement="top" type="primary">
-              变更生效
+            
+            <!-- 结束节点 -->
+             <el-timeline-item 
+              v-if="currentChange.status === 2" 
+              :timestamp="formatDate(currentChange.approvedAt)" 
+              placement="top" 
+              type="success"
+              icon="Check"
+            >
+              <div class="timeline-content">
+                <div class="timeline-title">流程结束</div>
+                <div class="timeline-desc">变更已生效</div>
+              </div>
             </el-timeline-item>
           </el-timeline>
         </el-card>
@@ -307,7 +340,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { getMyContracts, getContractDetail } from '@/api/contract'
-import type { Contract, ContractQuery } from '@/types'
+import { getInstanceHistory } from '@/api/workflow'
+import type { Contract, ContractQuery, ApprovalTask } from '@/types'
 import {
   myChanges,
   getChangeDetail,
@@ -494,12 +528,26 @@ const resetChangeFilter = () => {
 // 查看变更详情
 const drawerVisible = ref(false)
 const currentChange = ref<ContractChangeVO | null>(null)
+const approvalHistory = ref<ApprovalTask[]>([])
+const loadingHistory = ref(false)
 
 const viewChangeDetail = async (row: ContractChangeVO) => {
   try {
     const res = await getChangeDetail(row.id)
     currentChange.value = res.data
     drawerVisible.value = true
+    
+    // 加载审批历史
+    loadingHistory.value = true
+    try {
+      const historyRes = await getInstanceHistory(row.id)
+      approvalHistory.value = (Array.isArray(historyRes.data) ? historyRes.data : []) as ApprovalTask[]
+    } catch (e) {
+      console.error('获取审批历史失败:', e)
+      approvalHistory.value = []
+    } finally {
+      loadingHistory.value = false
+    }
   } catch (error) {
     const err = error as { message?: string }
     ElMessage.error(err.message || '获取详情失败')
@@ -550,7 +598,7 @@ const submitChange = async (row: ContractChangeVO) => {
 // 撤销变更
 const cancelChange = async (row: ContractChangeVO) => {
   try {
-    await ElMessageBox.confirm('确定要撤销此变更申请吗？此操作不可恢复。', '警告', {
+    await ElMessageBox.confirm('确定要撤销此变更申请吗？此操作不可恢复？', '警告', {
       type: 'warning'
     })
     
@@ -593,6 +641,27 @@ const getStatusType = (status: number) => {
     4: 'info'
   }
   return map[status] || 'info'
+}
+
+// 审批状态翻译
+const getApprovalStatusType = (status: number | undefined) => {
+  const map: Record<number, string> = {
+    0: 'warning', // 待审批
+    1: 'success', // 通过
+    2: 'danger',  // 驳回
+    3: 'info'     // 转发
+  }
+  return status !== undefined ? (map[status] || 'info') : 'info'
+}
+
+const getApprovalStatusText = (status: number | undefined) => {
+  const map: Record<number, string> = {
+    0: '待审批',
+    1: '已通过',
+    2: '已驳回',
+    3: '已转发'
+  }
+  return status !== undefined ? (map[status] || '未知') : '未知'
 }
 
 const formatAmount = (amount: number) => {

@@ -180,20 +180,27 @@ export type InstanceStatus = 'RUNNING' | 'COMPLETED' | 'REJECTED' | 'TERMINATED'
 export interface ApprovalTask {
   id: number
   instanceId: number
-  nodeId: number
+  nodeId?: number
+  scenarioNodeId?: number
   nodeName: string
-  approverId: number
-  approverName: string
-  status: TaskStatus
+  approverId?: number
+  assigneeId?: number
+  approverName?: string
+  assigneeName?: string
+  status: number
   parallelGroupId?: string
   opinion?: string
+  comment?: string
   approvalTime?: string
+  finishTime?: string
   contractId: number
   contractName: string
   contractNo: string
-  contractType: ContractType
+  contractType: string
   initiatorName: string
   createTime: string
+  isChange?: boolean
+  changeId?: number
 }
 
 export type TaskStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'TRANSFERRED'
@@ -246,6 +253,7 @@ export interface AiReviewResult {
   mediumRiskItems: RiskItem[]
   lowRiskItems: RiskItem[]
   goodClauses: string[]
+  rawAnalysis?: string
 }
 
 export interface RiskItem {
@@ -257,6 +265,7 @@ export interface RiskItem {
 // 分页相关
 export interface PageResult<T> {
   records: T[]
+  list?: T[] // 兼容某些接口返回 list
   total: number
   pageNum: number
   pageSize: number
